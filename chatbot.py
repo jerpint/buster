@@ -1,10 +1,10 @@
-import numpy as np
-import pandas as pd
-import openai
-import tiktoken
 import pickle
 
-from openai.embeddings_utils import get_embedding, cosine_similarity
+import numpy as np
+import openai
+import pandas as pd
+import tiktoken
+from openai.embeddings_utils import cosine_similarity, get_embedding
 
 EMBEDDING_MODEL = "text-embedding-ada-002"
 EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-002
