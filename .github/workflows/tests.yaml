@@ -1,0 +1,23 @@
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: black linter
+        uses: psf/black@stable
+        with:
+          options: "--check --diff --line-length 120"
+      - name: isort
+        run: |
+          pip install isort
+          isort --profile black --check-only .
+      - name: unit tests
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -e .
+          # pytest

@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mila-cluster-chatbot"
+version = "0.0.1"
+description = "Chatbot to answer Mila cluster questions"
+readme = "README.md"
+requires-python = ">=3.10"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 120
