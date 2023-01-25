@@ -2,7 +2,12 @@ import glob
 import os
 import pickle
 
+import tiktoken
 from bs4 import BeautifulSoup
+from openai.embeddings_utils import cosine_similarity, get_embedding
+
+EMBEDDING_MODEL = "text-embedding-ada-002"
+EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-002
 
 
 def get_all_sections(root_dir: str, max_section_length: int = 3000) -> list[str]:
@@ -53,6 +58,35 @@ def read_sections(filepath: str) -> list[str]:
     return sections
 
 
+def load_documents(fname: str):
+    df = pd.DataFrame()
+
+    with open(fname, "rb") as fp:
+        documents = pickle.load(fp)
+    df["documents"] = documents
+    return df
+
+
+def compute_n_tokens(df):
+    encoding = tiktoken.get_encoding(EMBEDDING_ENCODING)
+    df["n_tokens"] = df.documents.apply(lambda x: len(encoding.encode(x)))
+    return df
+
+
+def precompute_embeddings(df):
+    df["embedding"] = df.documents.apply(lambda x: get_embedding(x, engine=EMBEDDING_MODEL))
+    return df
+
+
+def generate_embeddings(filepath: str, output_csv: str):
+    # Get all documents and precompute their embeddings
+    df = load_documents(filepath)
+    df = compute_n_tokens(df)
+    df = precompute_embeddings(df)
+    df.to_csv(output_csv)
+    return df
+
+
 if __name__ == "__main__":
     root_dir = "/home/hadrien/perso/mila-docs/output/"
     save_filepath = os.path.join(root_dir, "sections.pkl")
@@ -63,3 +97,6 @@ if __name__ == "__main__":
 
     # How to load
     sections = read_sections(save_filepath)
+
+    # precopmute the document embeddings
+    df = generate_embeddings(filepath=save_filepath, output_csv="data/document_embeddings.csv")
