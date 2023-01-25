@@ -7,7 +7,7 @@ name = "buster"
 version = "0.0.1"
 description = "buster the bot for the mila cluster"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]
