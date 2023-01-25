@@ -54,13 +54,14 @@ def get_gpt_response(question: str, df) -> str:
         # Get the response text
         response_text = response["choices"][0]["text"]
         logger.info(
-        f"""
+            f"""
         GPT Response:\n{response_text}
         """
         )
         return response_text
     except Exception as e:
         import traceback
+
         logging.error(traceback.format_exc())
         return "Oops, something went wrong. Try again later!"
 
