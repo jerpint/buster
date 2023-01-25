@@ -18,7 +18,7 @@ BASE_URL = "https://docs.mila.quebec/"
 def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
     section = []
     for node in nodes:
-        if node.name == 'table':
+        if node.name == "table":
             node_text = pd.read_html(node.prettify())[0].to_markdown(index=False, tablefmt="github")
         else:
             node_text = node.text
