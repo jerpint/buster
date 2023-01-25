@@ -43,7 +43,7 @@ def format_response(response_text, sources_url=None):
     response = f"{response_text}\n"
 
     if sources_url:
-        response += f"<br><br>Here are the sources I used to answer your response:\n"
+        response += f"<br><br>Here are the sources I used to answer your question:\n"
         for url in sources_url:
             response += f"<br>[{url}]({url})\n"
 
