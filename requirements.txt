@@ -1,4 +1,4 @@
 pandas
-openai
+openai[embeddings]
 numpy
 tiktoken
