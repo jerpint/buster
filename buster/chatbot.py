@@ -12,12 +12,15 @@ logging.basicConfig(level=logging.INFO)
 
 
 # search through the reviews for a specific product
-def rank_documents(df: pd.DataFrame, query: str, top_k: int = 3) -> pd.DataFrame:
+def rank_documents(df: pd.DataFrame, query: str, top_k: int = 1, thresh: float = None) -> pd.DataFrame:
     product_embedding = get_embedding(
         query,
         engine=EMBEDDING_MODEL,
     )
     df["similarity"] = df.embedding.apply(lambda x: cosine_similarity(x, product_embedding))
+
+    if thresh:
+        df = df[df.similarity > thresh]
 
     if top_k == -1:
         # return all results
@@ -28,7 +31,11 @@ def rank_documents(df: pd.DataFrame, query: str, top_k: int = 3) -> pd.DataFrame
 
 
 def engineer_prompt(question: str, documents: list[str]) -> str:
-    return " ".join(documents) + "\nNow answer the following question:\n" + question
+    documents_str = " ".join(documents)
+    if len(documents_str) > 3000:
+        logger.info("truncating documents to fit...")
+        documents_str = documents_str[0:3000]
+    return documents_str + "\nNow answer the following question:\n" + question
 
 
 def format_response(response_text, sources_url=None):
@@ -50,9 +57,15 @@ def format_response(response_text, sources_url=None):
     return response
 
 
-def answer_question(question: str, df) -> str:
+def answer_question(question: str, df, top_k: int = 1, thresh: float = None) -> str:
     # rank the documents, get the highest scoring doc and generate the prompt
-    candidates = rank_documents(df, query=question, top_k=1)
+    candidates = rank_documents(df, query=question, top_k=top_k, thresh=thresh)
+
+    logger.info(f"candidate responses: {candidates}")
+
+    if len(candidates) == 0:
+        return format_response("I did not find any relevant documentation related to your question.")
+
     documents = candidates.text.to_list()
     sources_url = candidates.url.to_list()
     prompt = engineer_prompt(question, documents)
