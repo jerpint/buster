@@ -4,9 +4,8 @@ import pickle
 import numpy as np
 import openai
 import pandas as pd
-from openai.embeddings_utils import cosine_similarity, get_embedding
-
 from docparser import EMBEDDING_MODEL
+from openai.embeddings_utils import cosine_similarity, get_embedding
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
