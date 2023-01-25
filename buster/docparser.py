@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import tiktoken
 from bs4 import BeautifulSoup
-from openai.embeddings_utils import cosine_similarity, get_embedding
+from openai.embeddings_utils import get_embedding
 
 
 EMBEDDING_MODEL = "text-embedding-ada-002"
@@ -90,7 +90,7 @@ def get_all_documents(root_dir: str, max_section_length: int = 3000) -> pd.DataF
 
 
 def write_documents(filepath: str, documents_df: pd.DataFrame):
-    documents_df.to_csv(filepath)
+    documents_df.to_csv(filepath, index=False)
 
 
 def read_documents(filepath: str) -> pd.DataFrame:
@@ -99,27 +99,27 @@ def read_documents(filepath: str) -> pd.DataFrame:
 
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
     encoding = tiktoken.get_encoding(EMBEDDING_ENCODING)
-    df["n_tokens"] = df.documents.apply(lambda x: len(encoding.encode(x)))
+    df["n_tokens"] = df.text.apply(lambda x: len(encoding.encode(x)))
     return df
 
 
 def precompute_embeddings(df: pd.DataFrame) -> pd.DataFrame:
-    df["embedding"] = df.documents.apply(lambda x: get_embedding(x, engine=EMBEDDING_MODEL))
+    df["embedding"] = df.text.apply(lambda x: get_embedding(x, engine=EMBEDDING_MODEL))
     return df
 
 
 def generate_embeddings(filepath: str, output_csv: str) -> pd.DataFrame:
     # Get all documents and precompute their embeddings
-    df = read_documents(filepath)['text']
+    df = read_documents(filepath)
     df = compute_n_tokens(df)
     df = precompute_embeddings(df)
-    df.to_csv(output_csv)
+    write_documents(output_csv, df)
     return df
 
 
 if __name__ == "__main__":
     root_dir = "/home/hadrien/perso/mila-docs/output/"
-    save_filepath = os.path.join(root_dir, "documents.csv")
+    save_filepath = "data/documents.csv"
 
     # How to write
     documents_df = get_all_documents(root_dir)
