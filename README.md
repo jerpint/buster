@@ -3,24 +3,24 @@
 Buster is a chatbot that can answer questions about the Mila cluster. You can try it [here](https://huggingface.co/spaces/jerpint/buster).
 
 
-![Question about tmpdir](imgs/qa_tmpdir.png)
+![Question about tmpdir](buster/imgs/qa_tmpdir.png)
 <!---
 Where should I put my data when running a job?
 -->
 
-![Question about GPUs jobs](imgs/qa_gpus.png)
+![Question about GPUs jobs](buster/imgs/qa_gpus.png)
 <!---
 How do I run a job with 2 GPUs?
 -->
 
 It also works in french, although not as well:
-![Question en français](imgs/qa_french.png)
+![Question en français](buster/imgs/qa_french.png)
 <!---
 Comment est-ce que je lance une job avec 2 GPUs?
 -->
 
 If you ask a stupid question, you will get a stupid answer:
-![Dumb question](imgs/qa_pasta.png)
+![Dumb question](buster/imgs/qa_pasta.png)
 <!---
 What has more calories: a DGX A100 or a pasta salad?
 -->
