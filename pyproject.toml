@@ -3,11 +3,11 @@ requires = ["setuptools", "setuptools-scm"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "mila-cluster-chatbot"
+name = "buster"
 version = "0.0.1"
-description = "Chatbot to answer Mila cluster questions"
+description = "buster the bot for the mila cluster"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.9"
 dynamic = ["dependencies"]
 
 [tool.setuptools.dynamic]
