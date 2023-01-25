@@ -36,14 +36,16 @@ def format_response(response_text, sources_url=None):
     response = f"{response_text}\n"
 
     if sources_url:
-        response += f"\nHere are the sources I used to answer your response:\n"
+        response += f"<br><br>Here are the sources I used to answer your response:\n"
         for url in sources_url:
-            response += f"[{url}]({url})\n"
+            response += f"<br>[{url}]({url})\n"
 
+    response += "<br><br>"
     response += """
-    \n\n
+    ```
     I'm a bot 🤖 and not always perfect.
     For more info, view the full documentation here (https://docs.mila.quebec/) or contact support@mila.quebec
+    ```
     """
     return response
 
