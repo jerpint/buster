@@ -2,6 +2,7 @@ import glob
 import math
 import os
 
+import bs4
 import pandas as pd
 import tiktoken
 from bs4 import BeautifulSoup
@@ -14,7 +15,20 @@ EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-0
 BASE_URL = "https://docs.mila.quebec/"
 
 
-def get_all_documents(root_dir: str, max_section_length: int = 3000) -> pd.DataFrame:
+def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
+    section = []
+    for node in nodes:
+        if node.name == 'table':
+            node_text = pd.read_html(node.prettify())[0].to_markdown(index=False, tablefmt="github")
+        else:
+            node_text = node.text
+        section.append(node_text)
+    section = "".join(section)[1:]
+
+    return section
+
+
+def get_all_documents(root_dir: str, max_section_length: int = 2000) -> pd.DataFrame:
     """Parse all HTML files in `root_dir`, and extract all sections.
 
     Sections are broken into subsections if they are longer than `max_section_length`.
@@ -34,11 +48,10 @@ def get_all_documents(root_dir: str, max_section_length: int = 3000) -> pd.DataF
 
             # If sections has subsections, keep only the part before the first subsection
             if len(section_href) > 1:
-                section_siblings = section_soup.section.previous_siblings
-                section = [sibling.text for sibling in section_siblings]
-                section = "".join(section[::-1])[1:]
+                section_siblings = list(section_soup.section.previous_siblings)[::-1]
+                section = parse_section(section_siblings)
             else:
-                section = section_soup.text[1:]
+                section = parse_section(section_soup.children)
 
             url = section_found["href"]
             name = section_found.parent.text[:-1]
