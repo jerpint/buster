@@ -31,10 +31,26 @@ def engineer_prompt(question: str, documents: list[str]) -> str:
     return " ".join(documents) + "\nNow answer the following question:\n" + question
 
 
+def format_response(response_text, sources_url=None):
+
+    response = f"{response_text}\n"
+
+    if sources_url:
+        response += f"\nHere are the sources I used to answer your response: \n{sources_url}\n"
+
+    response += """
+    \n\n
+    I'm a bot 🤖 and not always perfect.
+    For more info, view the full documentation here (https://docs.mila.quebec/) or contact support@mila.quebec
+    """
+    return response
+
+
 def answer_question(question: str, df) -> str:
     # rank the documents, get the highest scoring doc and generate the prompt
     candidates = rank_documents(df, query=question, top_k=1)
     documents = candidates.text.to_list()
+    sources_url = candidates.url.to_list()
     prompt = engineer_prompt(question, documents)
 
     logger.info(f"querying GPT...")
@@ -58,12 +74,14 @@ def answer_question(question: str, df) -> str:
         GPT Response:\n{response_text}
         """
         )
-        return response_text
+        return format_response(response_text, sources_url)
+
     except Exception as e:
         import traceback
 
         logging.error(traceback.format_exc())
-        return "Oops, something went wrong. Try again later!"
+        response = "Oops, something went wrong. Try again later!"
+        return format_response(response)
 
 
 def load_embeddings(path: str) -> pd.DataFrame:
