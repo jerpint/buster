@@ -11,7 +11,10 @@ EMBEDDING_MODEL = "text-embedding-ada-002"
 EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-002
 
 
-def get_all_sections(root_dir: str, max_section_length: int = 3000) -> list[str]:
+BASE_URL = "https://docs.mila.quebec/"
+
+
+def get_all_sections(root_dir: str, max_section_length: int = 3000) -> tuple[list[str], list[str]]:
     """Parse all HTML files in `root_dir`, and extract all sections.
 
     Sections are broken into subsections if they are longer than `max_section_length`.
@@ -19,32 +22,45 @@ def get_all_sections(root_dir: str, max_section_length: int = 3000) -> list[str]
     """
     files = glob.glob("*.html", root_dir=root_dir)
 
-    selector = "section > section"
-
     # Recurse until sections are small enough
-    def get_all_subsections(soup, selector: str) -> list[str]:
-        found = soup.select(selector)
-        data = [x.text.split(";")[-1].strip() for x in found]
+    def get_all_subsections(soup: BeautifulSoup, level: int) -> tuple[list[str], list[str]]:
+        if level >= 5:
+            return [], []
+
+        found = soup.find_all('a', href=True, class_="headerlink")
 
         sections = []
-        for i, section in enumerate(data):
+        urls = []
+        for section_found in found:
+            section_soup = section_found.parent.parent
+            section = section_soup.text
+            url = section_found['href']
+
             if len(section) > max_section_length:
-                sections.extend(get_all_subsections(found[i], selector + " > section"))
+                s, u = get_all_subsections(section_soup, level + 1)
+                sections.extend(s)
+                urls.extend(u)
             else:
                 sections.append(section)
+                urls.append(url)
 
-        return sections
+        return sections, urls
 
     sections = []
+    urls = []
     for file in files:
         filepath = os.path.join(root_dir, file)
         with open(filepath, "r") as file:
             source = file.read()
 
         soup = BeautifulSoup(source, "html.parser")
-        sections.extend(get_all_subsections(soup, selector))
+        sections_file, urls_file = get_all_subsections(soup, 2)
+        sections.extend(sections_file)
 
-    return sections
+        urls_file = [BASE_URL + os.path.basename(file.name) + url for url in urls_file]
+        urls.extend(urls_file)
+
+    return sections, urls
 
 
 def write_sections(filepath: str, sections: list[str]):

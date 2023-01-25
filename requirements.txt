@@ -1,4 +1,8 @@
-pandas
-openai
+bs4
 numpy
+<<<<<<< HEAD
 tiktoken
+=======
+openai
+pandas
+>>>>>>> fe2ece9 (parsing urls)
