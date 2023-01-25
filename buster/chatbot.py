@@ -31,7 +31,7 @@ def engineer_prompt(question: str, documents: list[str]) -> str:
     return " ".join(documents) + "\nNow answer the following question:\n" + question
 
 
-def get_gpt_response(question: str, df) -> str:
+def answer_question(question: str, df) -> str:
     # rank the documents, get the highest scoring doc and generate the prompt
     candidates = rank_documents(df, query=question, top_k=1)
     documents = candidates.text.to_list()
@@ -79,4 +79,4 @@ if __name__ == "__main__":
     df = load_embeddings("data/document_embeddings.csv")
 
     question = "Where should I put my datasets when I am running a job?"
-    response = get_gpt_response(question, df)
+    response = answer_question(question, df)
