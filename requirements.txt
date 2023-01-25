@@ -1,4 +1,5 @@
-pandas
-openai
+bs4
 numpy
 tiktoken
+openai
+pandas
