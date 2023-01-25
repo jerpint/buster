@@ -5,3 +5,7 @@ numpy
 tiktoken
 openai
 pandas
+scikit-learn
+tenacity
+matplotlib
+plotly
