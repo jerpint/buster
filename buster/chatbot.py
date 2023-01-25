@@ -1,5 +1,4 @@
 import logging
-import pickle
 
 import numpy as np
 import openai
@@ -10,6 +9,7 @@ from buster.docparser import EMBEDDING_MODEL
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
 
 # search through the reviews for a specific product
 def rank_documents(df: pd.DataFrame, query: str, top_k: int = 3) -> pd.DataFrame:
@@ -34,7 +34,7 @@ def engineer_prompt(question: str, documents: list[str]) -> str:
 def answer_question(question: str, df) -> str:
     # rank the documents, get the highest scoring doc and generate the prompt
     candidates = rank_documents(df, query=question, top_k=1)
-    documents = candidates.documents.to_list()
+    documents = candidates.text.to_list()
     prompt = engineer_prompt(question, documents)
 
     logger.info(f"querying GPT...")

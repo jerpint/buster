@@ -1,4 +1,7 @@
 pandas
 openai[embeddings]
+bs4
 numpy
 tiktoken
+openai
+pandas
