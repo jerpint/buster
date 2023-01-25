@@ -7,7 +7,6 @@ import tiktoken
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
-
 EMBEDDING_MODEL = "text-embedding-ada-002"
 EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-002
 
@@ -24,24 +23,24 @@ def get_all_documents(root_dir: str, max_section_length: int = 3000) -> pd.DataF
     files = glob.glob("*.html", root_dir=root_dir)
 
     def get_all_subsections(soup: BeautifulSoup) -> tuple[list[str], list[str], list[str]]:
-        found = soup.find_all('a', href=True, class_="headerlink")
+        found = soup.find_all("a", href=True, class_="headerlink")
 
         sections = []
         urls = []
         names = []
         for section_found in found:
             section_soup = section_found.parent.parent
-            section_href = section_soup.find_all('a', href=True, class_="headerlink")
+            section_href = section_soup.find_all("a", href=True, class_="headerlink")
 
             # If sections has subsections, keep only the part before the first subsection
             if len(section_href) > 1:
                 section_siblings = section_soup.section.previous_siblings
                 section = [sibling.text for sibling in section_siblings]
-                section = ''.join(section[::-1])[1:]
+                section = "".join(section[::-1])[1:]
             else:
                 section = section_soup.text[1:]
 
-            url = section_found['href']
+            url = section_found["href"]
             name = section_found.parent.text[:-1]
 
             # If text is too long, split into chunks of equal sizes
@@ -49,7 +48,7 @@ def get_all_documents(root_dir: str, max_section_length: int = 3000) -> pd.DataF
                 n_chunks = math.ceil(len(section) / float(max_section_length))
                 separator_index = math.floor(len(section) / n_chunks)
 
-                section_chunks = [section[separator_index * i: separator_index * (i + 1)] for i in range(n_chunks)]
+                section_chunks = [section[separator_index * i : separator_index * (i + 1)] for i in range(n_chunks)]
                 url_chunks = [url] * n_chunks
                 name_chunks = [name] * n_chunks
 
@@ -80,11 +79,7 @@ def get_all_documents(root_dir: str, max_section_length: int = 3000) -> pd.DataF
 
         names.extend(names_file)
 
-    documents_df = pd.DataFrame.from_dict({
-        'name': names,
-        'url': urls,
-        'text': sections
-    })
+    documents_df = pd.DataFrame.from_dict({"name": names, "url": urls, "text": sections})
 
     return documents_df
 
@@ -130,4 +125,3 @@ if __name__ == "__main__":
 
     # precompute the document embeddings
     df = generate_embeddings(filepath=save_filepath, output_csv="data/document_embeddings.csv")
-
