@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 # search through the reviews for a specific product
-def rank_documents(df, query, top_k=3):
+def rank_documents(df: pd.DataFrame, query: str, top_k: int = 3) -> pd.DataFrame:
     product_embedding = get_embedding(
         query,
         engine=EMBEDDING_MODEL,
@@ -27,12 +27,11 @@ def rank_documents(df, query, top_k=3):
     return results
 
 
-def engineer_prompt(question: str, documents: list[str]):
+def engineer_prompt(question: str, documents: list[str]) -> str:
     return " ".join(documents) + "\nNow answer the following question:\n" + question
 
 
-def get_gpt_response(question: str, df):
-
+def get_gpt_response(question: str, df) -> str:
     # rank the documents, get the highest scoring doc and generate the prompt
     candidates = rank_documents(df, query=question, top_k=1)
     documents = candidates.documents.to_list()
@@ -55,21 +54,18 @@ def get_gpt_response(question: str, df):
         # Get the response text
         response_text = response["choices"][0]["text"]
         logger.info(
-            f"""
-        User Question:\n{question}
-
+        f"""
         GPT Response:\n{response_text}
         """
         )
         return response_text
     except Exception as e:
         import traceback
-
         logging.error(traceback.format_exc())
         return "Oops, something went wrong. Try again later!"
 
 
-def load_embeddings(path):
+def load_embeddings(path: str) -> pd.DataFrame:
     logger.info(f"loading embeddings from {path}...")
     df = pd.read_csv(path)
     df["embedding"] = df.embedding.apply(eval).apply(np.array)

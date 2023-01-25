@@ -2,6 +2,7 @@ import glob
 import os
 import pickle
 
+import pandas as pd
 import tiktoken
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import cosine_similarity, get_embedding
@@ -58,7 +59,7 @@ def read_sections(filepath: str) -> list[str]:
     return sections
 
 
-def load_documents(fname: str):
+def load_documents(fname: str) -> pd.DataFrame:
     df = pd.DataFrame()
 
     with open(fname, "rb") as fp:
@@ -67,18 +68,18 @@ def load_documents(fname: str):
     return df
 
 
-def compute_n_tokens(df):
+def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
     encoding = tiktoken.get_encoding(EMBEDDING_ENCODING)
     df["n_tokens"] = df.documents.apply(lambda x: len(encoding.encode(x)))
     return df
 
 
-def precompute_embeddings(df):
+def precompute_embeddings(df: pd.DataFrame) -> pd.DataFrame:
     df["embedding"] = df.documents.apply(lambda x: get_embedding(x, engine=EMBEDDING_MODEL))
     return df
 
 
-def generate_embeddings(filepath: str, output_csv: str):
+def generate_embeddings(filepath: str, output_csv: str) -> pd.DataFrame:
     # Get all documents and precompute their embeddings
     df = load_documents(filepath)
     df = compute_n_tokens(df)
