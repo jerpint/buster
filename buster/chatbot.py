@@ -56,12 +56,8 @@ def format_response(response_text, sources_url=None):
     """
     return response
 
-<<<<<<< develop -- Incoming Change
 
 def answer_question(question: str, df, top_k: int = 1, thresh: float = None) -> str:
-=======
-def answer_question(question: str, df) -> str:
->>>>>>> main -- Current Change
     # rank the documents, get the highest scoring doc and generate the prompt
     candidates = rank_documents(df, query=question, top_k=top_k, thresh=thresh)
 
