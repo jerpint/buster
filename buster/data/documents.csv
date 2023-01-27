@@ -95,7 +95,8 @@ framework outside of the scope of the workload manager.
 If this all seems complicated, you should know that all these things
 do not need to always be used. It is perfectly acceptable to sumbit
 jobs with a single step, a single task and a single process.
-The available resources on the cluster are not infinite and it is the
+The available resource"
+The workload manager,https://docs.mila.quebec/Theory_cluster.html#the-workload-manager,"s on the cluster are not infinite and it is the
 workload manager’s job to allocate them. Whenever a job request comes
 in and there are not enough resources available to start it
 immediately, it will go in the queue.
@@ -110,8 +111,7 @@ can see the status of your queued jobs and why they remain in the
 queue.
 The workload manager will divide the cluster into partitions according
 to the configuration set by the admins. A partition is a set of
-machi"
-The workload manager,https://docs.mila.quebec/Theory_cluster.html#the-workload-manager,"nes typically reserved for a particular purpose. An example might
+machines typically reserved for a particular purpose. An example might
 be CPU-only machines for preprocessing setup as a separate partition.
 It is possible for multiple partitions to share resources.
 There will always be at least one partition that is the default
@@ -125,7 +125,8 @@ clusters where different hardware is mixed in and not all software is
 compatible with all of it (for example x86 and POWER cpus).
 To ensure a fair share of the computing resources for all, the workload
 manager establishes limits on the amount of resources that a single
-user can use at once. These can be hard limits which prevent running
+user can us"
+The workload manager,https://docs.mila.quebec/Theory_cluster.html#the-workload-manager,"e at once. These can be hard limits which prevent running
 jobs when you go over or soft limits which will let you run jobs, but
 only until some other job needs the resources.
 Admin policy will determine what those exact limits are for a
@@ -535,7 +536,8 @@ simultaneously, it is a weighting factor of the workload manager to balance
 jobs. For instance, even though we are allocated 400 GPU-years across all
 clusters, we can use more or less than 400 GPUs simultaneously depending on the
 history of usage from our group and other groups using the cluster at a given
-period of time. Please see the Alliance’s documentation for
+period of time. Please see the Alliance’s doc"
+Current allocation description,https://docs.mila.quebec/Extra_compute.html#current-allocation-description,"umentation for
 more information on how allocations and resource scheduling are configured for
 these installations.
 The table below provides information on the allocation for
@@ -543,62 +545,14 @@ rrg-bengioy-ad for the period which spans from April 2022 to
 April 2023. Note that there are no special allocations for GPUs on
 Graham and therefore jobs with GPUs should be submitted with the
 account def-bengioy.
-
-
-
-
-
-
-
-
-
-
-
-Cluster
-CPUs
-GPUs
-
-#
-account
-Model
-#
-SLURM type specifier
-account
-
-Beluga
-238
-rrg-bengioy-ad
-V100-16G
-77
-v100
-rrg-bengioy-ad
-
-Cedar
-34
-rrg-bengioy-ad
-V100-32G
-138
-v100l
-rrg-bengioy-ad
-
-Graham
-34
-rrg-bengioy-ad
-various
-–
-–
-def-bengioy
-
-Narval
-34
-rrg-bengioy-ad
-A100-40G
-185
-a100
-rrg-bengioy-ad
-
-
-
+| 0       | 1    | 2              | 3        | 4    | 5                    | 6              |
+|---------|------|----------------|----------|------|----------------------|----------------|
+| Cluster | CPUs | CPUs           | GPUs     | GPUs | GPUs                 | GPUs           |
+| Cluster | #    | account        | Model    | #    | SLURM type specifier | account        |
+| Beluga  | 238  | rrg-bengioy-ad | V100-16G | 77   | v100                 | rrg-bengioy-ad |
+| Cedar   | 34   | rrg-bengioy-ad | V100-32G | 138  | v100l                | rrg-bengioy-ad |
+| Graham  | 34   | rrg-bengioy-ad | various  | –    | –                    | def-bengioy    |
+| Narval  | 34   | rrg-bengioy-ad | A100-40G | 185  | a100                 | rrg-bengioy-ad |
 "
 Account Creation,https://docs.mila.quebec/Extra_compute.html#account-creation,"Account Creation
 To access the Alliance clusters you have to first create an account at
@@ -685,52 +639,12 @@ more time to get scheduled.
 
 "
 Beluga Storage,https://docs.mila.quebec/Extra_compute.html#beluga-storage,"Beluga Storage
-
-
-
-
-
-
-
-Storage
-Path
-Usage
-
-
-
-$HOME
-/home/<user>/
-
-Code
-Specific libraries
-
-
-
-$HOME/projects
-/project/rpp-bengioy
-
-Compressed raw datasets
-
-
-
-$SCRATCH
-/scratch/<user>
-
-Processed datasets
-Experimental results
-Logs of experiments
-
-
-
-$SLURM_TMPDIR
-
-
-Temporary job results
-
-
-
-
-
+| Storage        | Path                 | Usage                                                         |
+|----------------|----------------------|---------------------------------------------------------------|
+| $HOME          | /home/<user>/        | Code  Specific libraries                                      |
+| $HOME/projects | /project/rpp-bengioy | Compressed raw datasets                                       |
+| $SCRATCH       | /scratch/<user>      | Processed datasets  Experimental results  Logs of experiments |
+| $SLURM_TMPDIR  | nan                  | Temporary job results                                         |
 They are roughly listed in order of increasing performance and optimized for
 different uses:
 
@@ -758,23 +672,11 @@ Modules,https://docs.mila.quebec/Extra_compute.html#modules,"Modules
 Many software, such as Python or MATLAB are already compiled and available on
 Beluga through the module command and its subcommands. Its full
 documentation can be found here.
-
-
-
-
-
-
-module avail
-Displays all the available modules
-
-module load <module>
-Loads <module>
-
-module spider <module>
-Shows specific details about <module>
-
-
-
+| 0                      | 1                                     |
+|------------------------|---------------------------------------|
+| module avail           | Displays all the available modules    |
+| module load <module>   | Loads <module>                        |
+| module spider <module> | Shows specific details about <module> |
 In particular, if you with to use Python 3.6 you can simply do:
 module load python/3.6
 
@@ -927,213 +829,27 @@ request them for a very short duration (for testing code before queueing long
 jobs). You do not get the same guarantee as on the Mila cluster, however.
 "
 Node profile description,https://docs.mila.quebec/Information.html#node-profile-description,"Node profile description
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Name
-GPU
-CPUs
-Sockets
-Cores/Socket
-Threads/Core
-Memory (GB)
-TmpDisk (TB)
-Arch
-Slurm Features
-
-Model
-Mem
-#
-GPU Arch and Memory
-
-
-
-GPU Compute Nodes
-
-cn-a[001-011]
-RTX8000
-48
-8
-40
-2
-20
-1
-384
-3.6
-x86_64
-turing,48gb
-
-cn-b[001-005]
-V100
-32
-8
-40
-2
-20
-1
-384
-3.6
-x86_64
-volta,nvlink,32gb
-
-cn-c[001-040]
-RTX8000
-48
-8
-64
-2
-32
-1
-384
-3
-x86_64
-turing,48gb
-
-cn-g[001-026]
-A100
-80
-4
-64
-2
-32
-1
-1024
-7
-x86_64
-ampere,nvlink,80gb
-
-DGX Systems
-
-cn-d[001-002]
-A100
-40
-8
-128
-2
-64
-1
-1024
-14
-x86_64
-ampere,nvlink,40gb
-
-cn-d[003-004]
-A100
-80
-8
-128
-2
-64
-1
-2048
-28
-x86_64
-ampere,nvlink,80gb
-
-cn-e[002-003]
-V100
-32
-8
-40
-2
-20
-1
-512
-7
-x86_64
-volta,32gb
-
-CPU Compute Nodes
-
-cn-f[001-004]
-
-
-
-
-
-
-
-
-
-
-
-
-32
-1
-32
-1
-256
-10
-x86_64
-rome
-
-cn-h[001-004]
-
-
-
-
-
-
-
-
-
-
-
-
-64
-2
-32
-1
-768
-7
-x86_64
-milan
-
-Legacy GPU Compute Nodes
-
-kepler5
-V100
-16
-2
-16
-2
-4
-2
-256
-3.6
-x86_64
-volta,16gb
-
-TITAN RTX
-
-rtx[1,3-5,7]
-titanrtx
-24
-2
-20
-1
-10
-2
-128
-0.93
-x86_64
-turing,24gb
-
-
-
+| ('Name', 'Name')         | ('GPU', 'Model')         | ('GPU', 'Mem')           | ('GPU', '#')             | ('CPUs', 'CPUs')         | ('Sockets', 'Sockets')   | ('Cores/Socket', 'Cores/Socket')   | ('Threads/Core', 'Threads/Core')   | ('Memory (GB)', 'Memory (GB)')   | ('TmpDisk (TB)', 'TmpDisk (TB)')   | ('Arch', 'Arch')         | ('Slurm Features', 'GPU Arch and Memory')   |
+|--------------------------|--------------------------|--------------------------|--------------------------|--------------------------|--------------------------|------------------------------------|------------------------------------|----------------------------------|------------------------------------|--------------------------|---------------------------------------------|
+| GPU Compute Nodes        | GPU Compute Nodes        | GPU Compute Nodes        | GPU Compute Nodes        | GPU Compute Nodes        | GPU Compute Nodes        | GPU Compute Nodes                  | GPU Compute Nodes                  | GPU Compute Nodes                | GPU Compute Nodes                  | GPU Compute Nodes        | GPU Compute Nodes                           |
+| cn-a[001-011]            | RTX8000                  | 48                       | 8                        | 40                       | 2                        | 20                                 | 1                                  | 384                              | 3.6                                | x86_64                   | turing,48gb                                 |
+| cn-b[001-005]            | V100                     | 32                       | 8                        | 40                       | 2                        | 20      "
+Node profile description,https://docs.mila.quebec/Information.html#node-profile-description,"                           | 1                                  | 384                              | 3.6                                | x86_64                   | volta,nvlink,32gb                           |
+| cn-c[001-040]            | RTX8000                  | 48                       | 8                        | 64                       | 2                        | 32                                 | 1                                  | 384                              | 3                                  | x86_64                   | turing,48gb                                 |
+| cn-g[001-026]            | A100                     | 80                       | 4                        | 64                       | 2                        | 32                                 | 1                                  | 1024                             | 7                                  | x86_64                   | ampere,nvlink,80gb                          |
+| DGX Systems              | DGX Systems              | DGX Systems              | DGX Systems              | DGX Systems              | DGX Systems              | DGX Systems                        | DGX Systems                        | DGX Systems                      | DGX Systems                        | DGX Systems              | DGX Systems                                 |
+| cn-d[001-002]            | A100                     | 40                       | 8                        | 128                      | 2                        | 64                                 | 1                                  | 1024                             | 14                                 | x86_64                   | ampere,nvlink,40gb               "
+Node profile description,https://docs.mila.quebec/Information.html#node-profile-description,"           |
+| cn-d[003-004]            | A100                     | 80                       | 8                        | 128                      | 2                        | 64                                 | 1                                  | 2048                             | 28                                 | x86_64                   | ampere,nvlink,80gb                          |
+| cn-e[002-003]            | V100                     | 32                       | 8                        | 40                       | 2                        | 20                                 | 1                                  | 512                              | 7                                  | x86_64                   | volta,32gb                                  |
+| CPU Compute Nodes        | CPU Compute Nodes        | CPU Compute Nodes        | CPU Compute Nodes        | CPU Compute Nodes        | CPU Compute Nodes        | CPU Compute Nodes                  | CPU Compute Nodes                  | CPU Compute Nodes                | CPU Compute Nodes                  | CPU Compute Nodes        | CPU Compute Nodes                           |
+| cn-f[001-004]            | nan                      | nan                      | nan                      | 32                       | 1                        | 32                                 | 1                                  | 256                              | 10                                 | x86_64                   | rome                                        |
+| cn-h[001-004]            | nan                      | nan                      | nan                      | 64                       | 2                        | 32                   "
+Node profile description,https://docs.mila.quebec/Information.html#node-profile-description,"              | 1                                  | 768                              | 7                                  | x86_64                   | milan                                       |
+| Legacy GPU Compute Nodes | Legacy GPU Compute Nodes | Legacy GPU Compute Nodes | Legacy GPU Compute Nodes | Legacy GPU Compute Nodes | Legacy GPU Compute Nodes | Legacy GPU Compute Nodes           | Legacy GPU Compute Nodes           | Legacy GPU Compute Nodes         | Legacy GPU Compute Nodes           | Legacy GPU Compute Nodes | Legacy GPU Compute Nodes                    |
+| kepler5                  | V100                     | 16                       | 2                        | 16                       | 2                        | 4                                  | 2                                  | 256                              | 3.6                                | x86_64                   | volta,16gb                                  |
+| TITAN RTX                | TITAN RTX                | TITAN RTX                | TITAN RTX                | TITAN RTX                | TITAN RTX                | TITAN RTX                          | TITAN RTX                          | TITAN RTX                        | TITAN RTX                          | TITAN RTX                | TITAN RTX                                   |
+| rtx[1,3-5,7]             | titanrtx                 | 24                       | 2                        | 20                       | 1                        | 10                                 | 2                                  | 128                              | 0.93                               | x86_64                   | turing,24gb                                 |
 "
 Special nodes and outliers,https://docs.mila.quebec/Information.html#special-nodes-and-outliers,"Special nodes and outliers
 "
@@ -1161,55 +877,12 @@ expected to be used.
 The cn-g series of nodes include A100-80GB GPUs. One third have been
 configured to offer regular (non-MIG mode) a100l GPUs. The other two-thirds
 have been configured in MIG mode, and offer the following profiles:
-
-
-
-
-
-
-
-
-
-Name
-GPU
-Cluster-wide
-
-Model
-Memory
-Compute
-#
-
-
-
-a100l.1g.10gb
-a100l.1
-A100
-10GB 
-(1/8th)
-1/7th
-of full
-72
-
-a100l.2g.20gb
-a100l.2
-A100
-20GB 
-(2/8th)
-2/7th
-of full
-108
-
-a100l.3g.40gb
-a100l.3
-A100
-40GB 
-(4/8th)
-3/7th
-of full
-72
-
-
-
+| ('Name', 'Name')       | ('GPU', 'Model')   | ('GPU', 'Memory')   | ('GPU', 'Compute')   |   ('Cluster-wide', '#') |
+|------------------------|--------------------|---------"
+MIG,https://docs.mila.quebec/Information.html#mig,"------------|----------------------|-------------------------|
+| a100l.1g.10gb  a100l.1 | A100               | 10GB  (1/8th)       | 1/7th  of full       |                      72 |
+| a100l.2g.20gb  a100l.2 | A100               | 20GB  (2/8th)       | 2/7th  of full       |                     108 |
+| a100l.3g.40gb  a100l.3 | A100               | 40GB  (4/8th)       | 3/7th  of full       |                      72 |
 And can be requested using a SLURM flag such as --gres=gpu:a100l.1
 The partitioning may be revised as needs and SLURM capabilities evolve. Other
 MIG profiles exist and could be introduced.
@@ -1222,7 +895,6 @@ limit every MIG job to exactly one MIG slice and no more. Thus,
 --gres=gpu:a100l.3 will work (and request a size-3 slice of an
 a100l GPU) but --gres=gpu:a100l.1:3 (with :3 requesting
 three size-1 slices) will not.
-
 "
 AMD,https://docs.mila.quebec/Information.html#amd,"AMD
 
@@ -1329,7 +1001,8 @@ when you actually require only 8GB.
 
 GPU
 Monitors the GPU usage using an nvidia-smi plugin for Netdata.
-Under the plugin interface, select the GPU number which was allocated to
+Under the plugin interface, select the GPU"
+Example watching the CPU/RAM/GPU usage,https://docs.mila.quebec/Information.html#example-watching-the-cpu-ram-gpu-usage," number which was allocated to
 you. You can figure this out by running echo $SLURM_JOB_GPUS on the
 allocated node or, if you have the job ID,
 scontrol show -d job YOUR_JOB_ID | grep 'GRES' and checking IDX
@@ -1363,99 +1036,20 @@ inspect this to diagnose certain problems.
 
 
 
-
 "
 Example with Mila dashboard,https://docs.mila.quebec/Information.html#example-with-mila-dashboard,"Example with Mila dashboard
 
 "
 Storage,https://docs.mila.quebec/Information.html#storage,"Storage
-
-
-
-
-
-
-
-
-
-
-Path
-Performance
-Usage
-Quota (Space/Files)
-Backup
-Auto-cleanup
-
-
-
-/network/datasets/
-High
-
-Curated raw datasets (read only)
-
-
-
-
-
-
-$HOME or /home/mila/<u>/<username>/
-Low
-
-Personal user space
-Specific libraries, code, binaries
-
-
-100GB/1000K
-Daily
-no
-
-$SCRATCH or /network/scratch/<u>/<username>/
-High
-
-Temporary job results
-Processed datasets
-Optimized for small Files
-
-
-no
-no
-90 days
-
-$SLURM_TMPDIR
-Highest
-
-High speed disk for temporary job
-results
-
-
-4TB/-
-no
-at job end
-
-/network/projects/<groupname>/
-Fair
-
-Shared space to facilitate
-collaboration between researchers
-Long-term project storage
-
-
-200GB/1000K
-Daily
-no
-
-$ARCHIVE or /network/archive/<u>/<username>/
-Low
-
-Long-term personal storage
-
-
-500GB
-no
-no
-
-
-
+| Path                                           | Performance   | Usage                                                                                   | Quota (Space/Files)   | Backup   | Auto-cleanup   |
+|------------------------------------------------|---------------|-----------------------------------------------------------------------------------------|-----------------------|----------|----------------|
+| /network/datasets/                             | High          | Curated raw datasets (read only)                                                        | nan                   | nan      | nan            |
+| $HOME  or  /home/mila/<u>/<username>/          | Low           | Personal user space  Specific libraries, code, binaries                                 | 100GB/1000K           | Daily    | no             |
+| $SCRATCH  or  /network/scratch/<u>/<username>/ | High          | Temporary job results  Processed datasets  Optimized for small Files                    | no                    | no       | 90 days  "
+Storage,https://docs.mila.quebec/Information.html#storage,"      |
+| $SLURM_TMPDIR                                  | Highest       | High speed disk for temporary job results                                               | 4TB/-                 | no       | at job end     |
+| /network/projects/<groupname>/                 | Fair          | Shared space to facilitate collaboration between researchers  Long-term project storage | 200GB/1000K           | Daily    | no             |
+| $ARCHIVE  or  /network/archive/<u>/<username>/ | Low           | Long-term personal storage                                                              | 500GB                 | no       | no             |
 
 Note
 The $HOME file system is backed up once a day. For any file
@@ -1758,34 +1352,13 @@ an allocation on multiple nodes.
 Job submission arguments,https://docs.mila.quebec/Userguide.html#job-submission-arguments,"Job submission arguments
 In order to accurately select the resources for your job, several arguments are
 available. The most important ones are:
-
-
-
-
-
-
-Argument
-Description
-
-
-
--n, –ntasks=<number>
-The number of task in your script, usually =1
-
--c, –cpus-per-task=<ncpus>
-The number of cores for each task
-
--t, –time=<time>
-Time requested for your job
-
-–mem=<size[units]>
-Memory requested for all your tasks
-
-–gres=<list>
-Select generic resources such as GPUs for your job: --gres=gpu:GPU_MODEL
-
-
-
+| Argument                   | Description                                                               |
+|----------------------------|---------------------------------------------------------------------------|
+| -n, –ntasks=<number>       | The number of task in your script, usually =1                             |
+| -c, –cpus-per-task=<ncpus> | The number of cores for each task                                         |
+| -t, –time=<time>           | Time requested for your job                                               |
+| –mem=<size[units]>         | Memory requested for all your tasks                                       |
+| –gres=<list>               | Select generic resources such as GPUs for your job:  --gres=gpu:GPU_MODEL |
 
 Tip
 Always consider requesting the adequate amount of resources to improve the
@@ -1816,65 +1389,23 @@ with a lower priority: unkillable > main > long. Once preempted, your job is
 killed without notice and is automatically re-queued on the same partition until
 resources are available. (To leverage a different preemption mechanism, see the
 Handling preemption)
-
-
-
-
-
-
-
-
-Flag
-Max Resource Usage
-Max Time
-Note
-
-
-
---partition=unkillable
-6  CPUs, mem=32G,  1 GPU
-2 days
-
-
---partition=unkillable-cpu
-2  CPUs, mem=16G
-2 days
-CPU-only jobs
-
---partition=short-unkillable
-24 CPUs, mem=128G, 4 GPUs
-3 hours (!)
-Large but short jobs
-
---partition=main
-8  CPUs, mem=48G,  2 GPUs
-5 days
-
-
---partition=main-cpu
-8  CPUs, mem=64G
-5 days
-CPU-only jobs
-
---partition=long
-no limit of resources
-7 days
-
-
---partition=long-cpu
-no limit of resources
-7 days
-CPU-only jobs
-
-
-
+| Flag                         | Max Resource Usage        | Max Time    | Note                 |
+|------------------------------|---------------------------|-------------|----------------------|
+| --partition=unkillable       | 6 CPUs, mem=32G, 1 GPU    | 2 days      | nan                  |
+| --partition=unkillable-cpu   | 2 CPUs, mem=16G           | 2 days      | CPU-only jobs        |
+| --partition=short-unkillable | 24 CPUs, mem=128G, 4 GPUs | 3 hours (!) | Large but short jobs |
+| --partition=main             | 8 CPUs, mem=48G, 2 GPUs   | 5 days      | nan                  |
+| --partition=main-cpu         | 8 CPUs, mem=64G           | 5 days      | CPU-only jobs        |
+| --partition=long             | no limit of resources     | 7 days      | nan                  |
+| --partition=long-cpu         | no limit of resources     | 7 days      | CPU-only jobs        |
 
 Warning
 Historically, before the 2022 introduction of CPU-only nodes (e.g. the cn-f
 series), CPU jobs ran side-by-side with the GPU jobs on GPU nodes. To prevent
 them obstructing any GPU job, they were always lowest-priority and preemptible.
 This was implemented by automatically assigning them to one of the now-obsolete
-partitions cpu_jobs, cpu_jobs_low or cpu_jobs_low-grace.
+part"
+Partitioning,https://docs.mila.quebec/Userguide.html#partitioning,"itions cpu_jobs, cpu_jobs_low or cpu_jobs_low-grace.
 Do not use these partition names anymore. Prefer the *-cpu partition
 names defined above.
 For backwards-compatibility purposes, the legacy partition names are translated
@@ -1901,28 +1432,11 @@ accessed Node profile description.
 Example:
 To request a machine with 2 GPUs using NVLink, you can use
 sbatch -c 4 --gres=gpu:2 --constraint=nvlink
-
-
-
-
-
-
-Feature
-Particularities
-
-
-
-12GB/16GB/24GB/32GB/48GB
-Request a specific amount of GPU memory
-
-volta/turing/ampere
-Request a specific GPU architecture
-
-nvlink
-Machine with GPUs using the NVLink interconnect technology
-
-
-
+| Feature                  | Particularities                                            |
+|--------------------------|------------------------------------------------------------|
+| 12GB/16GB/24GB/32GB/48GB | Request a specific amount of  GPU  memory                  |
+| volta/turing/ampere      | Request a specific  GPU  architecture                      |
+| nvlink                   | Machine with GPUs using the NVLink interconnect technology |
 "
 Information on partitions/nodes,https://docs.mila.quebec/Userguide.html#information-on-partitions-nodes,"Information on partitions/nodes
 sinfo (ref.) provides most of the
@@ -1947,12 +1461,12 @@ node[10-15]     6 batch     idle      2    246    16000     0  (null)   (null)
 And to get statistics on a job running or terminated, use sacct with some of
 the fields you want to display
 sacct --format=User,JobID,Jobname,partition,state,time,start,end,elapsed,nnodes,ncpus,nodelist,workdir -u $USER
-     User        JobID    JobName  Partition      State  Timelimit               Start                 End    Elapsed   NNodes      NCPUS        NodeList              WorkDir
+     User        JobID    JobName  Partition      State  Timelimit               Start                 End    Elapsed   NNodes      NCPUS        N"
+Information on partitions/nodes,https://docs.mila.quebec/Userguide.html#information-on-partitions-nodes,"odeList              WorkDir
 --------- ------------ ---------- ---------- ---------- ---------- ------------------- ------------------- ---------- -------- ---------- --------------- --------------------
 my_usern+ 2398         run_extra+      batch    RUNNING 130-05:00+ 2019-03-27T18:33:43             Unknown 1-01:07:54        1         16 node9           /home/mila/my_usern+
 my_usern+ 2399         run_extra+      batch    RUNNING 130-05:00+ 2019-03-26T08:51:38             Unknown 2-10:49:59        1         16 node9           /home/mila/my_usern+
-Or to get the list of all your previous jobs, use the --start=YYYY-MM-DD flag. You can check sacct(1) for further information about additional t"
-Information on partitions/nodes,https://docs.mila.quebec/Userguide.html#information-on-partitions-nodes,"ime formats.
+Or to get the list of all your previous jobs, use the --start=YYYY-MM-DD flag. You can check sacct(1) for further information about additional time formats.
 sacct -u $USER --start=2019-01-01
 scontrol (ref.) can be used to
 provide specific information on a job (currently running or recently terminated)
@@ -1966,7 +1480,8 @@ RunTime=2-10:41:57 TimeLimit=130-05:00:00 TimeMin=N/A
 SubmitTime=2019-03-26T08:47:17 EligibleTime=2019-03-26T08:49:18
 AccrueTime=2019-03-26T08:49:18
 StartTime=2019-03-26T08:51:38 EndTime=2019-08-03T13:51:38 Deadline=N/A
-PreemptTime=None SuspendTime=None SecsPreSuspend=0
+PreemptTime=None SuspendTim"
+Information on partitions/nodes,https://docs.mila.quebec/Userguide.html#information-on-partitions-nodes,"e=None SecsPreSuspend=0
 LastSchedEval=2019-03-26T08:49:18
 Partition=slurm_partition AllocNode:Sid=login-node-1:14586
 ReqNodeList=(null) ExcNodeList=(null)
@@ -2000,8 +1515,7 @@ CfgTRES=cpu=16,mem=32000M,billing=3
 AllocTRES=cpu=16,mem=32000M
 CapWatts=n/a
 CurrentWatts=0 LowestJoules=0 ConsumedJoules=0
-ExtSensorsJoules=n/s ExtSensorsWatts=0 ExtSensorsTemp=n/s
-"
+ExtSensorsJoules=n/s ExtSensorsWatts=0 ExtSensorsTemp=n/"
 Useful Commands,https://docs.mila.quebec/Userguide.html#useful-commands,"Useful Commands
 
 sallocGet an interactive job and give you a shell. (ssh like) CPU only
@@ -2180,18 +1694,19 @@ module avail
   cuda/11.0 -> cudatoolkit/11.0    pytorch       -> python/3.7/cuda/10.2/cudnn/7.6/pytorch/1.5.1    tensorflow          -> python/3.7/tensorflow/2.2
   cuda/9.0  -> cudatoolkit/9.0     pytorch/1.4.0 -> python/3.7/cuda/10.2/cudnn/7.6/pytorch/1.4.0    tensorflow-cpu/1.15 -> python/3.7/tensorflow/1.15
 
--------------------------------------------------------------------------------------------------- /cvmfs/config.mila.quebec/modules/Core ---------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------- /cvmfs/config.mila.quebec/modules/Core ---------------------------------"
+The module command,https://docs.mila.quebec/Userguide.html#the-module-command,"------------------------------------------------------------------
   Mila       (S,L)    anaconda/3 (D)    go/1.13.5        miniconda/2        mujoco/1.50        python/2.7    python/3.6        python/3.8           singularity/3.0.3    singularity/3.2.1    singularity/3.5.3 (D)
   anaconda/2          go/1.12.4         go/1.14   (D)    miniconda/3 (D)    mujoco/2.0  (D)    python/3.5    python/3.7 (D)    singularity/2.6.1    singularity/3.1.1    singularity/3.4.2
 
------------------------------------------------------------------------------------------------- /cvmfs/config.mila.quebec/modules/Compiler ---------------------------------------------------------------------------------------"
-The module command,https://docs.mila.quebec/Userguide.html#the-module-command,"----------
+------------------------------------------------------------------------------------------------ /cvmfs/config.mila.quebec/modules/Compiler -------------------------------------------------------------------------------------------------
   python/3.7/mujoco-py/2.0
 
 -------------------------------------------------------------------------------------------------- /cvmfs/config.mila.quebec/modules/Cuda ---------------------------------------------------------------------------------------------------
   cuda/10.0/cudnn/7.3        cuda/10.0/nccl/2.4         cuda/10.1/nccl/2.4     cuda/11.0/nccl/2.7        cuda/9.0/nccl/2.4     cudatoolkit/9.0     cudatoolkit/10.1        cudnn/7.6/cuda/10.0/tensorrt/7.0
   cuda/10.0/cudnn/7.5        cuda/10.1/cudnn/7.5        cuda/10.2/cudnn/7.6    cuda/9.0/cudnn/7.3        cuda/9.2/cudnn/7.6    cudatoolkit/9.2     cudatoolkit/10.2        cudnn/7.6/cuda/10.1/tensorrt/7.0
-  cuda/10.0/cudnn/7.6 (D)    cuda/10.1/cudnn/7.6 (D)    cuda/10.2/nccl/2.7     cuda/9.0/cudnn/7.5 (D)    cuda/9.2/nccl/2.4     cudatoolkit/10.0    cudatoolkit/11.0 (D)    cudnn/7.6/cuda/9.0/tensorrt/7.0
+  cuda/10"
+The module command,https://docs.mila.quebec/Userguide.html#the-module-command,".0/cudnn/7.6 (D)    cuda/10.1/cudnn/7.6 (D)    cuda/10.2/nccl/2.7     cuda/9.0/cudnn/7.5 (D)    cuda/9.2/nccl/2.4     cudatoolkit/10.0    cudatoolkit/11.0 (D)    cudnn/7.6/cuda/9.0/tensorrt/7.0
 
 ------------------------------------------------------------------------------------------------ /cvmfs/config.mila.quebec/modules/Pytorch --------------------------------------------------------------------------------------------------
   python/3.7/cuda/10.1/cudnn/7.6/pytorch/1.4.1    python/3.7/cuda/10.1/cudnn/7.6/pytorch/1.5.1 (D)    python/3.7/cuda/10.2/cudnn/7.6/pytorch/1.5.0
@@ -2209,32 +1724,12 @@ module load python3.7
 "
 Available Software,https://docs.mila.quebec/Userguide.html#available-software,"Available Software
 Modules are divided in 5 main sections:
-
-
-
-
-
-
-Section
-Description
-
-
-
-Core
-Base interpreter and software (Python, go, etc…)
-
-Compiler
-Interpreter-dependent software (see the note below)
-
-Cuda
-Toolkits, cudnn and related libraries
-
-Pytorch/Tensorflow
-Pytorch/TF built with a specific Cuda/Cudnn
-version for Mila’s GPUs (see the related paragraph)
-
-
-
+| Section            | Description                                                                                         |
+|--------------------|-----------------------------------------------------------------------------------------------------|
+| Core               | Base interpreter and software (Python, go, etc…)                                                    |
+| Compiler           | Interpreter-dependent software (  see the note below  )                                             |
+| Cuda               | Toolkits, cudnn and related libraries                                                               |
+| Pytorch/Tensorflow | Pytorch/TF built with a specific Cuda/Cudnn version for Mila’s GPUs (  see the related paragraph  ) |
 
 Note
 Modules which are nested (../../..) usually depend on other software/module
@@ -2495,7 +1990,8 @@ From: tensorflow/tensorflow:latest-gpu-py3
         apt-get update
         apt-get install -y cmake libcupti-dev libyaml-dev wget unzip
         apt-get clean
-        echo ""Installing things with pip""
+        echo ""Instal"
+Second way: Use recipes,https://docs.mila.quebec/Userguide.html#second-way-use-recipes,"ling things with pip""
         pip install tqdm
         echo ""Creating mount points""
         mkdir /dataset
@@ -2524,7 +2020,6 @@ Warning
 You always need to use sudo when you build a container from a
 recipe. As there is no access to sudo on the cluster, a personal computer or
 the use singularity hub is needed to build a container
-
 "
 Build recipe on singularity hub,https://docs.mila.quebec/Userguide.html#build-recipe-on-singularity-hub,"Build recipe on singularity hub
 Singularity hub allows users to build containers from recipes directly on
@@ -2600,7 +2095,8 @@ From: pytorch/pytorch:1.0-cuda10.0-cudnn7-runtime
         mkdir /Gym && cd /Gym
         git clone https://github.com/openai/gym.git || true && \
         mkdir /Gym/.mujoco && cd /Gym/.mujoco
-        wget https://www.roboti.us/download/mjpro150_linux.zip  && \
+        wget https://www.roboti.us/do"
+"Example: Recipe with OpenAI gym, MuJoCo and Miniworld",https://docs.mila.quebec/Userguide.html#example-recipe-with-openai-gym-mujoco-and-miniworld,"wnload/mjpro150_linux.zip  && \
         unzip mjpro150_linux.zip && \
         wget https://www.roboti.us/download/mujoco200_linux.zip && \
         unzip mujoco200_linux.zip && \
@@ -2610,8 +2106,7 @@ From: pytorch/pytorch:1.0-cuda10.0-cudnn7-runtime
         export MUJOCO_PY_MJKEY_PATH=/Gym/.mujoco/mjkey.txt
         export MUJOCO_PY_MUJOCO_PATH=/Gym/.mujoco/mujoco150/
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Gym/.mujoco/mjpro150/bin
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Gym"
-"Example: Recipe with OpenAI gym, MuJoCo and Miniworld",https://docs.mila.quebec/Userguide.html#example-recipe-with-openai-gym-mujoco-and-miniworld,"/.mujoco/mujoco200/bin
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Gym/.mujoco/mujoco200/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/bin
         cp /mjkey.txt /Gym/.mujoco/mjkey.txt
         # Install Python dependencies
@@ -2632,7 +2127,8 @@ From: pytorch/pytorch:1.0-cuda10.0-cudnn7-runtime
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Gym/.mujoco/mjpro150/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Gym/.mujoco/mujoco200/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/bin
-        export PATH=/Gym/gym/.tox/py3/bin:$PATH
+        export PATH=/Gym/gym/.tox/py3/bin:$PATH"
+"Example: Recipe with OpenAI gym, MuJoCo and Miniworld",https://docs.mila.quebec/Userguide.html#example-recipe-with-openai-gym-mujoco-and-miniworld,"
 
 %runscript
         exec /bin/sh ""$@""
@@ -2674,8 +2170,7 @@ From: tensorflow/tensorflow:latest-gpu-py3
 
         # Download Gym and MuJoCo
         mkdir /Gym && cd /Gym
-        git clone"
-"Example: Recipe with OpenAI gym, MuJoCo and Miniworld",https://docs.mila.quebec/Userguide.html#example-recipe-with-openai-gym-mujoco-and-miniworld," https://github.com/openai/gym.git || true && \
+        git clone https://github.com/openai/gym.git || true && \
         mkdir /Gym/.mujoco && cd /Gym/.mujoco
         wget https://www.roboti.us/download/mjpro150_linux.zip  && \
         unzip mjpro150_linux.zip && \
@@ -2685,7 +2180,8 @@ From: tensorflow/tensorflow:latest-gpu-py3
 
         # Export global environment variables
         export MUJOCO_PY_MJKEY_PATH=/Gym/.mujoco/mjkey.txt
-        export MUJOCO_PY_MUJOCO_PATH=/Gym/.mujoco/mujoco150/
+        export MUJOCO_PY_MUJOCO_PATH=/Gym/.mujoco/mujo"
+"Example: Recipe with OpenAI gym, MuJoCo and Miniworld",https://docs.mila.quebec/Userguide.html#example-recipe-with-openai-gym-mujoco-and-miniworld,"co150/
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Gym/.mujoco/mjpro150/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/Gym/.mujoco/mujoco200/bin
         export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/bin
@@ -2722,8 +2218,7 @@ From: tensorflow/tensorflow:latest-gpu-py3
 
 Keep in mind that those environment variables are sourced at runtime and not at
 build time. This is why, you should also define them in the %post section
-since they are required to install MuJoCo.
-"
+since they are required to install MuJoCo"
 Using containers on clusters,https://docs.mila.quebec/Userguide.html#using-containers-on-clusters,"Using containers on clusters
 "
 How to use containers on clusters,https://docs.mila.quebec/Userguide.html#how-to-use-containers-on-clusters,"How to use containers on clusters
@@ -3168,29 +2663,10 @@ It does not require any ssh tunnel or port redirection, the hub acts as a proxy
 server that will redirect you to a session as soon as it is available.
 It is currently available for Mila clusters and some Digital Research Alliance
 of Canada (Alliance) clusters.
-
-
-
-
-
-
-
-Cluster
-Address
-Login type
-
-
-
-Mila Local
-https://jupyterhub.server.mila.quebec
-Google Oauth
-
-Alliance
-https://docs.alliancecan.ca/wiki/JupyterHub
-DRAC login
-
-
-
+| Cluster    | Address                                     | Login type   |
+|------------|---------------------------------------------|--------------|
+| Mila Local | https://jupyterhub.server.mila.quebec       | Google Oauth |
+| Alliance   | https://docs.alliancecan.ca/wiki/JupyterHub | DRAC login   |
 
 Warning
 Do not forget to close the JupyterLab session! Closing the window leaves
@@ -3351,7 +2827,8 @@ Requesting 2 tasks per GPU
 
 
 --exclusive is important to specify subsequent step/srun to bind to different cpus.
-This will produce 8 output files, 2 for each step:
+This will produce 8 output files"
+Sharing a node with multiple GPU & multiple processes/GPU,https://docs.mila.quebec/Userguide.html#sharing-a-node-with-multiple-gpu-multiple-processes-gpu,", 2 for each step:
 
 JOBID-step-0-task-0.out
 JOBID-step-0-task-1.out
@@ -3372,8 +2849,7 @@ cat JOBID-step-* | grep Tesla
 0: |   0  Tesla P100-PCIE...  On   | 00000000:82:00.0 Off |                    0 |
 1: |   0  Tesla P100-PCIE...  On   | 00000000:82:00.0 Off |                    0 |
 0: |   0  Tesla P100-PCIE...  On   | 00000000:03:00.0 Off |                    0 |
-1: |   0  Tesla P100-PCIE...  On   | 00000000:03:00.0 Off |                    0 |
-"
+1: |   0  Tesla P100-PCIE...  On   | 00000000:03:00.0 Off |                    0 |"
 Multiple Nodes,https://docs.mila.quebec/Userguide.html#multiple-nodes,"Multiple Nodes
 "
 Data Parallel,https://docs.mila.quebec/Userguide.html#data-parallel,"Data Parallel
