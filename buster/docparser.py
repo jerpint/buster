@@ -12,7 +12,8 @@ EMBEDDING_MODEL = "text-embedding-ada-002"
 EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-002
 
 
-BASE_URL = "https://docs.mila.quebec/"
+BASE_URL_MILA = "https://docs.mila.quebec/"
+BASE_URL_ORION = "https://orion.readthedocs.io/en/stable/"
 
 
 def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
@@ -28,13 +29,13 @@ def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
     return section
 
 
-def get_all_documents(root_dir: str, max_section_length: int = 2000) -> pd.DataFrame:
+def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 2000) -> pd.DataFrame:
     """Parse all HTML files in `root_dir`, and extract all sections.
 
     Sections are broken into subsections if they are longer than `max_section_length`.
-    Sections correspond to h2 HTML tags, and move on to h3 then h4 if needed.
+    Sections correspond to `section` HTML tags that have a headerlink attached.
     """
-    files = glob.glob("*.html", root_dir=root_dir)
+    files = glob.glob("**/*.html", root_dir=root_dir, recursive=True)
 
     def get_all_subsections(soup: BeautifulSoup) -> tuple[list[str], list[str], list[str]]:
         found = soup.find_all("a", href=True, class_="headerlink")
@@ -47,7 +48,7 @@ def get_all_documents(root_dir: str, max_section_length: int = 2000) -> pd.DataF
             section_href = section_soup.find_all("a", href=True, class_="headerlink")
 
             # If sections has subsections, keep only the part before the first subsection
-            if len(section_href) > 1:
+            if len(section_href) > 1 and section_soup.section is not None:
                 section_siblings = list(section_soup.section.previous_siblings)[::-1]
                 section = parse_section(section_siblings)
             else:
@@ -87,7 +88,7 @@ def get_all_documents(root_dir: str, max_section_length: int = 2000) -> pd.DataF
         sections_file, urls_file, names_file = get_all_subsections(soup)
         sections.extend(sections_file)
 
-        urls_file = [BASE_URL + os.path.basename(file.name) + url for url in urls_file]
+        urls_file = [base_url + os.path.basename(file.name) + url for url in urls_file]
         urls.extend(urls_file)
 
         names.extend(names_file)
