@@ -1,16 +1,52 @@
 import os
 
+from omegaconf import OmegaConf
 from slack_bolt import App
 
-from buster.chatbot import answer_question, load_embeddings
+from buster.chatbot import Chatbot
 
-df = load_embeddings("buster/data/document_embeddings.csv")
+UNK_TEMPLATE = """This doesn't seem to be related to cluster usage. I am not sure how to answer."""
+PROMPT_AFTER = """I'm a bot 🤖 and not always perfect.
+For more info, view the full documentation here (https://docs.mila.quebec/) or contact support@mila.quebec
+"""
+PROMPT_BEFORE = """
+You are a slack chatbot assistant answering technical questions about a cluster.
+Make sure to format your answers in Markdown format, including code block and snippets.
+Do not include any links to urls or hyperlinks in your answers.
 
-# Initializes your app with your bot token and signing secret
+If you do not know the answer to a question, or if it is completely irrelevant to cluster usage, simply reply with:
+
+'This doesn't seem to be related to cluster usage.'
+
+For example:
+
+What is the meaning of life on the cluster?
+
+This doesn't seem to be related to cluster usage.
+
+Now answer the following question:
+"""
+
+buster_cfg = {
+    "documents_csv": "buster/data/document_embeddings.csv",
+    "unk_template": UNK_TEMPLATE,
+    "prompt_after": PROMPT_AFTER,
+    "prompt_before": PROMPT_BEFORE,
+    "embedding_model": "text-embedding-ada-002",
+    "top_k": 3,
+    "thresh": 0.7,
+    "max_chars": 3000,
+    "completion_engine": "text-davinci-003",
+    "max_tokens": 200,
+    "temperature": None,
+    "top_p": None,
+    "separator": "\n",
+    "link_format": "slack",
+}
+buster_cfg = OmegaConf.create(buster_cfg)
+buster_chatbot = Chatbot(buster_cfg)
+
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
-
-# Add functionality here
-# @app.event("app_home_opened") etc
 
 
 @app.event("app_mention")
@@ -19,16 +55,11 @@ def respond_to_question(event, say):
 
     # user's text
     text = event["text"]
-    # text = event['blocks'][0]['elements'][0]['elements'][1]['text']
-    print(text)
-
-    answer = answer_question(text, df, top_k=3, thresh=0.7, style="md")
+    answer = buster_chatbot.process_input(text)
 
     # responds to the message in the thread
     thread_ts = event["event_ts"]
 
-    # user_id = event["user"]
-    # text = f"Welcome to the team, <@{user_id}>! 🎉 You can introduce yourself in this channel."
     say(text=answer, thread_ts=thread_ts)
 
 

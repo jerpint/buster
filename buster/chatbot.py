@@ -10,158 +10,8 @@ from buster.docparser import EMBEDDING_MODEL
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-UNK_EMBEDDING = get_embedding(
-    "This doesn't seem to be related to cluster usage. I am not sure how to answer.",
-    engine=EMBEDDING_MODEL,
-)
-# search through the reviews for a specific product
-def rank_documents(df: pd.DataFrame, query: str, top_k: int = 1, thresh: float = None) -> pd.DataFrame:
-    product_embedding = get_embedding(
-        query,
-        engine=EMBEDDING_MODEL,
-    )
-    df["similarity"] = df.embedding.apply(lambda x: cosine_similarity(x, product_embedding))
 
-    # sort by score
-    results = df.sort_values("similarity", ascending=False)
-
-    # get top_k
-    top_k = len(df) if top_k == -1 else top_k
-    results = results.head(top_k)
-
-    # print results before thresholding
-    logger.info(results)
-
-    # filter out based on threshold
-    if thresh:
-        results = results[results.similarity > thresh]
-
-    return results
-
-
-def engineer_prompt(question: str, documents: list[str]) -> str:
-    documents_str = " ".join(documents)
-    if len(documents_str) > 3000:
-        logger.info("truncating documents to fit...")
-        documents_str = documents_str[0:3000]
-
-    # Links should follow slack syntax.
-    # As a reminder, links in slack are formatted like this: <http://www.example.com|This message *is* a link>
-    prompt = """
-You are a slack chatbot assistant answering technical questions about a cluster.
-Make sure to format your answers in Markdown format, including code block and snippets.
-Do not include any links to urls or hyperlinks in your answers.
-
-If you do not know the answer to a question, or if it is completely irrelevant to cluster usage, simply reply with:
-
-'This doesn't seem to be related to cluster usage.'
-
-For example:
-
-What is the meaning of life on the cluster?
-
-This doesn't seem to be related to cluster usage.
-
-Now answer the following question:
-"""
-
-    return documents_str + prompt + question
-
-
-def add_sources(response: str, candidates: pd.DataFrame, style: str):
-    # get the sources
-    sep = "<br>" if style == "html" else "\n"
-    sep2 = "```" if style == "html" else "\n"
-
-    urls = candidates.url.to_list()
-    names = candidates.name.to_list()
-    similarities = candidates.similarity.to_list()
-
-    response += f"{sep}{sep}Here are the sources I used to answer your question:\n"
-    for url, name, similarity in zip(urls, names, similarities):
-        if style == "html":
-            response += f"{sep}[{name}]({url}){sep}"
-        else:
-            response += f"• <{url}|{name}>, score: {similarity:2.3f}{sep}"
-
-    return response
-
-
-def format_response(response_text: str, candidates: pd.DataFrame = None, style="html"):
-
-    sep = "<br>" if style == "html" else "\n"
-    sep2 = "```" if style == "html" else "\n"
-
-    response = f"{response_text}"
-
-    if candidates is not None:
-        response_embedding = get_embedding(
-            response,
-            engine=EMBEDDING_MODEL,
-        )
-        score = cosine_similarity(response_embedding, UNK_EMBEDDING)
-        logger.info(f"UNK score: {score}")
-        if score < 0.9:
-            # more likely that it knows an answer at this point
-            response = add_sources(response, candidates=candidates, style=style)
-
-    response += f"{sep}"
-
-    response += f"""{sep}
-I'm a bot 🤖 and not always perfect.
-For more info, view the full documentation here (https://docs.mila.quebec/) or contact support@mila.quebec
-{sep}
-"""
-
-    return response
-
-
-def answer_question(question: str, df, top_k: int = 1, thresh: float = None, style="html") -> str:
-    # rank the documents, get the highest scoring doc and generate the prompt
-    candidates = rank_documents(df, query=question, top_k=top_k, thresh=thresh)
-
-    logger.info(f"candidate responses: {candidates}")
-
-    if len(candidates) == 0:
-        return format_response(
-            "I did not find any relevant documentation related to your question.", candidates=None, style=style
-        )
-
-    documents = candidates.text.to_list()
-    prompt = engineer_prompt(question, documents)
-
-    logger.info(f"querying GPT...")
-    logger.info(f"User Question:\n{question}")
-    # Call the API to generate a response
-    try:
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens=200,
-            #  temperature=0,
-            #  top_p=0,
-            frequency_penalty=1,
-            presence_penalty=1,
-        )
-
-        # Get the response text
-        response_text = response["choices"][0]["text"]
-        logger.info(
-            f"""
-        GPT Response:\n{response_text}
-        """
-        )
-        return format_response(response_text, candidates=candidates, style=style)
-
-    except Exception as e:
-        import traceback
-
-        logging.error(traceback.format_exc())
-        response = "Oops, something went wrong. Try again later!"
-        return format_response(response, candidates=None, style=style)
-
-
-def load_embeddings(path: str) -> pd.DataFrame:
+def load_documents(path: str) -> pd.DataFrame:
     logger.info(f"loading embeddings from {path}...")
     df = pd.read_csv(path)
     df["embedding"] = df.embedding.apply(eval).apply(np.array)
@@ -169,9 +19,165 @@ def load_embeddings(path: str) -> pd.DataFrame:
     return df
 
 
-if __name__ == "__main__":
-    # we generate the embeddings using docparser.py
-    df = load_embeddings("data/document_embeddings.csv")
+class Chatbot:
+    def __init__(self, cfg: dict):
+        self.cfg = cfg
+        self.documents = load_documents(self.cfg.documents_csv)
+        self.init_unk_embedding()
 
-    question = "Where should I put my datasets when I am running a job?"
-    response = answer_question(question, df)
+    def init_unk_embedding(self):
+        unk_template = self.cfg.unk_template
+        engine = self.cfg.embedding_model
+        self.unk_embedding = get_embedding(
+            unk_template,
+            engine=engine,
+        )
+
+    def rank_documents(
+        self,
+        documents: pd.DataFrame,
+        query: str,
+    ) -> pd.DataFrame:
+        """
+        Compare the question to the series of documents and return the best matching documents.
+        """
+        top_k = self.cfg.top_k
+        thresh = self.cfg.thresh
+        engine = self.cfg.embedding_model  # EMBEDDING_MODEL
+
+        query_embedding = get_embedding(
+            query,
+            engine=engine,
+        )
+        documents["similarity"] = documents.embedding.apply(lambda x: cosine_similarity(x, query_embedding))
+
+        # sort the matched_documents by score
+        matched_documents = documents.sort_values("similarity", ascending=False)
+
+        # limit search to top_k matched_documents.
+        top_k = len(matched_documents) if top_k == -1 else top_k
+        matched_documents = matched_documents.head(top_k)
+
+        # log matched_documents to the console
+        logger.info(f"matched documents before thresh: {matched_documents}")
+
+        # filter out matched_documents using a threshold
+        if thresh:
+            matched_documents = matched_documents[matched_documents.similarity > thresh]
+            logger.info(f"matched documents after thresh: {matched_documents}")
+
+        return matched_documents
+
+    def prepare_prompt(self, question: str, candidates: pd.DataFrame) -> str:
+        """
+        Prepare the prompt with prompt engineering.
+        """
+
+        max_chars = self.cfg.max_chars
+        prompt_before = self.cfg.prompt_before
+
+        documents_list = candidates.text.to_list()
+        documents_str = " ".join(documents_list)
+        if len(documents_str) > max_chars:
+            logger.info("truncating documents to fit...")
+            documents_str = documents_str[0:max_chars]
+
+        return documents_str + prompt_before + question
+
+    def generate_response(self, prompt: str, matched_documents: pd.DataFrame) -> str:
+        """
+        Generate a response based on the retrieved documents.
+        """
+        if len(matched_documents) == 0:
+            # No matching documents were retrieved, return
+            response_text = "I did not find any relevant documentation related to your question."
+            return response_text
+
+        engine = self.cfg.completion_engine  # text-davinci-003
+        max_tokens = self.cfg.max_tokens  # 200
+        temperature = self.cfg.temperature  # None
+        top_p = self.cfg.top_p  # None
+
+        logger.info(f"querying GPT...")
+        # Call the API to generate a response
+        try:
+            response = openai.Completion.create(
+                engine=engine,
+                prompt=prompt,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                frequency_penalty=1,
+                presence_penalty=1,
+            )
+
+            # Get the response text
+            response_text = response["choices"][0]["text"]
+            logger.info(f"GPT Response:\n{response_text}")
+            return response_text
+
+        except Exception as e:
+            # log the error and return a generic response instead.
+            import traceback
+
+            logging.error(traceback.format_exc())
+            response_text = "Oops, something went wrong. Try again later!"
+            return response_text
+
+    def add_sources(self, response: str, matched_documents: pd.DataFrame):
+        """
+        Add sources fromt the matched documents to the response.
+        """
+        sep = self.cfg.separator  # \n
+        format = self.cfg.link_format
+
+        urls = matched_documents.url.to_list()
+        names = matched_documents.name.to_list()
+        similarities = matched_documents.similarity.to_list()
+
+        response += f"{sep}{sep}Here are the sources I used to answer your question:\n"
+        for url, name, similarity in zip(urls, names, similarities):
+            if format == "html":
+                response += f"{sep}[{name}]({url}){sep}"
+            elif format == "slack":
+                response += f"• <{url}|{name}>, score: {similarity:2.3f}{sep}"
+
+        return response
+
+    def format_response(self, response: str, matched_documents: pd.DataFrame) -> str:
+        """
+        Format the response by adding the sources if necessary, and a disclaimer prompt.
+        """
+
+        sep = self.cfg.separator
+        prompt_after = self.cfg.prompt_after
+
+        if len(matched_documents) > 0:
+            # we have matched documents, now we check to see if the answer is meaningful
+            response_embedding = get_embedding(
+                response,
+                engine=EMBEDDING_MODEL,
+            )
+            score = cosine_similarity(response_embedding, self.unk_embedding)
+            logger.info(f"UNK score: {score}")
+            if score < 0.9:
+                # Liekly that the answer is meaningful, add the top sources
+                response = self.add_sources(response, matched_documents=matched_documents)
+
+        response += f"{sep}{sep}{sep}{prompt_after}{sep}"
+
+        return response
+
+    def process_input(self, question: str) -> str:
+        """
+        Main function to process the input question and generate a formatted output.
+        """
+
+        logger.info(f"User Question:\n{question}")
+
+        matched_documents = self.rank_documents(documents=self.documents, query=question)
+        prompt = self.prepare_prompt(question, matched_documents)
+        response = self.generate_response(prompt, matched_documents)
+        formatted_output = self.format_response(response, matched_documents)
+
+        return formatted_output
