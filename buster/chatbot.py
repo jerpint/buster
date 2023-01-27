@@ -3,8 +3,8 @@ import logging
 import numpy as np
 import openai
 import pandas as pd
-from openai.embeddings_utils import cosine_similarity, get_embedding
 from omegaconf import OmegaConf
+from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import EMBEDDING_MODEL
 
