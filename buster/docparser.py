@@ -29,7 +29,11 @@ def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
     return section
 
 
+<<<<<<< HEAD
 def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 2000) -> pd.DataFrame:
+=======
+def get_all_documents(root_dir: str, max_section_length: int = 2000) -> pd.DataFrame:
+>>>>>>> main
     """Parse all HTML files in `root_dir`, and extract all sections.
 
     Sections are broken into subsections if they are longer than `max_section_length`.
@@ -48,7 +52,11 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
             section_href = section_soup.find_all("a", href=True, class_="headerlink")
 
             # If sections has subsections, keep only the part before the first subsection
+<<<<<<< HEAD
             if len(section_href) > 1 and section_soup.section is not None:
+=======
+            if len(section_href) > 1:
+>>>>>>> main
                 section_siblings = list(section_soup.section.previous_siblings)[::-1]
                 section = parse_section(section_siblings)
             else:
