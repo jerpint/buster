@@ -4,6 +4,7 @@ import numpy as np
 import openai
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
+from omegaconf import OmegaConf
 
 from buster.docparser import EMBEDDING_MODEL
 
@@ -20,7 +21,8 @@ def load_documents(path: str) -> pd.DataFrame:
 
 
 class Chatbot:
-    def __init__(self, cfg: dict):
+    def __init__(self, cfg: OmegaConf):
+        # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
         self.cfg = cfg
         self.documents = load_documents(self.cfg.documents_csv)
         self.init_unk_embedding()
