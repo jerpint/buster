@@ -96,23 +96,12 @@ class Chatbot:
             response_text = "I did not find any relevant documentation related to your question."
             return response_text
 
-        engine = self.cfg.completion_engine  # text-davinci-003
-        max_tokens = self.cfg.max_tokens  # 200
-        temperature = self.cfg.temperature  # None
-        top_p = self.cfg.top_p  # None
-
         logger.info(f"querying GPT...")
         # Call the API to generate a response
         try:
-            response = openai.Completion.create(
-                engine=engine,
-                prompt=prompt,
-                max_tokens=max_tokens,
-                temperature=temperature,
-                top_p=top_p,
-                frequency_penalty=1,
-                presence_penalty=1,
-            )
+            completion_kwargs = self.cfg.completion_kwargs
+            completion_kwargs["prompt"] = prompt
+            response = openai.Completion.create(**completion_kwargs)
 
             # Get the response text
             response_text = response["choices"][0]["text"]
@@ -190,17 +179,36 @@ class Chatbot:
 
 @dataclass
 class ChatbotConfig:
+    """Configuration object for a chatbot.
+
+    documents_csv: Path to the csv file containing the documents and their embeddings.
+    embedding_model: OpenAI model to use to get embeddings.
+    top_k: Max number of documents to retrieve, ordered by cosine similarity
+    thresh: threshold for cosine similarity to be considered
+    max_chars: maximum number of characters the retrieved documents can be. Will truncate otherwise.
+    completion_kwargs: kwargs for the OpenAI.Completion() method
+    separator: the separator to use, can be either "\n" or <p> depending on rendering.
+    link_format: the type of format to render links with, e.g. slack or markdown
+    unknown_prompt: Prompt to use to generate the "I don't know" embedding to compare to.
+    text_before_prompt: Text to prompt GPT with before the user prompt, but after the documentation.
+    text_after_response: Generic response to add the the chatbot's reply.
+    """
+
     documents_csv: str = "buster/data/document_embeddings.csv"
-    unknown_prompt: str = "I Don't know how to answer your question."
-    text_before_prompt: str = "I'm a chatbot, bleep bloop."
-    text_after_response: str = "Answer the following question:\n"
     embedding_model: str = "text-embedding-ada-002"
     top_k: int = 3
     thresh: float = 0.7
     max_chars: int = 3000
-    completion_engine: str = "text-davinci-003"
-    max_tokens: int = 200
-    temperature: int = None
-    top_p: int = None
+    completion_kwargs: dict = {
+        "engine": "text-davinci-003",
+        "max_tokens": 200,
+        "temperature": None,
+        "top_p": None,
+        "frequency_penalty": 1,
+        "presence_penalty": 1,
+    }
     separator: str = "\n"
     link_format: str = "slack"
+    unknown_prompt: str = "I Don't know how to answer your question."
+    text_before_prompt: str = "I'm a chatbot, bleep bloop."
+    text_after_response: str = "Answer the following question:\n"
