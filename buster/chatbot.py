@@ -25,10 +25,13 @@ class Chatbot:
     def __init__(self, cfg: OmegaConf):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
         self.cfg = cfg
-        self.documents = load_documents(self.cfg.documents_csv)
-        self.init_unk_embedding()
+        self._init_documents()
+        self._init_unk_embedding()
 
-    def init_unk_embedding(self):
+    def _init_documents(self):
+        self.documents = load_documents(self.cfg.documents_csv)
+
+    def _init_unk_embedding(self):
         unknown_prompt = self.cfg.unknown_prompt
         engine = self.cfg.embedding_model
         self.unk_embedding = get_embedding(
