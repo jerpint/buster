@@ -32,6 +32,7 @@ class Chatbot:
         self.documents = load_documents(self.cfg.documents_csv)
 
     def _init_unk_embedding(self):
+        logger.info("Generating UNK token...")
         unknown_prompt = self.cfg.unknown_prompt
         engine = self.cfg.embedding_model
         self.unk_embedding = get_embedding(
