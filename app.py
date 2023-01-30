@@ -4,13 +4,12 @@ from slack_bolt import App
 
 from buster.chatbot import Chatbot, ChatbotConfig
 
-UNKNOWN_PROMPT = """This doesn't seem to be related to cluster usage. I am not sure how to answer."""
 MILA_CLUSTER_CHANNEL = "C04LR4H9KQA"
 ORION_CHANNEL = "C04LYHGUYB0"
 
 buster_cfg = ChatbotConfig(
     documents_csv="buster/data/document_embeddings.csv",
-    unknown_prompt=UNKNOWN_PROMPT,
+    unknown_prompt="This doesn't seem to be related to cluster usage. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
     thresh=0.7,
@@ -46,7 +45,7 @@ buster_chatbot = Chatbot(buster_cfg)
 
 orion_cfg = ChatbotConfig(
     documents_csv="buster/data/document_embeddings_orion.csv",
-    unknown_prompt=UNKNOWN_PROMPT,
+    unknown_prompt="This doesn't seem to be related to the orion library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
     thresh=0.7,
