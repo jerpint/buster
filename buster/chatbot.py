@@ -1,4 +1,5 @@
 import logging
+from dataclasses import dataclass
 
 import numpy as np
 import openai
@@ -28,10 +29,10 @@ class Chatbot:
         self.init_unk_embedding()
 
     def init_unk_embedding(self):
-        unk_template = self.cfg.unk_template
+        unknown_prompt = self.cfg.unknown_prompt
         engine = self.cfg.embedding_model
         self.unk_embedding = get_embedding(
-            unk_template,
+            unknown_prompt,
             engine=engine,
         )
 
@@ -76,7 +77,7 @@ class Chatbot:
         """
 
         max_chars = self.cfg.max_chars
-        prompt_before = self.cfg.prompt_before
+        text_before_prompt = self.cfg.text_before_prompt
 
         documents_list = candidates.text.to_list()
         documents_str = " ".join(documents_list)
@@ -84,7 +85,7 @@ class Chatbot:
             logger.info("truncating documents to fit...")
             documents_str = documents_str[0:max_chars]
 
-        return documents_str + prompt_before + question
+        return documents_str + text_before_prompt + question
 
     def generate_response(self, prompt: str, matched_documents: pd.DataFrame) -> str:
         """
@@ -139,10 +140,12 @@ class Chatbot:
 
         response += f"{sep}{sep}Here are the sources I used to answer your question:\n"
         for url, name, similarity in zip(urls, names, similarities):
-            if format == "html":
+            if format == "markdown":
                 response += f"{sep}[{name}]({url}){sep}"
             elif format == "slack":
                 response += f"• <{url}|{name}>, score: {similarity:2.3f}{sep}"
+            else:
+                raise ValueError(f"{format} is not a valid URL format.")
 
         return response
 
@@ -152,7 +155,7 @@ class Chatbot:
         """
 
         sep = self.cfg.separator
-        prompt_after = self.cfg.prompt_after
+        text_after_response = self.cfg.text_after_response
 
         if len(matched_documents) > 0:
             # we have matched documents, now we check to see if the answer is meaningful
@@ -166,7 +169,7 @@ class Chatbot:
                 # Liekly that the answer is meaningful, add the top sources
                 response = self.add_sources(response, matched_documents=matched_documents)
 
-        response += f"{sep}{sep}{sep}{prompt_after}{sep}"
+        response += f"{sep}{sep}{sep}{text_after_response}{sep}"
 
         return response
 
@@ -183,3 +186,21 @@ class Chatbot:
         formatted_output = self.format_response(response, matched_documents)
 
         return formatted_output
+
+
+@dataclass
+class ChatbotConfig:
+    documents_csv: str = "buster/data/document_embeddings.csv"
+    unknown_prompt: str = "I Don't know how to answer your question."
+    text_before_prompt: str = "I'm a chatbot, bleep bloop."
+    text_after_response: str = "Answer the following question:\n"
+    embedding_model: str = "text-embedding-ada-002"
+    top_k: int = 3
+    thresh: float = 0.7
+    max_chars: int = 3000
+    completion_engine: str = "text-davinci-003"
+    max_tokens: int = 200
+    temperature: int = None
+    top_p: int = None
+    separator: str = "\n"
+    link_format: str = "slack"
