@@ -57,10 +57,8 @@ orion_cfg = ChatbotConfig(
     top_p=None,
     separator="\n",
     link_format="slack",
-    text_after_response="""I'm a bot 🤖 and not always perfect.
-    """,
-    text_before_prompt="""
-    You are a slack chatbot assistant answering technical questions about orion, a hyperparameter optimization library written in python.
+    text_after_response="I'm a bot 🤖 and not always perfect.",
+    text_before_prompt="""You are a slack chatbot assistant answering technical questions about orion, a hyperparameter optimization library written in python.
     Make sure to format your answers in Markdown format, including code block and snippets.
     Do not include any links to urls or hyperlinks in your answers.
 
