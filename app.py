@@ -9,22 +9,22 @@ UNKNOWN_PROMPT = """This doesn't seem to be related to cluster usage. I am not s
 
 
 buster_cfg = ChatbotConfig(
-    documents_csv = "buster/data/document_embeddings.csv",
-    unknown_prompt = UNKNOWN_PROMPT,
-    embedding_model = "text-embedding-ada-002",
-    top_k = 3,
-    thresh = 0.7,
-    max_chars = 3000,
-    completion_engine = "text-davinci-003",
-    max_tokens = 200,
-    temperature = None,
-    top_p = None,
-    separator = "\n",
-    link_format = "slack",
-    text_after_response = """I'm a bot 🤖 and not always perfect.
+    documents_csv="buster/data/document_embeddings.csv",
+    unknown_prompt=UNKNOWN_PROMPT,
+    embedding_model="text-embedding-ada-002",
+    top_k=3,
+    thresh=0.7,
+    max_chars=3000,
+    completion_engine="text-davinci-003",
+    max_tokens=200,
+    temperature=None,
+    top_p=None,
+    separator="\n",
+    link_format="slack",
+    text_after_response="""I'm a bot 🤖 and not always perfect.
     For more info, view the full documentation here (https://docs.mila.quebec/) or contact support@mila.quebec
     """,
-    text_before_prompt = """
+    text_before_prompt="""
     You are a slack chatbot assistant answering technical questions about a cluster.
     Make sure to format your answers in Markdown format, including code block and snippets.
     Do not include any links to urls or hyperlinks in your answers.
@@ -44,10 +44,7 @@ buster_cfg = ChatbotConfig(
 )
 buster_chatbot = Chatbot(buster_cfg)
 
-app = App(
-    token=os.environ.get("SLACK_BOT_TOKEN"),
-    signing_secret=os.environ.get("SLACK_SIGNING_SECRET")
-)
+app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
 
 
 @app.event("app_mention")
