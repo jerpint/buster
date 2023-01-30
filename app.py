@@ -114,19 +114,24 @@ def update_home_tab(client, event, logger):
                 "callback_id": "home_view",
                 # body of the view
                 "blocks": [
-                    {"type": "section", "text": {"type": "mrkdwn", "text": "*Welcome to your _App's Home_* :tada:"}},
+                    {"type": "section", "text": {"type": "mrkdwn", "text": "*Hello, I'm _BusterBot_* :tada:"}},
                     {"type": "divider"},
                     {
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": "This button won't do much for now but you can set up a listener for it using the `actions()` method and passing its unique `action_id`. See an example in the `examples` folder within your Bolt app.",
+                            "text": (
+                                "I am a chatbot 🤖 designed to answer questions related to technical documentation.\n\n"
+                                "I use OpenAI's GPT models to target which relevant sections of documentation are relevant and respond with.\n"
+                                "I am open-sourced, and my code is available on github: https://github.com/jerpint/buster\n\n"
+                                "For more information, contact either Jeremy or Hadrien from the AMLRT team.\n"
+                            ),
                         },
                     },
-                    {
-                        "type": "actions",
-                        "elements": [{"type": "button", "text": {"type": "plain_text", "text": "Click me!"}}],
-                    },
+                    # {
+                    #     "type": "actions",
+                    #     "elements": [{"type": "button", "text": {"type": "plain_text", "text": "Click me!"}}],
+                    # },
                 ],
             },
         )
