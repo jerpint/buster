@@ -54,10 +54,7 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
             else:
                 section = parse_section(section_soup.children)
 
-<<<<<<< HEAD
             # Remove special characters, plus newlines in some url and section names.
-=======
->>>>>>> af9aa89 (remove special chars)
             section = section.strip()
             url = section_found["href"].strip().replace("\n", "")
             name = section_found.parent.text.strip()[:-1].replace("\n", "")
