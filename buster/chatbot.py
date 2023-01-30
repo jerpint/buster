@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import numpy as np
 import openai
@@ -199,14 +199,17 @@ class ChatbotConfig:
     top_k: int = 3
     thresh: float = 0.7
     max_chars: int = 3000
-    completion_kwargs: dict = {
-        "engine": "text-davinci-003",
-        "max_tokens": 200,
-        "temperature": None,
-        "top_p": None,
-        "frequency_penalty": 1,
-        "presence_penalty": 1,
-    }
+
+    completion_kwargs: dict = field(
+        default_factory=lambda: {
+            "engine": "text-davinci-003",
+            "max_tokens": 200,
+            "temperature": None,
+            "top_p": None,
+            "frequency_penalty": 1,
+            "presence_penalty": 1,
+        }
+    )
     separator: str = "\n"
     link_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
