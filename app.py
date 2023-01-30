@@ -1,12 +1,12 @@
 import os
 
-from omegaconf import OmegaConf
 from slack_bolt import App
 
 from buster.chatbot import Chatbot, ChatbotConfig
 
 UNKNOWN_PROMPT = """This doesn't seem to be related to cluster usage. I am not sure how to answer."""
-
+MILA_CLUSTER_CHANNEL = "C04LR4H9KQA"
+ORION_CHANNEL = "C04LYHGUYB0"
 
 buster_cfg = ChatbotConfig(
     documents_csv="buster/data/document_embeddings.csv",
@@ -44,6 +44,41 @@ buster_cfg = ChatbotConfig(
 )
 buster_chatbot = Chatbot(buster_cfg)
 
+orion_cfg = ChatbotConfig(
+    documents_csv="buster/data/document_embeddings_orion.csv",
+    unknown_prompt=UNKNOWN_PROMPT,
+    embedding_model="text-embedding-ada-002",
+    top_k=3,
+    thresh=0.7,
+    max_chars=3000,
+    completion_engine="text-davinci-003",
+    max_tokens=200,
+    temperature=None,
+    top_p=None,
+    separator="\n",
+    link_format="slack",
+    text_after_response="""I'm a bot 🤖 and not always perfect.
+    """,
+    text_before_prompt="""
+    You are a slack chatbot assistant answering technical questions about orion, a hyperparameter optimization library written in python.
+    Make sure to format your answers in Markdown format, including code block and snippets.
+    Do not include any links to urls or hyperlinks in your answers.
+
+    If you do not know the answer to a question, or if it is completely irrelevant to the library usage, simply reply with:
+
+    'This doesn't seem to be related to the orion library.'
+
+    For example:
+
+    What is the meaning of life for orion?
+
+    This doesn't seem to be related to cluster usage.
+
+    Now answer the following question:
+    """,
+)
+orion_chatbot = Chatbot(orion_cfg)
+
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
 
 
@@ -53,7 +88,14 @@ def respond_to_question(event, say):
 
     # user's text
     text = event["text"]
-    answer = buster_chatbot.process_input(text)
+    channel = event["channel"]
+
+    if channel == MILA_CLUSTER_CHANNEL:
+        print("*******using BUSTER********")
+        answer = buster_chatbot.process_input(text)
+    elif channel == ORION_CHANNEL:
+        print("*******using ORION********")
+        answer = orion_chatbot.process_input(text)
 
     # responds to the message in the thread
     thread_ts = event["event_ts"]
