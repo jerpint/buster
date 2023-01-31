@@ -100,12 +100,22 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
     return documents_df
 
 
-def write_documents(filepath: str, documents_df: pd.DataFrame):
-    documents_df.to_csv(filepath, index=False)
+def write_documents(filepath: str, documents_df: pd.DataFrame, format: str = "pickle"):
+    if format == "csv":
+        documents_df.to_csv(filepath, index=False)
+    elif format == "pickle":
+        documents_df.to_pickle(filepath)
+    else:
+        raise ValueError(f"Unsupported format: {format}. Accepted formats are: csv, pickle.")
 
 
-def read_documents(filepath: str) -> pd.DataFrame:
-    return pd.read_csv(filepath)
+def read_documents(filepath: str, format: str = "pickle") -> pd.DataFrame:
+    if format == "csv":
+        return pd.read_csv(filepath)
+    elif format == "pickle":
+        return pd.read_pickle(filepath)
+    else:
+        raise ValueError(f"Unsupported format: {format}. Accepted formats are: csv, pickle.")
 
 
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
@@ -119,18 +129,18 @@ def precompute_embeddings(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def generate_embeddings(filepath: str, output_csv: str) -> pd.DataFrame:
+def generate_embeddings(filepath: str, output_file: str) -> pd.DataFrame:
     # Get all documents and precompute their embeddings
     df = read_documents(filepath)
     df = compute_n_tokens(df)
     df = precompute_embeddings(df)
-    write_documents(output_csv, df)
+    write_documents(output_file, df)
     return df
 
 
 if __name__ == "__main__":
     root_dir = "/home/hadrien/perso/mila-docs/output/"
-    save_filepath = "data/documents.csv"
+    save_filepath = "data/documents.tar.gz"
 
     # How to write
     documents_df = get_all_documents(root_dir)
@@ -140,4 +150,4 @@ if __name__ == "__main__":
     documents_df = read_documents(save_filepath)
 
     # precompute the document embeddings
-    df = generate_embeddings(filepath=save_filepath, output_csv="data/document_embeddings.csv")
+    df = generate_embeddings(filepath=save_filepath, output_file="data/document_embeddings.tar.gz")
