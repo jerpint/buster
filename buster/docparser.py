@@ -100,22 +100,30 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
     return documents_df
 
 
-def write_documents(filepath: str, documents_df: pd.DataFrame, format: str = "pickle"):
-    if format == "csv":
+def get_file_extension(filepath: str) -> str:
+    return os.path.splitext(filepath)[1]
+
+
+def write_documents(filepath: str, documents_df: pd.DataFrame):
+    ext = get_file_extension(filepath)
+
+    if ext == ".csv":
         documents_df.to_csv(filepath, index=False)
-    elif format == "pickle":
+    elif ext in [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]:
         documents_df.to_pickle(filepath)
     else:
-        raise ValueError(f"Unsupported format: {format}. Accepted formats are: csv, pickle.")
+        raise ValueError(f"Unsupported format: {ext}.")
 
 
-def read_documents(filepath: str, format: str = "pickle") -> pd.DataFrame:
-    if format == "csv":
+def read_documents(filepath: str) -> pd.DataFrame:
+    ext = get_file_extension(filepath)
+
+    if ext == ".csv":
         return pd.read_csv(filepath)
-    elif format == "pickle":
+    elif ext in [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]:
         return pd.read_pickle(filepath)
     else:
-        raise ValueError(f"Unsupported format: {format}. Accepted formats are: csv, pickle.")
+        raise ValueError(f"Unsupported format: {ext}.")
 
 
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
