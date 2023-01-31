@@ -14,6 +14,7 @@ EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-0
 
 BASE_URL_MILA = "https://docs.mila.quebec/"
 BASE_URL_ORION = "https://orion.readthedocs.io/en/stable/"
+BASE_URL_PYTORCH = "https://pytorch.org/docs/stable/"
 
 
 PICKLE_EXTENSIONS = [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]
@@ -32,7 +33,9 @@ def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
     return section
 
 
-def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 2000) -> pd.DataFrame:
+def get_all_documents(
+    root_dir: str, base_url: str, min_section_length: int = 100, max_section_length: int = 2000
+) -> pd.DataFrame:
     """Parse all HTML files in `root_dir`, and extract all sections.
 
     Sections are broken into subsections if they are longer than `max_section_length`.
@@ -74,7 +77,8 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
                 sections.extend(section_chunks)
                 urls.extend(url_chunks)
                 names.extend(name_chunks)
-            else:
+            # If text is not too short, add in 1 chunk
+            elif len(section) > min_section_length:
                 sections.append(section)
                 urls.append(url)
                 names.append(name)
