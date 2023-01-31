@@ -54,8 +54,10 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
             else:
                 section = parse_section(section_soup.children)
 
-            url = section_found["href"]
-            name = section_found.parent.text[:-1]
+            # Remove special characters, plus newlines in some url and section names.
+            section = section.strip()
+            url = section_found["href"].strip().replace("\n", "")
+            name = section_found.parent.text.strip()[:-1].replace("\n", "")
 
             # If text is too long, split into chunks of equal sizes
             if len(section) > max_section_length:
@@ -81,14 +83,14 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
     names = []
     for file in files:
         filepath = os.path.join(root_dir, file)
-        with open(filepath, "r") as file:
-            source = file.read()
+        with open(filepath, "r") as f:
+            source = f.read()
 
         soup = BeautifulSoup(source, "html.parser")
         sections_file, urls_file, names_file = get_all_subsections(soup)
         sections.extend(sections_file)
 
-        urls_file = [base_url + os.path.basename(file.name) + url for url in urls_file]
+        urls_file = [base_url + file + url for url in urls_file]
         urls.extend(urls_file)
 
         names.extend(names_file)
