@@ -16,6 +16,9 @@ BASE_URL_MILA = "https://docs.mila.quebec/"
 BASE_URL_ORION = "https://orion.readthedocs.io/en/stable/"
 
 
+PICKLE_EXTENSIONS = [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]
+
+
 def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
     section = []
     for node in nodes:
@@ -100,12 +103,30 @@ def get_all_documents(root_dir: str, base_url: str, max_section_length: int = 20
     return documents_df
 
 
+def get_file_extension(filepath: str) -> str:
+    return os.path.splitext(filepath)[1]
+
+
 def write_documents(filepath: str, documents_df: pd.DataFrame):
-    documents_df.to_csv(filepath, index=False)
+    ext = get_file_extension(filepath)
+
+    if ext == ".csv":
+        documents_df.to_csv(filepath, index=False)
+    elif ext in PICKLE_EXTENSIONS:
+        documents_df.to_pickle(filepath)
+    else:
+        raise ValueError(f"Unsupported format: {ext}.")
 
 
 def read_documents(filepath: str) -> pd.DataFrame:
-    return pd.read_csv(filepath)
+    ext = get_file_extension(filepath)
+
+    if ext == ".csv":
+        return pd.read_csv(filepath)
+    elif ext in PICKLE_EXTENSIONS:
+        return pd.read_pickle(filepath)
+    else:
+        raise ValueError(f"Unsupported format: {ext}.")
 
 
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
@@ -119,18 +140,18 @@ def precompute_embeddings(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def generate_embeddings(filepath: str, output_csv: str) -> pd.DataFrame:
+def generate_embeddings(filepath: str, output_file: str) -> pd.DataFrame:
     # Get all documents and precompute their embeddings
     df = read_documents(filepath)
     df = compute_n_tokens(df)
     df = precompute_embeddings(df)
-    write_documents(output_csv, df)
+    write_documents(output_file, df)
     return df
 
 
 if __name__ == "__main__":
     root_dir = "/home/hadrien/perso/mila-docs/output/"
-    save_filepath = "data/documents.csv"
+    save_filepath = "data/documents.tar.gz"
 
     # How to write
     documents_df = get_all_documents(root_dir)
@@ -140,4 +161,4 @@ if __name__ == "__main__":
     documents_df = read_documents(save_filepath)
 
     # precompute the document embeddings
-    df = generate_embeddings(filepath=save_filepath, output_csv="data/document_embeddings.csv")
+    df = generate_embeddings(filepath=save_filepath, output_file="data/document_embeddings.tar.gz")
