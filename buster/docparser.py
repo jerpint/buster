@@ -16,6 +16,9 @@ BASE_URL_MILA = "https://docs.mila.quebec/"
 BASE_URL_ORION = "https://orion.readthedocs.io/en/stable/"
 
 
+PICKLE_EXTENSIONS = [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]
+
+
 def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
     section = []
     for node in nodes:
@@ -109,7 +112,7 @@ def write_documents(filepath: str, documents_df: pd.DataFrame):
 
     if ext == ".csv":
         documents_df.to_csv(filepath, index=False)
-    elif ext in [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]:
+    elif ext in PICKLE_EXTENSIONS:
         documents_df.to_pickle(filepath)
     else:
         raise ValueError(f"Unsupported format: {ext}.")
@@ -120,7 +123,7 @@ def read_documents(filepath: str) -> pd.DataFrame:
 
     if ext == ".csv":
         return pd.read_csv(filepath)
-    elif ext in [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]:
+    elif ext in PICKLE_EXTENSIONS:
         return pd.read_pickle(filepath)
     else:
         raise ValueError(f"Unsupported format: {ext}.")
