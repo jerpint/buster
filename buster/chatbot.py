@@ -96,6 +96,7 @@ class Chatbot:
             return response_text
 
         logger.info(f"querying GPT...")
+        logger.info(f"Prompt:  {prompt}")
         # Call the API to generate a response
         try:
             completion_kwargs = self.cfg.completion_kwargs
