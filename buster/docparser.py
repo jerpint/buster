@@ -3,6 +3,7 @@ import math
 import os
 
 import bs4
+import numpy as np
 import pandas as pd
 import tiktoken
 from bs4 import BeautifulSoup
@@ -126,7 +127,9 @@ def read_documents(filepath: str) -> pd.DataFrame:
     ext = get_file_extension(filepath)
 
     if ext == ".csv":
-        return pd.read_csv(filepath)
+        df = pd.read_csv(filepath)
+        df["embedding"] = df.embedding.apply(eval).apply(np.array)
+        return df
     elif ext in PICKLE_EXTENSIONS:
         return pd.read_pickle(filepath)
     else:
