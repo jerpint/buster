@@ -7,18 +7,10 @@ import pandas as pd
 from omegaconf import OmegaConf
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
-from buster.docparser import EMBEDDING_MODEL
+from buster.docparser import EMBEDDING_MODEL, read_documents
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-
-def load_documents(path: str) -> pd.DataFrame:
-    logger.info(f"loading embeddings from {path}...")
-    df = pd.read_csv(path)
-    df["embedding"] = df.embedding.apply(eval).apply(np.array)
-    logger.info(f"embeddings loaded.")
-    return df
 
 
 class Chatbot:
@@ -29,7 +21,10 @@ class Chatbot:
         self._init_unk_embedding()
 
     def _init_documents(self):
-        self.documents = load_documents(self.cfg.documents_csv)
+        filepath = self.cfg.documents_file
+        logger.info(f"loading embeddings from {filepath}...")
+        self.documents = read_documents(filepath)
+        logger.info(f"embeddings loaded.")
 
     def _init_unk_embedding(self):
         logger.info("Generating UNK token...")
@@ -101,6 +96,7 @@ class Chatbot:
             return response_text
 
         logger.info(f"querying GPT...")
+        logger.info(f"Prompt:  {prompt}")
         # Call the API to generate a response
         try:
             completion_kwargs = self.cfg.completion_kwargs
@@ -198,7 +194,7 @@ class ChatbotConfig:
     text_after_response: Generic response to add the the chatbot's reply.
     """
 
-    documents_csv: str = "buster/data/document_embeddings.csv"
+    documents_file: str = "buster/data/document_embeddings.csv"
     embedding_model: str = "text-embedding-ada-002"
     top_k: int = 3
     thresh: float = 0.7
