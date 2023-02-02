@@ -97,11 +97,11 @@ pytorch_cfg = ChatbotConfig(
 
     If you do not know the answer to a question, or if it is completely irrelevant to the library usage, simply reply with:
 
-    'This doesn't seem to be related to the orion library.'
+    'This doesn't seem to be related to the pytorch library.'
 
     For example:
 
-    What is the meaning of life for orion?
+    What is the meaning of life for pytorch?
 
     This doesn't seem to be related to cluster usage.
 
