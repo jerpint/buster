@@ -1,13 +1,21 @@
 import logging
+import os
 from dataclasses import dataclass, field
 
 import numpy as np
 import openai
 import pandas as pd
+import promptlayer
 from omegaconf import OmegaConf
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import EMBEDDING_MODEL
+
+promptlayer.api_key = os.environ.get("PROMPTLAYER_API_KEY")
+
+# Swap out your 'import openai'
+openai = promptlayer.openai
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
