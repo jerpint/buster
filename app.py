@@ -14,7 +14,7 @@ ORION_CHANNEL = "C04LYHGUYB0"
 PYTORCH_CHANNEL = "C04MEK6N882"
 HF_TRANSFORMERS_CHANNEL = "C04NJNCJWHE"
 
-buster_cfg = ChatbotConfig(
+mila_doc_cfg = ChatbotConfig(
     documents_file="buster/data/document_embeddings.csv",
     unknown_prompt="This doesn't seem to be related to cluster usage.",
     embedding_model="text-embedding-ada-002",
@@ -48,7 +48,7 @@ buster_cfg = ChatbotConfig(
     Now answer the following question:
     """,
 )
-buster_chatbot = Chatbot(buster_cfg)
+mila_doc_chatbot = Chatbot(mila_doc_cfg)
 
 orion_cfg = ChatbotConfig(
     documents_file="buster/data/document_embeddings_orion.csv",
@@ -149,25 +149,16 @@ hf_transformers_cfg = ChatbotConfig(
 )
 hf_transformers_chatbot = Chatbot(hf_transformers_cfg)
 
+# TODO: eventually move this to a factory of sorts
+# Put all the bots in a dict by channel
+channel_id_to_bot = {
+    MILA_CLUSTER_CHANNEL: mila_doc_chatbot,
+    ORION_CHANNEL: orion_chatbot,
+    PYTORCH_CHANNEL: pytorch_chatbot,
+    HF_TRANSFORMERS_CHANNEL: hf_transformers_chatbot,
+}
+
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
-
-
-def get_channel_bot(channel: str):
-    if channel == MILA_CLUSTER_CHANNEL:
-        logger.info("*******using BUSTER********")
-        return buster_chatbot
-    elif channel == ORION_CHANNEL:
-        logger.info("*******using ORION********")
-        return orion_chatbot
-    elif channel == PYTORCH_CHANNEL:
-        logger.info("*******using PYTORCH********")
-        return pytorch_chatbot
-    elif channel == HF_TRANSFORMERS_CHANNEL:
-        logger.info("*******using HF TRANSFORMERS********")
-        return hf_transformers_chatbot
-    else:
-        logger.info(f"invalid channel: {channel}")
-        return None
 
 
 @app.event("app_mention")
@@ -176,10 +167,10 @@ def respond_to_question(event, say):
 
     # user's text
     text = event["text"]
-    channel = event["channel"]
+    channel_id = event["channel"]
 
     try:
-        chatbot = get_channel_bot(channel)
+        chatbot = channel_id_to_bot.get(channel_id)
         if chatbot:
             answer = chatbot.process_input(text)
         else:
