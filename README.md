@@ -7,7 +7,7 @@ Buster is a question-answering chatbot that can be tuned to specific documentati
 
 ![Question: My code is crashing with "CUDA out of memory". What can I do to solve this?](buster/imgs/qa_web_oom.png)
 
-## How does Buster works?
+## How does Buster work?
 
 First, we parsed the documentation into snippets. For each snippet, we obtain an embedding by using the [OpenAI API](https://beta.openai.com/docs/guides/embeddings/what-are-embeddings).
 
