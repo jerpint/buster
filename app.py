@@ -8,6 +8,7 @@ from buster.chatbot import Chatbot, ChatbotConfig
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+# Set Slack channel IDs
 MILA_CLUSTER_CHANNEL = "C04LR4H9KQA"
 ORION_CHANNEL = "C04LYHGUYB0"
 PYTORCH_CHANNEL = "C04MEK6N882"
