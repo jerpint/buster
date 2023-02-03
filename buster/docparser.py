@@ -101,6 +101,7 @@ def read_documents(filepath: str) -> pd.DataFrame:
 
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
     encoding = tiktoken.get_encoding(EMBEDDING_ENCODING)
+    # TODO are there unexpected consequences of allowing endoftext?
     df["n_tokens"] = df.text.apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
     return df
 

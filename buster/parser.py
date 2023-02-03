@@ -148,4 +148,5 @@ class HuggingfaceParser(Parser):
         return self.soup.find_all(["h1", "h2", "h3"], class_="relative group")
 
     def build_url(self, suffix: str) -> str:
+        # The splitext is to remove the .html extension
         return self.base_url + os.path.splitext(self.filename)[0] + suffix
