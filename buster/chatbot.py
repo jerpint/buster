@@ -9,7 +9,7 @@ import promptlayer
 from omegaconf import OmegaConf
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
-from buster.docparser import EMBEDDING_MODEL
+from buster.docparser import EMBEDDING_MODEL, read_documents
 
 promptlayer.api_key = os.environ.get("PROMPTLAYER_API_KEY")
 
@@ -21,14 +21,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def load_documents(path: str) -> pd.DataFrame:
-    logger.info(f"loading embeddings from {path}...")
-    df = pd.read_csv(path)
-    df["embedding"] = df.embedding.apply(eval).apply(np.array)
-    logger.info(f"embeddings loaded.")
-    return df
-
-
 class Chatbot:
     def __init__(self, cfg: OmegaConf):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
@@ -37,7 +29,10 @@ class Chatbot:
         self._init_unk_embedding()
 
     def _init_documents(self):
-        self.documents = load_documents(self.cfg.documents_csv)
+        filepath = self.cfg.documents_file
+        logger.info(f"loading embeddings from {filepath}...")
+        self.documents = read_documents(filepath)
+        logger.info(f"embeddings loaded.")
 
     def _init_unk_embedding(self):
         logger.info("Generating UNK token...")
@@ -109,6 +104,7 @@ class Chatbot:
             return response_text
 
         logger.info(f"querying GPT...")
+        logger.info(f"Prompt:  {prompt}")
         # Call the API to generate a response
         try:
             completion_kwargs = self.cfg.completion_kwargs
@@ -124,8 +120,9 @@ class Chatbot:
             # log the error and return a generic response instead.
             import traceback
 
+            logger.error("Error connecting to OpenAI API")
             logging.error(traceback.format_exc())
-            response_text = "Oops, something went wrong. Try again later!"
+            response_text = "Hmm, we're having trouble connecting to OpenAI right now... Try again soon!"
             return response_text
 
     def add_sources(self, response: str, matched_documents: pd.DataFrame):
@@ -139,12 +136,12 @@ class Chatbot:
         names = matched_documents.name.to_list()
         similarities = matched_documents.similarity.to_list()
 
-        response += f"{sep}{sep}Here are the sources I used to answer your question:\n"
+        response += f"{sep}{sep}Here are the sources I used to answer your question:{sep}"
         for url, name, similarity in zip(urls, names, similarities):
             if format == "markdown":
-                response += f"{sep}[{name}]({url}){sep}"
+                response += f"[{name}]({url}), relevance: {similarity:2.3f}{sep}"
             elif format == "slack":
-                response += f"• <{url}|{name}>, score: {similarity:2.3f}{sep}"
+                response += f"• <{url}|{name}>, relevance: {similarity:2.3f}{sep}"
             else:
                 raise ValueError(f"{format} is not a valid URL format.")
 
@@ -206,7 +203,7 @@ class ChatbotConfig:
     text_after_response: Generic response to add the the chatbot's reply.
     """
 
-    documents_csv: str = "buster/data/document_embeddings.csv"
+    documents_file: str = "buster/data/document_embeddings.csv"
     embedding_model: str = "text-embedding-ada-002"
     top_k: int = 3
     thresh: float = 0.7
