@@ -112,6 +112,7 @@ class Chatbot:
             # log the error and return a generic response instead.
             import traceback
 
+            logger.error("Error connecting to OpenAI API")
             logging.error(traceback.format_exc())
             response_text = "Oops, something went wrong. Try again later!"
             return response_text

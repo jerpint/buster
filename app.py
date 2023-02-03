@@ -1,8 +1,12 @@
 import os
+import logging
 
 from slack_bolt import App
 
 from buster.chatbot import Chatbot, ChatbotConfig
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 MILA_CLUSTER_CHANNEL = "C04LR4H9KQA"
 ORION_CHANNEL = "C04LYHGUYB0"
@@ -147,29 +151,44 @@ hf_transformers_chatbot = Chatbot(hf_transformers_cfg)
 app = App(token=os.environ.get("SLACK_BOT_TOKEN"), signing_secret=os.environ.get("SLACK_SIGNING_SECRET"))
 
 
+def get_channel_bot(channel: str):
+    if channel == MILA_CLUSTER_CHANNEL:
+        logger.info("*******using BUSTER********")
+        return buster_chatbot
+    elif channel == ORION_CHANNEL:
+        logger.info("*******using ORION********")
+        return orion_chatbot
+    elif channel == PYTORCH_CHANNEL:
+        logger.info("*******using PYTORCH********")
+        return pytorch_chatbot
+    elif channel == HF_TRANSFORMERS_CHANNEL:
+        logger.info("*******using HF TRANSFORMERS********")
+        return hf_transformers_chatbot
+    else:
+        logger.info(f"invalid channel: {channel}")
+        return None
+
+
 @app.event("app_mention")
 def respond_to_question(event, say):
-    print(event)
+    logger.info(event)
 
     # user's text
     text = event["text"]
     channel = event["channel"]
 
-    if channel == MILA_CLUSTER_CHANNEL:
-        print("*******using BUSTER********")
-        answer = buster_chatbot.process_input(text)
-    elif channel == ORION_CHANNEL:
-        print("*******using ORION********")
-        answer = orion_chatbot.process_input(text)
-    elif channel == PYTORCH_CHANNEL:
-        print("*******using PYTORCH********")
-        answer = pytorch_chatbot.process_input(text)
-    elif channel == HF_TRANSFORMERS_CHANNEL:
-        print("*******using HF TRANSFORMERS********")
-        answer = hf_transformers_chatbot.process_input(text)
-    else:
-        print(f"invalid channel: {channel}")
-        answer = "I was not yet implemented to support this channel."
+    try:
+        chatbot = get_channel_bot(channel)
+        if chatbot:
+            answer = chatbot.process_input(text)
+        else:
+            answer = "I was not yet implemented to support this channel."
+    except ValueError as e:
+        # log the error and return a generic response instead.
+        import traceback
+
+        logging.error(traceback.format_exc())
+        answer = "Oops, something went wrong. Try again later!"
 
     # responds to the message in the thread
     thread_ts = event["event_ts"]
