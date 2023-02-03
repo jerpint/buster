@@ -215,4 +215,3 @@ class Chatbot:
         formatted_output = self.format_response(response, matched_documents)
 
         return formatted_output
-
