@@ -2,9 +2,16 @@ bs4
 matplotlib
 numpy
 pandas
-plotly
-scikit-learn
 tabulate
 tenacity
 tiktoken
-openai[embeddings]
+openai
+
+# all openai[embeddings] deps, their list breaks our CI, see: https://github.com/openai/openai-python/issues/210 
+
+scikit-learn >= 1.0.2  # Needed for embedding utils, versions >= 1.1 require python 3.8
+tenacity >= 8.0.1
+matplotlib
+plotly
+pandas-stubs >= 1.1.0.11  # Needed for type hints for mypy
+openpyxl >= 3.0.7  # Needed for CLI fine-tuning data preparation tool xlsx format
