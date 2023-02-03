@@ -11,14 +11,18 @@ from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import EMBEDDING_MODEL, read_documents
 
-promptlayer.api_key = os.environ.get("PROMPTLAYER_API_KEY")
-
-# Swap out your 'import openai'
-openai = promptlayer.openai
-openai.api_key = os.environ.get("OPENAI_API_KEY")
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+# Check if an API key exists for promptlayer, if it does, use it
+promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
+if promptlayer_api_key:
+    logger.info("Enabling prompt layer...")
+    promptlayer.api_key = promptlayer_api_key
+
+    # replace openai with the promptlayer wrapper
+    openai = promptlayer.openai
+    openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 class Chatbot:
