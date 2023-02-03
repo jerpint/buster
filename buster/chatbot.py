@@ -127,12 +127,12 @@ class Chatbot:
         names = matched_documents.name.to_list()
         similarities = matched_documents.similarity.to_list()
 
-        response += f"{sep}{sep}Here are the sources I used to answer your question:\n"
+        response += f"{sep}{sep}Here are the sources I used to answer your question:{sep}"
         for url, name, similarity in zip(urls, names, similarities):
             if format == "markdown":
-                response += f"{sep}[{name}]({url}){sep}"
+                response += f"[{name}]({url}), relevance: {similarity:2.3f}{sep}"
             elif format == "slack":
-                response += f"• <{url}|{name}>, score: {similarity:2.3f}{sep}"
+                response += f"• <{url}|{name}>, relevance: {similarity:2.3f}{sep}"
             else:
                 raise ValueError(f"{format} is not a valid URL format.")
 
