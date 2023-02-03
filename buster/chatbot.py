@@ -4,7 +4,6 @@ from dataclasses import dataclass, field
 import numpy as np
 import openai
 import pandas as pd
-from omegaconf import OmegaConf
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import EMBEDDING_MODEL, read_documents
@@ -13,8 +12,48 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+@dataclass
+class ChatbotConfig:
+    """Configuration object for a chatbot.
+
+    documents_csv: Path to the csv file containing the documents and their embeddings.
+    embedding_model: OpenAI model to use to get embeddings.
+    top_k: Max number of documents to retrieve, ordered by cosine similarity
+    thresh: threshold for cosine similarity to be considered
+    max_chars: maximum number of characters the retrieved documents can be. Will truncate otherwise.
+    completion_kwargs: kwargs for the OpenAI.Completion() method
+    separator: the separator to use, can be either "\n" or <p> depending on rendering.
+    link_format: the type of format to render links with, e.g. slack or markdown
+    unknown_prompt: Prompt to use to generate the "I don't know" embedding to compare to.
+    text_before_prompt: Text to prompt GPT with before the user prompt, but after the documentation.
+    text_after_response: Generic response to add the the chatbot's reply.
+    """
+
+    documents_file: str = "buster/data/document_embeddings.csv"
+    embedding_model: str = "text-embedding-ada-002"
+    top_k: int = 3
+    thresh: float = 0.7
+    max_chars: int = 3000
+
+    completion_kwargs: dict = field(
+        default_factory=lambda: {
+            "engine": "text-davinci-003",
+            "max_tokens": 200,
+            "temperature": None,
+            "top_p": None,
+            "frequency_penalty": 1,
+            "presence_penalty": 1,
+        }
+    )
+    separator: str = "\n"
+    link_format: str = "slack"
+    unknown_prompt: str = "I Don't know how to answer your question."
+    text_before_prompt: str = "I'm a chatbot, bleep bloop."
+    text_after_response: str = "Answer the following question:\n"
+
+
 class Chatbot:
-    def __init__(self, cfg: OmegaConf):
+    def __init__(self, cfg: ChatbotConfig):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
         self.cfg = cfg
         self._init_documents()
@@ -176,43 +215,3 @@ class Chatbot:
         formatted_output = self.format_response(response, matched_documents)
 
         return formatted_output
-
-
-@dataclass
-class ChatbotConfig:
-    """Configuration object for a chatbot.
-
-    documents_csv: Path to the csv file containing the documents and their embeddings.
-    embedding_model: OpenAI model to use to get embeddings.
-    top_k: Max number of documents to retrieve, ordered by cosine similarity
-    thresh: threshold for cosine similarity to be considered
-    max_chars: maximum number of characters the retrieved documents can be. Will truncate otherwise.
-    completion_kwargs: kwargs for the OpenAI.Completion() method
-    separator: the separator to use, can be either "\n" or <p> depending on rendering.
-    link_format: the type of format to render links with, e.g. slack or markdown
-    unknown_prompt: Prompt to use to generate the "I don't know" embedding to compare to.
-    text_before_prompt: Text to prompt GPT with before the user prompt, but after the documentation.
-    text_after_response: Generic response to add the the chatbot's reply.
-    """
-
-    documents_file: str = "buster/data/document_embeddings.csv"
-    embedding_model: str = "text-embedding-ada-002"
-    top_k: int = 3
-    thresh: float = 0.7
-    max_chars: int = 3000
-
-    completion_kwargs: dict = field(
-        default_factory=lambda: {
-            "engine": "text-davinci-003",
-            "max_tokens": 200,
-            "temperature": None,
-            "top_p": None,
-            "frequency_penalty": 1,
-            "presence_penalty": 1,
-        }
-    )
-    separator: str = "\n"
-    link_format: str = "slack"
-    unknown_prompt: str = "I Don't know how to answer your question."
-    text_before_prompt: str = "I'm a chatbot, bleep bloop."
-    text_after_response: str = "Answer the following question:\n"
