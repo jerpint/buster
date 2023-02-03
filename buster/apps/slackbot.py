@@ -10,7 +10,7 @@ PYTORCH_CHANNEL = "C04MEK6N882"
 HF_TRANSFORMERS_CHANNEL = "C04NJNCJWHE"
 
 buster_cfg = ChatbotConfig(
-    documents_file="buster/data/document_embeddings.csv",
+    documents_file="../data/document_embeddings.csv",
     unknown_prompt="This doesn't seem to be related to cluster usage.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
@@ -46,7 +46,7 @@ buster_cfg = ChatbotConfig(
 buster_chatbot = Chatbot(buster_cfg)
 
 orion_cfg = ChatbotConfig(
-    documents_file="buster/data/document_embeddings_orion.csv",
+    documents_file="../data/document_embeddings_orion.csv",
     unknown_prompt="This doesn't seem to be related to the orion library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
@@ -79,7 +79,7 @@ orion_cfg = ChatbotConfig(
 orion_chatbot = Chatbot(orion_cfg)
 
 pytorch_cfg = ChatbotConfig(
-    documents_file="buster/data/document_embeddings_pytorch.tar.gz",
+    documents_file="../data/document_embeddings_pytorch.tar.gz",
     unknown_prompt="This doesn't seem to be related to the pytorch library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
@@ -112,7 +112,7 @@ pytorch_cfg = ChatbotConfig(
 pytorch_chatbot = Chatbot(pytorch_cfg)
 
 hf_transformers_cfg = ChatbotConfig(
-    documents_file="buster/data/document_embeddings_hf_transformers.tar.gz",
+    documents_file="../data/document_embeddings_hf_transformers.tar.gz",
     unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
