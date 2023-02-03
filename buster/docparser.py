@@ -1,41 +1,47 @@
 import glob
-import math
 import os
 
-import bs4
 import numpy as np
 import pandas as pd
 import tiktoken
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
+from buster.parser import HuggingfaceParser, Parser, SphinxParser
+
 EMBEDDING_MODEL = "text-embedding-ada-002"
 EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-002
-
-
-BASE_URL_MILA = "https://docs.mila.quebec/"
-BASE_URL_ORION = "https://orion.readthedocs.io/en/stable/"
-BASE_URL_PYTORCH = "https://pytorch.org/docs/stable/"
 
 
 PICKLE_EXTENSIONS = [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]
 
 
-def parse_section(nodes: list[bs4.element.NavigableString]) -> str:
-    section = []
-    for node in nodes:
-        if node.name == "table":
-            node_text = pd.read_html(node.prettify())[0].to_markdown(index=False, tablefmt="github")
-        else:
-            node_text = node.text
-        section.append(node_text)
-    section = "".join(section)[1:]
-
-    return section
+supported_docs = {
+    "mila": {
+        "base_url": "https://docs.mila.quebec/",
+        "filename": "documents_mila.tar.gz",
+        "parser": SphinxParser,
+    },
+    "orion": {
+        "base_url": "https://orion.readthedocs.io/en/stable/",
+        "filename": "documents_orion.tar.gz",
+        "parser": SphinxParser,
+    },
+    "pytorch": {
+        "base_url": "https://pytorch.org/docs/stable/",
+        "filename": "documents_pytorch.tar.gz",
+        "parser": SphinxParser,
+    },
+    "huggingface": {
+        "base_url": "https://huggingface.co/docs/transformers/",
+        "filename": "documents_huggingface.tar.gz",
+        "parser": HuggingfaceParser,
+    },
+}
 
 
 def get_all_documents(
-    root_dir: str, base_url: str, min_section_length: int = 100, max_section_length: int = 2000
+    root_dir: str, base_url: str, parser: Parser, min_section_length: int = 100, max_section_length: int = 2000
 ) -> pd.DataFrame:
     """Parse all HTML files in `root_dir`, and extract all sections.
 
@@ -43,48 +49,6 @@ def get_all_documents(
     Sections correspond to `section` HTML tags that have a headerlink attached.
     """
     files = glob.glob("**/*.html", root_dir=root_dir, recursive=True)
-
-    def get_all_subsections(soup: BeautifulSoup) -> tuple[list[str], list[str], list[str]]:
-        found = soup.find_all("a", href=True, class_="headerlink")
-
-        sections = []
-        urls = []
-        names = []
-        for section_found in found:
-            section_soup = section_found.parent.parent
-            section_href = section_soup.find_all("a", href=True, class_="headerlink")
-
-            # If sections has subsections, keep only the part before the first subsection
-            if len(section_href) > 1 and section_soup.section is not None:
-                section_siblings = list(section_soup.section.previous_siblings)[::-1]
-                section = parse_section(section_siblings)
-            else:
-                section = parse_section(section_soup.children)
-
-            # Remove special characters, plus newlines in some url and section names.
-            section = section.strip()
-            url = section_found["href"].strip().replace("\n", "")
-            name = section_found.parent.text.strip()[:-1].replace("\n", "")
-
-            # If text is too long, split into chunks of equal sizes
-            if len(section) > max_section_length:
-                n_chunks = math.ceil(len(section) / float(max_section_length))
-                separator_index = math.floor(len(section) / n_chunks)
-
-                section_chunks = [section[separator_index * i : separator_index * (i + 1)] for i in range(n_chunks)]
-                url_chunks = [url] * n_chunks
-                name_chunks = [name] * n_chunks
-
-                sections.extend(section_chunks)
-                urls.extend(url_chunks)
-                names.extend(name_chunks)
-            # If text is not too short, add in 1 chunk
-            elif len(section) > min_section_length:
-                sections.append(section)
-                urls.append(url)
-                names.append(name)
-
-        return sections, urls, names
 
     sections = []
     urls = []
@@ -95,12 +59,11 @@ def get_all_documents(
             source = f.read()
 
         soup = BeautifulSoup(source, "html.parser")
-        sections_file, urls_file, names_file = get_all_subsections(soup)
+        soup_parser = parser(soup, base_url, file, min_section_length, max_section_length)
+        sections_file, urls_file, names_file = soup_parser.parse()
+
         sections.extend(sections_file)
-
-        urls_file = [base_url + file + url for url in urls_file]
         urls.extend(urls_file)
-
         names.extend(names_file)
 
     documents_df = pd.DataFrame.from_dict({"name": names, "url": urls, "text": sections})
@@ -138,7 +101,8 @@ def read_documents(filepath: str) -> pd.DataFrame:
 
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
     encoding = tiktoken.get_encoding(EMBEDDING_ENCODING)
-    df["n_tokens"] = df.text.apply(lambda x: len(encoding.encode(x)))
+    # TODO are there unexpected consequences of allowing endoftext?
+    df["n_tokens"] = df.text.apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
     return df
 
 
@@ -154,18 +118,3 @@ def generate_embeddings(filepath: str, output_file: str) -> pd.DataFrame:
     df = precompute_embeddings(df)
     write_documents(output_file, df)
     return df
-
-
-if __name__ == "__main__":
-    root_dir = "/home/hadrien/perso/mila-docs/output/"
-    save_filepath = "data/documents.tar.gz"
-
-    # How to write
-    documents_df = get_all_documents(root_dir)
-    write_documents(save_filepath, documents_df)
-
-    # How to load
-    documents_df = read_documents(save_filepath)
-
-    # precompute the document embeddings
-    df = generate_embeddings(filepath=save_filepath, output_file="data/document_embeddings.tar.gz")
