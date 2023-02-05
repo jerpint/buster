@@ -24,3 +24,9 @@ We send the prompt to the [OpenAI API](https://beta.openai.com/docs/api-referenc
 
 - For embeddings: "text-embedding-ada-002"
 - For completion: "text-davinci-003"
+
+### Livestream
+
+Video coming soon.
+
+[Livestream notebook](https://colab.research.google.com/drive/1CosxSNod48KrkyBn5_vkeleb7u0CrBa6)
