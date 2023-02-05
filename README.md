@@ -27,6 +27,8 @@ We send the prompt to the [OpenAI API](https://beta.openai.com/docs/api-referenc
 
 ### Livestream
 
-Video coming soon.
+For more information, you can watch the livestream where explain how buster works in detail!
 
-[Livestream notebook](https://colab.research.google.com/drive/1CosxSNod48KrkyBn5_vkeleb7u0CrBa6)
+- [Livestream recording](https://youtu.be/LB5g-AhfPG8)
+
+- [Livestream notebook](https://colab.research.google.com/drive/1CosxSNod48KrkyBn5_vkeleb7u0CrBa6)
