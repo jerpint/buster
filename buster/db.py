@@ -4,7 +4,6 @@ import zlib
 import numpy as np
 import pandas as pd
 
-
 documents_table = """CREATE TABLE IF NOT EXISTS documents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL,
