@@ -85,7 +85,7 @@ def write_documents(filepath: str, source: str, documents_df: pd.DataFrame):
         documents_df.to_pickle(filepath)
     elif ext == ".db":
         db = DocumentsDB(filepath)
-        db.reset_document_source(source, documents_df)
+        db.write_documents(source, documents_df)
     else:
         raise ValueError(f"Unsupported format: {ext}.")
 
@@ -98,14 +98,18 @@ def read_documents(filepath: str, source: str) -> pd.DataFrame:
 
         if "embedding" in df.columns:
             df["embedding"] = df.embedding.apply(eval).apply(np.array)
-        return df
     elif ext in PICKLE_EXTENSIONS:
-        return pd.read_pickle(filepath)
+        df = pd.read_pickle(filepath)
     elif ext == ".db":
         db = DocumentsDB(filepath)
-        return db.get_documents(source)
+        df = db.get_documents(source)
     else:
         raise ValueError(f"Unsupported format: {ext}.")
+
+    # TODO remove this once renaming is applied across all files
+    df = df.rename(columns={"title": "name", "content": "text"})
+
+    return df
 
 
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:

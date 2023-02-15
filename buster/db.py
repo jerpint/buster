@@ -33,6 +33,17 @@ qa_table = """CREATE TABLE IF NOT EXISTS qa (
 
 
 class DocumentsDB:
+    """Simple SQLite database for storing documents and questions/answers.
+
+    The database is just a file on disk. It can store documents from different sources, and it can store multiple versions of the same document (e.g. if the document is updated).
+    Questions/answers refer to the version of the document that was used at the time.
+
+    Example:
+        >>> db = DocumentsDB("/path/to/the/db.db")
+        >>> db.write_documents("source", df)  # df is a DataFrame containing the documents from a given source, obtained e.g. by using buster.docparser.generate_embeddings
+        >>> df = db.get_documents("source")
+    """
+
     def __init__(self, db_path):
         self.db_path = db_path
         self.conn = sqlite3.connect(db_path)
@@ -49,8 +60,8 @@ class DocumentsDB:
         self.cursor.execute(qa_table)
         self.conn.commit()
 
-    def reset_document_source(self, source: str, df: pd.DataFrame):
-        """Reset the current flag for all documents from a given source."""
+    def write_documents(self, source: str, df: pd.DataFrame):
+        """Write all documents from the dataframe into the db. All previous documents from that source will be set to `current = 0`."""
         df = df.copy()
 
         # Prepare the rows
