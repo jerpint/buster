@@ -12,7 +12,7 @@ def test_read_write():
             "title": ["test"],
             "url": ["http://url.com"],
             "content": ["cool text"],
-            "embedding": [np.arange(10, dtype=np.int32)],
+            "embedding": [np.arange(10, dtype=np.float32) - 0.3],
             "n_tokens": [10],
         }
     )

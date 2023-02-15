@@ -89,7 +89,7 @@ class DocumentsDB:
         df = pd.DataFrame(rows, columns=[description[0] for description in results.description])
 
         # ZLIB decompress the embeddings
-        df["embedding"] = df["embedding"].apply(lambda x: np.frombuffer(zlib.decompress(x), dtype=np.int32).tolist())
+        df["embedding"] = df["embedding"].apply(lambda x: np.frombuffer(zlib.decompress(x), dtype=np.float32).tolist())
 
         # Drop the `current` column
         df.drop(columns=["current"], inplace=True)

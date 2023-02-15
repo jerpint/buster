@@ -116,7 +116,7 @@ def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def precompute_embeddings(df: pd.DataFrame) -> pd.DataFrame:
-    df["embedding"] = df.content.apply(lambda x: np.asarray(get_embedding(x, engine=EMBEDDING_MODEL), dtype=np.int32))
+    df["embedding"] = df.content.apply(lambda x: np.asarray(get_embedding(x, engine=EMBEDDING_MODEL), dtype=np.float32))
     return df
 
 
