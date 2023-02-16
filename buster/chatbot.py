@@ -141,7 +141,6 @@ class Chatbot:
     def prepare_prompt(
         self,
         question: str,
-
         matched_documents: pd.DataFrame,
         text_before_prompt: str,
         text_before_documents: str,
