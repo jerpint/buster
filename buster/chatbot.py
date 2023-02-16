@@ -32,7 +32,7 @@ class ChatbotConfig:
     embedding_model: OpenAI model to use to get embeddings.
     top_k: Max number of documents to retrieve, ordered by cosine similarity
     thresh: threshold for cosine similarity to be considered
-    max_chars: maximum number of characters the retrieved documents can be. Will truncate otherwise.
+    max_words: maximum number of words the retrieved documents can be. Will truncate otherwise.
     completion_kwargs: kwargs for the OpenAI.Completion() method
     separator: the separator to use, can be either "\n" or <p> depending on rendering.
     link_format: the type of format to render links with, e.g. slack or markdown
@@ -45,7 +45,7 @@ class ChatbotConfig:
     embedding_model: str = "text-embedding-ada-002"
     top_k: int = 3
     thresh: float = 0.7
-    max_chars: int = 3000
+    max_words: int = 3000
     unknown_threshold: float = 0.9  # set to 0 to deactivate
 
     completion_kwargs: dict = field(
@@ -123,51 +123,41 @@ class Chatbot:
         return matched_documents
 
     @classmethod
-    def prepare_prompt(
-        cls,
-        question: str,
-        matched_documents: pd.DataFrame,
-        max_chars: int,
-        text_before_prompt: str,
-        text_before_documents: str,
-    ) -> str:
-        """
-        Prepare the prompt with prompt engineering.
-        """
-
+    def prepare_documents(cls, matched_documents: pd.DataFrame, max_words: int) -> str:
         # gather the documents in one large plaintext variable
         documents_list = matched_documents.text.to_list()
         documents_str = " ".join(documents_list)
 
         # truncate the documents to fit
         # TODO: increase to actual token count
-        if len(documents_str) > max_chars:
+        word_count = len(documents_str.split(" "))
+        if word_count > max_words:
             logger.info("truncating documents to fit...")
-            documents_str = documents_str[0:max_chars]
+            documents_str = " ".join(documents_str.split(" ")[0:max_words])
+            logger.info(f"Documents after truncation: {documents_str}")
 
+        return documents_str
+
+    def prepare_prompt(
+        self,
+        question: str,
+
+        matched_documents: pd.DataFrame,
+        text_before_prompt: str,
+        text_before_documents: str,
+    ) -> str:
+        """
+        Prepare the prompt with prompt engineering.
+        """
+        documents_str: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
         return text_before_documents + documents_str + text_before_prompt + question
 
-    def generate_response(self, prompt: str, matched_documents: pd.DataFrame) -> str:
-        """
-        Generate a response based on the retrieved documents.
-        """
-        if len(matched_documents) == 0:
-            # No matching documents were retrieved, return
-            response_text = "I did not find any relevant documentation related to your question."
-            return response_text
-
-        logger.info(f"querying GPT...")
-        logger.info(f"Prompt:  {prompt}")
+    @classmethod
+    def get_gpt_response(cls, **completion_kwargs):
         # Call the API to generate a response
+        logger.info(f"querying GPT...")
         try:
-            completion_kwargs = self.cfg.completion_kwargs
-            completion_kwargs["prompt"] = prompt
-            response = openai.Completion.create(**completion_kwargs)
-
-            # Get the response text
-            response_text = response["choices"][0]["text"]
-            logger.info(f"GPT Response:\n{response_text}")
-            return response_text
+            return openai.Completion.create(**completion_kwargs)
 
         except Exception as e:
             # log the error and return a generic response instead.
@@ -175,8 +165,22 @@ class Chatbot:
 
             logger.error("Error connecting to OpenAI API")
             logging.error(traceback.format_exc())
-            response_text = "Hmm, we're having trouble connecting to OpenAI right now... Try again soon!"
-            return response_text
+            response = {"choices": [{"text": "We're having trouble connecting to OpenAI right now... Try again soon!"}]}
+            return response
+
+    def generate_response(self, prompt: str, matched_documents: pd.DataFrame) -> str:
+        """
+        Generate a response based on the retrieved documents.
+        """
+        if len(matched_documents) == 0:
+            # No matching documents were retrieved, return
+            return "I did not find any relevant documentation related to your question."
+
+        logger.info(f"Prompt:  {prompt}")
+        response = self.get_gpt_response(prompt=prompt, **self.cfg.completion_kwargs)
+        response_str = response["choices"][0]["text"]
+        logger.info(f"GPT Response:\n{response_str}")
+        return response_str
 
     @classmethod
     def add_sources(cls, response: str, matched_documents: pd.DataFrame, sep: str, format: str):
@@ -271,7 +275,6 @@ class Chatbot:
         prompt = self.prepare_prompt(
             question=question,
             matched_documents=matched_documents,
-            max_chars=self.cfg.max_chars,
             text_before_prompt=self.cfg.text_before_prompt,
             text_before_documents=self.cfg.text_before_documents,
         )
