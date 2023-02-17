@@ -160,10 +160,7 @@ class Chatbot:
 
         except Exception as e:
             # log the error and return a generic response instead.
-            import traceback
-
-            logger.exception("Error connecting to OpenAI API")
-            logging.exception(traceback.format_exc())
+            logger.exception("Error connecting to OpenAI API. See traceback: %s", e)
             response = {"choices": [{"text": "We're having trouble connecting to OpenAI right now... Try again soon!"}]}
             return response
 
