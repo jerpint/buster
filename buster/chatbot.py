@@ -8,7 +8,7 @@ import pandas as pd
 import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
-from buster.docparser import EMBEDDING_MODEL, read_documents
+from buster.docparser import read_documents
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -32,7 +32,7 @@ class ChatbotConfig:
     embedding_model: OpenAI model to use to get embeddings.
     top_k: Max number of documents to retrieve, ordered by cosine similarity
     thresh: threshold for cosine similarity to be considered
-    max_chars: maximum number of characters the retrieved documents can be. Will truncate otherwise.
+    max_words: maximum number of words the retrieved documents can be. Will truncate otherwise.
     completion_kwargs: kwargs for the OpenAI.Completion() method
     separator: the separator to use, can be either "\n" or <p> depending on rendering.
     link_format: the type of format to render links with, e.g. slack or markdown
@@ -45,7 +45,8 @@ class ChatbotConfig:
     embedding_model: str = "text-embedding-ada-002"
     top_k: int = 3
     thresh: float = 0.7
-    max_chars: int = 3000
+    max_words: int = 3000
+    unknown_threshold: float = 0.9  # set to 0 to deactivate
 
     completion_kwargs: dict = field(
         default_factory=lambda: {
@@ -60,6 +61,7 @@ class ChatbotConfig:
     separator: str = "\n"
     link_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
+    text_before_documents: str = ("You are a chatbot.",)
     text_before_prompt: str = "I'm a chatbot, bleep bloop."
     text_after_response: str = "Answer the following question:\n"
 
@@ -78,25 +80,23 @@ class Chatbot:
         logger.info(f"embeddings loaded.")
 
     def _init_unk_embedding(self):
-        logger.info("Generating UNK token...")
-        unknown_prompt = self.cfg.unknown_prompt
-        engine = self.cfg.embedding_model
+        logger.info("Generating UNK embedding...")
         self.unk_embedding = get_embedding(
-            unknown_prompt,
-            engine=engine,
+            self.cfg.unknown_prompt,
+            engine=self.cfg.embedding_model,
         )
 
     def rank_documents(
         self,
         documents: pd.DataFrame,
         query: str,
+        top_k: float,
+        thresh: float,
+        engine: str,
     ) -> pd.DataFrame:
         """
         Compare the question to the series of documents and return the best matching documents.
         """
-        top_k = self.cfg.top_k
-        thresh = self.cfg.thresh
-        engine = self.cfg.embedding_model  # EMBEDDING_MODEL
 
         query_embedding = get_embedding(
             query,
@@ -121,59 +121,64 @@ class Chatbot:
 
         return matched_documents
 
-    def prepare_prompt(self, question: str, candidates: pd.DataFrame) -> str:
+    def prepare_documents(self, matched_documents: pd.DataFrame, max_words: int) -> str:
+        # gather the documents in one large plaintext variable
+        documents_list = matched_documents.text.to_list()
+        documents_str = " ".join(documents_list)
+
+        # truncate the documents to fit
+        # TODO: increase to actual token count
+        word_count = len(documents_str.split(" "))
+        if word_count > max_words:
+            logger.info("truncating documents to fit...")
+            documents_str = " ".join(documents_str.split(" ")[0:max_words])
+            logger.info(f"Documents after truncation: {documents_str}")
+
+        return documents_str
+
+    def prepare_prompt(
+        self,
+        question: str,
+        matched_documents: pd.DataFrame,
+        text_before_prompt: str,
+        text_before_documents: str,
+    ) -> str:
         """
         Prepare the prompt with prompt engineering.
         """
+        documents_str: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
+        return text_before_documents + documents_str + text_before_prompt + question
 
-        max_chars = self.cfg.max_chars
-        text_before_prompt = self.cfg.text_before_prompt
+    def get_gpt_response(self, **completion_kwargs):
+        # Call the API to generate a response
+        logger.info(f"querying GPT...")
+        try:
+            return openai.Completion.create(**completion_kwargs)
 
-        documents_list = candidates.text.to_list()
-        documents_str = " ".join(documents_list)
-        if len(documents_str) > max_chars:
-            logger.info("truncating documents to fit...")
-            documents_str = documents_str[0:max_chars]
+        except Exception as e:
+            # log the error and return a generic response instead.
+            logger.exception("Error connecting to OpenAI API. See traceback:")
+            response = {"choices": [{"text": "We're having trouble connecting to OpenAI right now... Try again soon!"}]}
+            return response
 
-        return documents_str + text_before_prompt + question
-
-    def generate_response(self, prompt: str, matched_documents: pd.DataFrame) -> str:
+    def generate_response(self, prompt: str, matched_documents: pd.DataFrame, unknown_prompt: str) -> str:
         """
         Generate a response based on the retrieved documents.
         """
         if len(matched_documents) == 0:
             # No matching documents were retrieved, return
-            response_text = "I did not find any relevant documentation related to your question."
-            return response_text
+            return unknown_prompt
 
-        logger.info(f"querying GPT...")
         logger.info(f"Prompt:  {prompt}")
-        # Call the API to generate a response
-        try:
-            completion_kwargs = self.cfg.completion_kwargs
-            completion_kwargs["prompt"] = prompt
-            response = openai.Completion.create(**completion_kwargs)
+        response = self.get_gpt_response(prompt=prompt, **self.cfg.completion_kwargs)
+        response_str = response["choices"][0]["text"]
+        logger.info(f"GPT Response:\n{response_str}")
+        return response_str
 
-            # Get the response text
-            response_text = response["choices"][0]["text"]
-            logger.info(f"GPT Response:\n{response_text}")
-            return response_text
-
-        except Exception as e:
-            # log the error and return a generic response instead.
-            import traceback
-
-            logger.error("Error connecting to OpenAI API")
-            logging.error(traceback.format_exc())
-            response_text = "Hmm, we're having trouble connecting to OpenAI right now... Try again soon!"
-            return response_text
-
-    def add_sources(self, response: str, matched_documents: pd.DataFrame):
+    def add_sources(self, response: str, matched_documents: pd.DataFrame, sep: str, format: str):
         """
         Add sources fromt the matched documents to the response.
         """
-        sep = self.cfg.separator  # \n
-        format = self.cfg.link_format
 
         urls = matched_documents.url.to_list()
         names = matched_documents.name.to_list()
@@ -192,25 +197,46 @@ class Chatbot:
 
         return response
 
-    def format_response(self, response: str, matched_documents: pd.DataFrame) -> str:
+    def check_response_relevance(
+        self, response: str, engine: str, unk_embedding: np.array, unk_threshold: float
+    ) -> bool:
+        """Check to see if a response is relevant to the chatbot's knowledge or not.
+
+        We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
+        Here, we compare the embedding of the response to the embedding of the prompt-engineered "I don't know" embedding.
+
+        set the unk_threshold to 0 to essentially turn off this feature.
+        """
+        response_embedding = get_embedding(
+            response,
+            engine=engine,
+        )
+        score = cosine_similarity(response_embedding, unk_embedding)
+        logger.info(f"UNK score: {score}")
+
+        # Likely that the answer is meaningful, add the top sources
+        return score < unk_threshold
+
+    def format_response(self, response: str, matched_documents: pd.DataFrame, text_after_response: str) -> str:
         """
         Format the response by adding the sources if necessary, and a disclaimer prompt.
         """
-
         sep = self.cfg.separator
-        text_after_response = self.cfg.text_after_response
 
-        if len(matched_documents) > 0:
-            # we have matched documents, now we check to see if the answer is meaningful
-            response_embedding = get_embedding(
-                response,
-                engine=EMBEDDING_MODEL,
+        is_relevant = self.check_response_relevance(
+            response=response,
+            engine=self.cfg.embedding_model,
+            unk_embedding=self.unk_embedding,
+            unk_threshold=self.cfg.unknown_threshold,
+        )
+        if is_relevant:
+            # Passes our relevance detection mechanism that the answer is meaningful, add the top sources
+            response = self.add_sources(
+                response=response,
+                matched_documents=matched_documents,
+                sep=self.cfg.separator,
+                format=self.cfg.link_format,
             )
-            score = cosine_similarity(response_embedding, self.unk_embedding)
-            logger.info(f"UNK score: {score}")
-            if score < 0.9:
-                # Liekly that the answer is meaningful, add the top sources
-                response = self.add_sources(response, matched_documents=matched_documents)
 
         response += f"{sep}{sep}{sep}{text_after_response}{sep}"
 
@@ -223,9 +249,22 @@ class Chatbot:
 
         logger.info(f"User Question:\n{question}")
 
-        matched_documents = self.rank_documents(documents=self.documents, query=question)
-        prompt = self.prepare_prompt(question, matched_documents)
-        response = self.generate_response(prompt, matched_documents)
-        formatted_output = self.format_response(response, matched_documents)
+        matched_documents = self.rank_documents(
+            documents=self.documents,
+            query=question,
+            top_k=self.cfg.top_k,
+            thresh=self.cfg.thresh,
+            engine=self.cfg.embedding_model,
+        )
+        prompt = self.prepare_prompt(
+            question=question,
+            matched_documents=matched_documents,
+            text_before_prompt=self.cfg.text_before_prompt,
+            text_before_documents=self.cfg.text_before_documents,
+        )
+        response = self.generate_response(prompt, matched_documents, self.cfg.unknown_prompt)
+        formatted_output = self.format_response(
+            response, matched_documents, text_after_response=self.cfg.text_after_response
+        )
 
         return formatted_output
