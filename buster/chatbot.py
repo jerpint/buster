@@ -214,8 +214,8 @@ class Chatbot:
         score = cosine_similarity(response_embedding, unk_embedding)
         logger.info(f"UNK score: {score}")
 
-        # Liekly that the answer is meaningful, add the top sources
-        return True if score < unk_threshold else False
+        # Likely that the answer is meaningful, add the top sources
+        return score < unk_threshold
 
     def format_response(self, response: str, matched_documents: pd.DataFrame) -> str:
         """
