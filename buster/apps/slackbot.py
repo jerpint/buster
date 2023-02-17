@@ -20,7 +20,7 @@ mila_doc_cfg = ChatbotConfig(
     embedding_model="text-embedding-ada-002",
     top_k=3,
     thresh=0.7,
-    max_chars=3000,
+    max_words=3000,
     completion_kwargs={
         "engine": "text-davinci-003",
         "max_tokens": 200,
@@ -56,7 +56,7 @@ orion_cfg = ChatbotConfig(
     embedding_model="text-embedding-ada-002",
     top_k=3,
     thresh=0.7,
-    max_chars=3000,
+    max_words=3000,
     completion_kwargs={
         "engine": "text-davinci-003",
         "max_tokens": 200,
@@ -89,7 +89,7 @@ pytorch_cfg = ChatbotConfig(
     embedding_model="text-embedding-ada-002",
     top_k=3,
     thresh=0.7,
-    max_chars=3000,
+    max_words=3000,
     completion_kwargs={
         "engine": "text-davinci-003",
         "max_tokens": 500,
@@ -122,7 +122,7 @@ hf_transformers_cfg = ChatbotConfig(
     embedding_model="text-embedding-ada-002",
     top_k=3,
     thresh=0.7,
-    max_chars=3000,
+    max_words=3000,
     completion_kwargs={
         "engine": "text-davinci-003",
         "max_tokens": 500,
