@@ -86,9 +86,8 @@ class Chatbot:
             engine=self.cfg.embedding_model,
         )
 
-    @classmethod
     def rank_documents(
-        cls,
+        self,
         documents: pd.DataFrame,
         query: str,
         top_k: float,
@@ -122,8 +121,7 @@ class Chatbot:
 
         return matched_documents
 
-    @classmethod
-    def prepare_documents(cls, matched_documents: pd.DataFrame, max_words: int) -> str:
+    def prepare_documents(self, matched_documents: pd.DataFrame, max_words: int) -> str:
         # gather the documents in one large plaintext variable
         documents_list = matched_documents.text.to_list()
         documents_str = " ".join(documents_list)
@@ -151,8 +149,7 @@ class Chatbot:
         documents_str: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
         return text_before_documents + documents_str + text_before_prompt + question
 
-    @classmethod
-    def get_gpt_response(cls, **completion_kwargs):
+    def get_gpt_response(self, **completion_kwargs):
         # Call the API to generate a response
         logger.info(f"querying GPT...")
         try:
@@ -178,8 +175,7 @@ class Chatbot:
         logger.info(f"GPT Response:\n{response_str}")
         return response_str
 
-    @classmethod
-    def add_sources(cls, response: str, matched_documents: pd.DataFrame, sep: str, format: str):
+    def add_sources(self, response: str, matched_documents: pd.DataFrame, sep: str, format: str):
         """
         Add sources fromt the matched documents to the response.
         """
@@ -201,9 +197,8 @@ class Chatbot:
 
         return response
 
-    @classmethod
     def check_response_relevance(
-        cls, response: str, engine: str, unk_embedding: np.array, unk_threshold: float
+        self, response: str, engine: str, unk_embedding: np.array, unk_threshold: float
     ) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
