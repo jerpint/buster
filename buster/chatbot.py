@@ -161,13 +161,13 @@ class Chatbot:
             response = {"choices": [{"text": "We're having trouble connecting to OpenAI right now... Try again soon!"}]}
             return response
 
-    def generate_response(self, prompt: str, matched_documents: pd.DataFrame) -> str:
+    def generate_response(self, prompt: str, matched_documents: pd.DataFrame, unknown_prompt: str) -> str:
         """
         Generate a response based on the retrieved documents.
         """
         if len(matched_documents) == 0:
             # No matching documents were retrieved, return
-            return "I did not find any relevant documentation related to your question."
+            return unknown_prompt
 
         logger.info(f"Prompt:  {prompt}")
         response = self.get_gpt_response(prompt=prompt, **self.cfg.completion_kwargs)
@@ -217,18 +217,11 @@ class Chatbot:
         # Likely that the answer is meaningful, add the top sources
         return score < unk_threshold
 
-    def format_response(self, response: str, matched_documents: pd.DataFrame) -> str:
+    def format_response(self, response: str, matched_documents: pd.DataFrame, text_after_response: str) -> str:
         """
         Format the response by adding the sources if necessary, and a disclaimer prompt.
         """
         sep = self.cfg.separator
-        text_after_response = self.cfg.text_after_response
-
-        if len(matched_documents) == 0:
-            # No documents were retrieved, overwrite with a generic message.
-            response = "I did not find any relevant documents matching your question."
-            response += f"{sep}{sep}{text_after_response}{sep}"
-            return response
 
         is_relevant = self.check_response_relevance(
             response=response,
@@ -269,7 +262,7 @@ class Chatbot:
             text_before_prompt=self.cfg.text_before_prompt,
             text_before_documents=self.cfg.text_before_documents,
         )
-        response = self.generate_response(prompt, matched_documents)
-        formatted_output = self.format_response(response, matched_documents)
+        response = self.generate_response(prompt, matched_documents, self.cfg.unknown_prompt)
+        formatted_output = self.format_response(response, matched_documents, text_after_response=self.cfg.text_after_response)
 
         return formatted_output
