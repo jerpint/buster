@@ -23,8 +23,8 @@ def test_generate_embeddings(tmp_path, monkeypatch):
     read_df = read_documents(output_file, "test")
 
     # Check all the values are correct across the files
-    assert df["name"].iloc[0] == data["title"].iloc[0] == read_df["name"].iloc[0]
+    assert df["title"].iloc[0] == data["title"].iloc[0] == read_df["title"].iloc[0]
     assert df["url"].iloc[0] == data["url"].iloc[0] == read_df["url"].iloc[0]
-    assert df["text"].iloc[0] == data["content"].iloc[0] == read_df["text"].iloc[0]
+    assert df["content"].iloc[0] == data["content"].iloc[0] == read_df["content"].iloc[0]
     assert np.allclose(df["embedding"].iloc[0], read_df["embedding"].iloc[0])
     assert df["n_tokens"].iloc[0] == read_df["n_tokens"].iloc[0]

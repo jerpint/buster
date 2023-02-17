@@ -79,9 +79,6 @@ def get_file_extension(filepath: str) -> str:
 def write_documents(filepath: str, source: str, documents_df: pd.DataFrame):
     ext = get_file_extension(filepath)
 
-    # TODO remove this once renaming is applied across all files
-    documents_df = documents_df.rename(columns={"name": "title", "text": "content"})
-
     if ext == ".csv":
         documents_df.to_csv(filepath, index=False)
     elif ext in PICKLE_EXTENSIONS:
@@ -103,14 +100,14 @@ def read_documents(filepath: str, source: str) -> pd.DataFrame:
             df["embedding"] = df.embedding.apply(eval).apply(np.array)
     elif ext in PICKLE_EXTENSIONS:
         df = pd.read_pickle(filepath)
+
+        if "embedding" in df.columns:
+            df["embedding"] = df.embedding.apply(np.array)
     elif ext == ".db":
         db = DocumentsDB(filepath)
         df = db.get_documents(source)
     else:
         raise ValueError(f"Unsupported format: {ext}.")
-
-    # TODO remove this once renaming is applied across all files
-    df = df.rename(columns={"title": "name", "content": "text"})
 
     return df
 
@@ -118,12 +115,12 @@ def read_documents(filepath: str, source: str) -> pd.DataFrame:
 def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
     encoding = tiktoken.get_encoding(EMBEDDING_ENCODING)
     # TODO are there unexpected consequences of allowing endoftext?
-    df["n_tokens"] = df.text.apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
+    df["n_tokens"] = df.content.apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
     return df
 
 
 def precompute_embeddings(df: pd.DataFrame) -> pd.DataFrame:
-    df["embedding"] = df.text.apply(lambda x: np.asarray(get_embedding(x, engine=EMBEDDING_MODEL), dtype=np.float32))
+    df["embedding"] = df.content.apply(lambda x: np.asarray(get_embedding(x, engine=EMBEDDING_MODEL), dtype=np.float32))
     return df
 
 

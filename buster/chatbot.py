@@ -129,7 +129,7 @@ class Chatbot:
         max_chars = self.cfg.max_chars
         text_before_prompt = self.cfg.text_before_prompt
 
-        documents_list = candidates.text.to_list()
+        documents_list = candidates.content.to_list()
         documents_str = " ".join(documents_list)
         if len(documents_str) > max_chars:
             logger.info("truncating documents to fit...")
@@ -176,17 +176,17 @@ class Chatbot:
         format = self.cfg.link_format
 
         urls = matched_documents.url.to_list()
-        names = matched_documents.name.to_list()
+        titles = matched_documents.title.to_list()
         similarities = matched_documents.similarity.to_list()
 
         response += f"{sep}{sep}📝 Here are the sources I used to answer your question:{sep}{sep}"
-        for url, name, similarity in zip(urls, names, similarities):
+        for url, title, similarity in zip(urls, titles, similarities):
             if format == "markdown":
-                response += f"[🔗 {name}]({url}), relevance: {similarity:2.3f}{sep}"
+                response += f"[🔗 {title}]({url}), relevance: {similarity:2.3f}{sep}"
             elif format == "html":
-                response += f"<a href='{url}'>🔗 {name}</a>{sep}"
+                response += f"<a href='{url}'>🔗 {title}</a>{sep}"
             elif format == "slack":
-                response += f"<{url}|🔗 {name}>, relevance: {similarity:2.3f}{sep}"
+                response += f"<{url}|🔗 {title}>, relevance: {similarity:2.3f}{sep}"
             else:
                 raise ValueError(f"{format} is not a valid URL format.")
 
