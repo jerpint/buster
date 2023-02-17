@@ -263,6 +263,8 @@ class Chatbot:
             text_before_documents=self.cfg.text_before_documents,
         )
         response = self.generate_response(prompt, matched_documents, self.cfg.unknown_prompt)
-        formatted_output = self.format_response(response, matched_documents, text_after_response=self.cfg.text_after_response)
+        formatted_output = self.format_response(
+            response, matched_documents, text_after_response=self.cfg.text_after_response
+        )
 
         return formatted_output
