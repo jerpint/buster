@@ -61,9 +61,9 @@ class ChatbotConfig:
     separator: str = "\n"
     link_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
-    text_before_documents: str = ("You are a chatbot.",)
-    text_before_prompt: str = "I'm a chatbot, bleep bloop."
-    text_after_response: str = "Answer the following question:\n"
+    text_before_documents: str = "You are a chatbot answering questions.\n"
+    text_before_prompt: str = "Answer the following question:\n"
+    text_after_response: str = "I'm a chatbot, bleep bloop."
 
 
 class Chatbot:
