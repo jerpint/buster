@@ -1,5 +1,6 @@
 import glob
 import os
+from typing import Type
 
 import numpy as np
 import pandas as pd
@@ -42,7 +43,7 @@ supported_docs = {
 
 
 def get_all_documents(
-    root_dir: str, base_url: str, parser: Parser, min_section_length: int = 100, max_section_length: int = 2000
+    root_dir: str, base_url: str, parser_cls: Type[Parser], min_section_length: int = 100, max_section_length: int = 2000
 ) -> pd.DataFrame:
     """Parse all HTML files in `root_dir`, and extract all sections.
 
@@ -60,12 +61,12 @@ def get_all_documents(
             source = f.read()
 
         soup = BeautifulSoup(source, "html.parser")
-        soup_parser = parser(soup, base_url, file, min_section_length, max_section_length)
-        sections_file, urls_file, names_file = soup_parser.parse()
-
-        sections.extend(sections_file)
-        urls.extend(urls_file)
-        names.extend(names_file)
+        parser = parser_cls(soup, base_url, file, min_section_length, max_section_length)
+        # sections_file, urls_file, names_file =
+        for section in parser.parse():
+            sections.append(section.text)
+            urls.append(section.url)
+            names.append(section.name)
 
     documents_df = pd.DataFrame.from_dict({"title": names, "url": urls, "content": sections})
 
