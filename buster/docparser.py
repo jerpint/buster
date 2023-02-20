@@ -43,7 +43,11 @@ supported_docs = {
 
 
 def get_all_documents(
-    root_dir: str, base_url: str, parser_cls: Type[Parser], min_section_length: int = 100, max_section_length: int = 2000
+    root_dir: str,
+    base_url: str,
+    parser_cls: Type[Parser],
+    min_section_length: int = 100,
+    max_section_length: int = 2000,
 ) -> pd.DataFrame:
     """Parse all HTML files in `root_dir`, and extract all sections.
 

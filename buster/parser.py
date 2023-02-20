@@ -3,7 +3,7 @@ from dataclasses import InitVar, dataclass, field
 from itertools import takewhile, zip_longest
 import math
 import os
-from typing import Generator
+from typing import Iterator
 
 import bs4
 import pandas as pd
@@ -33,7 +33,7 @@ class Section:
         return len(self.text)
 
     @classmethod
-    def from_text(cls, text: str, url: str, name: str) -> 'Section':
+    def from_text(cls, text: str, url: str, name: str) -> "Section":
         """Alternate constructor, without parsing."""
         section = cls.__new__(cls)  # Allocate memory, does not call __init__
         # Does the init here.
@@ -43,7 +43,7 @@ class Section:
 
         return section
 
-    def get_chunks(self, min_length: int, max_length: int) -> Generator['Section', None, None]:
+    def get_chunks(self, min_length: int, max_length: int) -> Iterator["Section"]:
         """Split a section into chunks."""
         if len(self) > max_length:
             # Get the number of chunk, by dividing and rounding up.
@@ -54,9 +54,7 @@ class Section:
             length = len(self) // n_chunks
             for chunk in range(n_chunks):
                 start = chunk * length
-                yield Section.from_text(
-                    self.text[start: start + length],
-                    self.url, self.name)
+                yield Section.from_text(self.text[start : start + length], self.url, self.name)
         elif len(self) > min_length:
             yield self
         return
@@ -75,7 +73,7 @@ class Parser(ABC):
         ...
 
     @abstractmethod
-    def find_sections(self) -> Generator[Section, None, None]:
+    def find_sections(self) -> Iterator[Section]:
         ...
 
     def parse(self) -> list[Section]:
@@ -87,8 +85,7 @@ class Parser(ABC):
 
 
 class SphinxParser(Parser):
-
-    def find_sections(self) -> Generator[Section, None, None]:
+    def find_sections(self) -> Iterator[Section]:
         for section in self.soup.find_all("a", href=True, class_="headerlink"):
             container = section.parent.parent
             section_href = container.find_all("a", href=True, class_="headerlink")
@@ -110,8 +107,7 @@ class SphinxParser(Parser):
 
 
 class HuggingfaceParser(Parser):
-
-    def find_sections(self) -> Generator[Section, None, None]:
+    def find_sections(self) -> Iterator[Section]:
         sections = self.soup.find_all(["h1", "h2", "h3"], class_="relative group")
         for section, next_section in zip_longest(sections, sections[1:]):
             href = section.find("a", href=True, class_="header-link")
