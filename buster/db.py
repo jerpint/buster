@@ -1,4 +1,5 @@
 import sqlite3
+import warnings
 import zlib
 
 import numpy as np
@@ -75,6 +76,14 @@ class DocumentsDB:
                     "embedding",
                 ]
             )
+
+            # Check that the embeddings are float32
+            if not df["embedding"].iloc[0].dtype == np.float32:
+                warnings.warn(
+                    f"Embeddings are not float32, converting them to float32 from {df['embedding'].iloc[0].dtype}.",
+                    RuntimeWarning,
+                )
+                df["embedding"] = df["embedding"].apply(lambda x: x.astype(np.float32))
 
             # ZLIB compress the embeddings
             df["embedding"] = df["embedding"].apply(lambda x: sqlite3.Binary(zlib.compress(x.tobytes())))
