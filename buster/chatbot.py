@@ -10,8 +10,11 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
-from buster.formatter import Formatter
+from buster.formatter import Formatter, SlackFormatter, HTMLFormatter, MarkdownFormatter
 from buster.formatter.base import Response, Source
+
+
+FORMATTERS = {"text": Formatter, "slack": SlackFormatter, "html": HTMLFormatter, "markdown": MarkdownFormatter}
 
 
 logger = logging.getLogger(__name__)
@@ -216,10 +219,15 @@ class Chatbot:
         # Likely that the answer is meaningful, add the top sources
         return score < unk_threshold
 
-    def process_input(self, question: str, formatter: Formatter) -> str:
+    def process_input(self, question: str, formatter: Formatter = None) -> str:
         """
         Main function to process the input question and generate a formatted output.
         """
+
+        if formatter is None and self.cfg.link_format not in FORMATTERS:
+            raise ValueError(f"Unknown link format {self.cfg.link_format}")
+        elif formatter is None:
+            formatter = FORMATTERS[self.cfg.link_format]()
 
         logger.info(f"User Question:\n{question}")
 
