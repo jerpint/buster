@@ -15,7 +15,7 @@ PYTORCH_CHANNEL = "C04MEK6N882"
 HF_TRANSFORMERS_CHANNEL = "C04NJNCJWHE"
 
 mila_doc_cfg = ChatbotConfig(
-    documents_file="../data/document_embeddings.csv",
+    documents_file="../data/document_embeddings_mila.tar.gz",
     unknown_prompt="This doesn't seem to be related to cluster usage.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
@@ -51,7 +51,7 @@ mila_doc_cfg = ChatbotConfig(
 mila_doc_chatbot = Chatbot(mila_doc_cfg)
 
 orion_cfg = ChatbotConfig(
-    documents_file="../data/document_embeddings_orion.csv",
+    documents_file="../data/document_embeddings_orion.tar.gz",
     unknown_prompt="This doesn't seem to be related to the orion library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
@@ -117,7 +117,7 @@ pytorch_cfg = ChatbotConfig(
 pytorch_chatbot = Chatbot(pytorch_cfg)
 
 hf_transformers_cfg = ChatbotConfig(
-    documents_file="../data/document_embeddings_hf_transformers.tar.gz",
+    documents_file="../data/document_embeddings_huggingface.tar.gz",
     unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
     top_k=3,
