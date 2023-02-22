@@ -13,11 +13,11 @@ def test_generate_embeddings(tmp_path, monkeypatch):
 
     # Write the data to a file
     filepath = tmp_path / "test_document.csv"
-    write_documents(filepath, "test", data)
+    write_documents(filepath, data, "test")
 
     # Generate embeddings, store in a file
     output_file = tmp_path / "test_document_embeddings.tar.gz"
-    df = generate_embeddings(filepath, output_file, "test")
+    df = generate_embeddings(filepath=filepath, output_file=output_file, source="test")
 
     # Read the embeddings from the file
     read_df = read_documents(output_file, "test")

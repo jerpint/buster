@@ -129,5 +129,5 @@ def generate_embeddings(filepath: str, output_file: str, source: str) -> pd.Data
     df = read_documents(filepath, source)
     df = compute_n_tokens(df)
     df = precompute_embeddings(df)
-    write_documents(output_file, source, df)
+    write_documents(filepath=output_file, documents_df=df, source=source)
     return df

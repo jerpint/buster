@@ -16,7 +16,7 @@ def test_write_read():
             "n_tokens": [10],
         }
     )
-    db.write_documents("test", data)
+    db.write_documents(source="test", df=data)
 
     db_data = db.get_documents("test")
 
@@ -39,7 +39,7 @@ def test_write_write_read():
             "n_tokens": [10],
         }
     )
-    db.write_documents("test", data_1)
+    db.write_documents(source="test", df=data_1)
 
     data_2 = pd.DataFrame.from_dict(
         {
@@ -50,7 +50,7 @@ def test_write_write_read():
             "n_tokens": [20],
         }
     )
-    db.write_documents("test", data_2)
+    db.write_documents(source="test", df=data_2)
 
     db_data = db.get_documents("test")
 
