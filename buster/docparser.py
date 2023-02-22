@@ -76,7 +76,7 @@ def get_file_extension(filepath: str) -> str:
     return os.path.splitext(filepath)[1]
 
 
-def write_documents(filepath: str, source: str, documents_df: pd.DataFrame):
+def write_documents(filepath: str, documents_df: pd.DataFrame, source: str = ""):
     ext = get_file_extension(filepath)
 
     if ext == ".csv":
@@ -90,7 +90,7 @@ def write_documents(filepath: str, source: str, documents_df: pd.DataFrame):
         raise ValueError(f"Unsupported format: {ext}.")
 
 
-def read_documents(filepath: str, source: str) -> pd.DataFrame:
+def read_documents(filepath: str, source: str = "") -> pd.DataFrame:
     ext = get_file_extension(filepath)
 
     if ext == ".csv":
