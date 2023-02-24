@@ -1,8 +1,8 @@
+import math
+import os
 from abc import ABC, abstractmethod
 from dataclasses import InitVar, dataclass, field
 from itertools import takewhile, zip_longest
-import math
-import os
 from typing import Iterator
 
 import bs4
