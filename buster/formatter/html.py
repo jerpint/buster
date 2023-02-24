@@ -1,6 +1,7 @@
-from dataclasses import dataclass
 import html
+from dataclasses import dataclass
 from typing import Iterable
+
 from buster.formatter.base import Formatter, Response, Source
 
 

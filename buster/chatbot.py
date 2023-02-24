@@ -10,9 +10,8 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
-from buster.formatter import Formatter, SlackFormatter, HTMLFormatter, MarkdownFormatter
+from buster.formatter import Formatter, HTMLFormatter, MarkdownFormatter, SlackFormatter
 from buster.formatter.base import Response, Source
-
 
 FORMATTERS = {"text": Formatter, "slack": SlackFormatter, "html": HTMLFormatter, "markdown": MarkdownFormatter}
 
