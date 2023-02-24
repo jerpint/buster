@@ -248,7 +248,7 @@ class Chatbot:
         """
 
         logger.info(f"User Question:\n{question}")
-        
+
         # We make sure there is always a newline at the end of the question to avoid completing the question.
         if not question.endswith("\n"):
             question += "\n"
