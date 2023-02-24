@@ -91,7 +91,7 @@ class SphinxParser(Parser):
             section_href = container.find_all("a", href=True, class_="headerlink")
 
             url = self.build_url(section["href"].strip().replace("\n", ""))
-            name = section.parent.text
+            name = section.parent.text.strip()[:-1].replace("\n", "")
 
             # If sections has subsections, keep only the part before the first subsection
             if len(section_href) > 1 and container.section is not None:
