@@ -1,6 +1,7 @@
 import logging
 import os
 from dataclasses import dataclass, field
+from typing import Iterable
 
 import numpy as np
 import openai
@@ -9,6 +10,11 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
+from buster.formatter import Formatter, HTMLFormatter, MarkdownFormatter, SlackFormatter
+from buster.formatter.base import Response, Source
+
+FORMATTERS = {"text": Formatter, "slack": SlackFormatter, "html": HTMLFormatter, "markdown": MarkdownFormatter}
+
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -149,53 +155,49 @@ class Chatbot:
         documents_str: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
         return text_before_documents + documents_str + text_before_prompt + question
 
-    def get_gpt_response(self, **completion_kwargs):
+    def get_gpt_response(self, **completion_kwargs) -> Response:
         # Call the API to generate a response
         logger.info(f"querying GPT...")
         try:
-            return openai.Completion.create(**completion_kwargs)
-
+            response = openai.Completion.create(**completion_kwargs)
         except Exception as e:
             # log the error and return a generic response instead.
             logger.exception("Error connecting to OpenAI API. See traceback:")
-            response = {"choices": [{"text": "We're having trouble connecting to OpenAI right now... Try again soon!"}]}
-            return response
+            return Response("", True, "We're having trouble connecting to OpenAI right now... Try again soon!")
 
-    def generate_response(self, prompt: str, matched_documents: pd.DataFrame, unknown_prompt: str) -> str:
+        text = response["choices"][0]["text"]
+        return Response(text)
+
+    def generate_response(
+        self, prompt: str, matched_documents: pd.DataFrame, unknown_prompt: str
+    ) -> tuple[Response, Iterable[Source]]:
         """
         Generate a response based on the retrieved documents.
         """
         if len(matched_documents) == 0:
             # No matching documents were retrieved, return
-            return unknown_prompt
+            sources = tuple()
+            return Response(unknown_prompt), sources
 
         logger.info(f"Prompt:  {prompt}")
         response = self.get_gpt_response(prompt=prompt, **self.cfg.completion_kwargs)
-        response_str = response["choices"][0]["text"]
-        logger.info(f"GPT Response:\n{response_str}")
-        return response_str
-
-    def add_sources(self, response: str, matched_documents: pd.DataFrame, sep: str, format: str):
-        """
-        Add sources fromt the matched documents to the response.
-        """
-
-        urls = matched_documents.url.to_list()
-        titles = matched_documents.title.to_list()
-        similarities = matched_documents.similarity.to_list()
-
-        response += f"{sep}{sep}📝 Here are the sources I used to answer your question:{sep}{sep}"
-        for url, title, similarity in zip(urls, titles, similarities):
-            if format == "markdown":
-                response += f"[🔗 {title}]({url}), relevance: {similarity:2.3f}{sep}"
-            elif format == "html":
-                response += f"<a href='{url}'>🔗 {title}</a>{sep}"
-            elif format == "slack":
-                response += f"<{url}|🔗 {title}>, relevance: {similarity:2.3f}{sep}"
+        if response:
+            logger.info(f"GPT Response:\n{response.text}")
+            relevant = self.check_response_relevance(
+                response=response.text,
+                engine=self.cfg.embedding_model,
+                unk_embedding=self.unk_embedding,
+                unk_threshold=self.cfg.unknown_threshold,
+            )
+            if relevant:
+                sources = (
+                    Source(dct["name"], dct["url"], dct["similarity"])
+                    for dct in matched_documents.to_dict(orient="records")
+                )
             else:
-                raise ValueError(f"{format} is not a valid URL format.")
+                sources = tuple()
 
-        return response
+        return response, sources
 
     def check_response_relevance(
         self, response: str, engine: str, unk_embedding: np.array, unk_threshold: float
@@ -217,35 +219,15 @@ class Chatbot:
         # Likely that the answer is meaningful, add the top sources
         return score < unk_threshold
 
-    def format_response(self, response: str, matched_documents: pd.DataFrame, text_after_response: str) -> str:
-        """
-        Format the response by adding the sources if necessary, and a disclaimer prompt.
-        """
-        sep = self.cfg.separator
-
-        is_relevant = self.check_response_relevance(
-            response=response,
-            engine=self.cfg.embedding_model,
-            unk_embedding=self.unk_embedding,
-            unk_threshold=self.cfg.unknown_threshold,
-        )
-        if is_relevant:
-            # Passes our relevance detection mechanism that the answer is meaningful, add the top sources
-            response = self.add_sources(
-                response=response,
-                matched_documents=matched_documents,
-                sep=self.cfg.separator,
-                format=self.cfg.link_format,
-            )
-
-        response += f"{sep}{sep}{sep}{text_after_response}{sep}"
-
-        return response
-
-    def process_input(self, question: str) -> str:
+    def process_input(self, question: str, formatter: Formatter = None) -> str:
         """
         Main function to process the input question and generate a formatted output.
         """
+
+        if formatter is None and self.cfg.link_format not in FORMATTERS:
+            raise ValueError(f"Unknown link format {self.cfg.link_format}")
+        elif formatter is None:
+            formatter = FORMATTERS[self.cfg.link_format]()
 
         logger.info(f"User Question:\n{question}")
 
@@ -262,9 +244,6 @@ class Chatbot:
             text_before_prompt=self.cfg.text_before_prompt,
             text_before_documents=self.cfg.text_before_documents,
         )
-        response = self.generate_response(prompt, matched_documents, self.cfg.unknown_prompt)
-        formatted_output = self.format_response(
-            response, matched_documents, text_after_response=self.cfg.text_after_response
-        )
+        response, sources = self.generate_response(prompt, matched_documents, self.cfg.unknown_prompt)
 
-        return formatted_output
+        return formatter(response, sources)
