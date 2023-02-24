@@ -130,7 +130,7 @@ class Chatbot:
 
     def prepare_documents(self, matched_documents: pd.DataFrame, max_words: int) -> str:
         # gather the documents in one large plaintext variable
-        documents_list = matched_documents.text.to_list()
+        documents_list = matched_documents.content.to_list()
         documents_str = " ".join(documents_list)
 
         # truncate the documents to fit
