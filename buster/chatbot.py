@@ -177,7 +177,8 @@ class Chatbot:
         """
         if len(matched_documents) == 0:
             # No matching documents were retrieved, return
-            return Response(unknown_prompt), tuple()
+            sources = tuple()
+            return Response(unknown_prompt), sources
 
         logger.info(f"Prompt:  {prompt}")
         response = self.get_gpt_response(prompt=prompt, **self.cfg.completion_kwargs)
