@@ -17,9 +17,6 @@ class Response:
     error: bool = False
     error_msg: str | None = None
 
-    def __bool__(self) -> bool:
-        return not self.error
-
 
 @dataclass
 class Formatter:
@@ -58,6 +55,6 @@ class Formatter:
 
     def __call__(self, response: Response, sources: Iterable[Source]) -> str:
         """Format an answer and its sources, or an error message."""
-        if response:
-            return self.answer(response, sources)
-        return self.error(response)
+        if response.error:
+            return self.error(response)
+        return self.answer(response, sources)
