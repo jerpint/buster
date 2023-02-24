@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterable, NamedTuple
 
+
 # Should be from the `documents` module.
 class Source(NamedTuple):
     name: str
@@ -20,7 +21,6 @@ class Response:
 
 @dataclass
 class Formatter:
-
     source_template: str = "{source.name} (relevance: {source.question_similarity:2.3f})"
     error_msg_template: str = "Something went wrong: {response.error_msg}"
     error_fallback_template: str = "Something went very wrong."
