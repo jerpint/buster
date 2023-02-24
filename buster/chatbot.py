@@ -247,10 +247,11 @@ class Chatbot:
         Main function to process the input question and generate a formatted output.
         """
 
+        logger.info(f"User Question:\n{question}")
+        
         # We make sure there is always a newline at the end of the question to avoid completing the question.
         if not question.endswith("\n"):
             question += "\n"
-        logger.info(f"User Question:\n{question}")
 
         matched_documents = self.rank_documents(
             documents=self.documents,
