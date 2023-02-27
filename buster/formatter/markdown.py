@@ -9,7 +9,6 @@ class MarkdownResponseFormatter(ResponseFormatter):
     """Format the answer in markdown."""
 
     source_template: str = """[🔗 {source.source}]({source.url}), relevance: {source.question_similarity:2.3f}"""
-    error_msg_template: str = """Something went wrong:\n{response.error_msg}"""
 
     def sources_list(self, sources: Iterable[Source]) -> str | None:
         """Format sources into a list."""

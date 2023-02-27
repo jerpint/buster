@@ -10,7 +10,7 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
-from buster.formatter import ResponseFormatter, HTMLResponseFormatter, MarkdownResponseFormatter, SlackResponseFormatter
+from buster.formatter import ResponseFormatter, HTMLResponseFormatter, MarkdownResponseFormatter, SlackResponseFormatter, GradioResponseFormatter
 from buster.formatter.base import Response, Source
 
 FORMATTERS = {
@@ -18,6 +18,7 @@ FORMATTERS = {
     "slack": SlackResponseFormatter,
     "html": HTMLResponseFormatter,
     "markdown": MarkdownResponseFormatter,
+    "gradio": GradioResponseFormatter,
 }
 
 
