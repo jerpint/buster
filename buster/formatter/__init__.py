@@ -1,6 +1,6 @@
-from .base import Formatter
-from .html import HTMLFormatter
-from .markdown import MarkdownFormatter
-from .slack import SlackFormatter
+from .base import ResponseFormatter
+from .html import HTMLResponseFormatter
+from .markdown import MarkdownResponseFormatter
+from .slack import SlackResponseFormatter
 
-__all__ = [Formatter, HTMLFormatter, MarkdownFormatter, SlackFormatter]
+__all__ = [ResponseFormatter, HTMLResponseFormatter, MarkdownResponseFormatter, SlackResponseFormatter]

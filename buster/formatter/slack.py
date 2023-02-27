@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import Iterable
 
-from buster.formatter.base import Formatter, Source
+from buster.formatter.base import ResponseFormatter, Source
 
 
 @dataclass
-class SlackFormatter(Formatter):
+class SlackResponseFormatter(ResponseFormatter):
     """Format the answer for Slack."""
 
-    source_template: str = """<{source.url}|🔗 {source.name}>, relevance: {source.question_similarity:2.3f}"""
+    source_template: str = """<{source.url}|🔗 {source.source}>, relevance: {source.question_similarity:2.3f}"""
     error_msg_template: str = """Something went wrong:\n{response.error_msg}"""
     error_fallback_template: str = """Something went very wrong."""
     sourced_answer_template: str = (

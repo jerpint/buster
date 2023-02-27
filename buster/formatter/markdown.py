@@ -1,14 +1,14 @@
 from dataclasses import dataclass
 from typing import Iterable
 
-from buster.formatter.base import Formatter, Source
+from buster.formatter.base import ResponseFormatter, Source
 
 
 @dataclass
-class MarkdownFormatter(Formatter):
+class MarkdownResponseFormatter(ResponseFormatter):
     """Format the answer in markdown."""
 
-    source_template: str = """[🔗 {source.name}]({source.url}), relevance: {source.question_similarity:2.3f}"""
+    source_template: str = """[🔗 {source.source}]({source.url}), relevance: {source.question_similarity:2.3f}"""
     error_msg_template: str = """Something went wrong:\n{response.error_msg}"""
     error_fallback_template: str = """Something went very wrong."""
     sourced_answer_template: str = (

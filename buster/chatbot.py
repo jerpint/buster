@@ -10,10 +10,10 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
-from buster.formatter import Formatter, HTMLFormatter, MarkdownFormatter, SlackFormatter
+from buster.formatter import ResponseFormatter, HTMLResponseFormatter, MarkdownResponseFormatter, SlackResponseFormatter
 from buster.formatter.base import Response, Source
 
-FORMATTERS = {"text": Formatter, "slack": SlackFormatter, "html": HTMLFormatter, "markdown": MarkdownFormatter}
+FORMATTERS = {"text": ResponseFormatter, "slack": SlackResponseFormatter, "html": HTMLResponseFormatter, "markdown": MarkdownResponseFormatter}
 
 
 logger = logging.getLogger(__name__)
@@ -191,7 +191,7 @@ class Chatbot:
             )
             if relevant:
                 sources = (
-                    Source(dct["name"], dct["url"], dct["similarity"])
+                    Source(dct["source"], dct["url"], dct["similarity"])
                     for dct in matched_documents.to_dict(orient="records")
                 )
             else:
@@ -219,7 +219,7 @@ class Chatbot:
         # Likely that the answer is meaningful, add the top sources
         return score < unk_threshold
 
-    def process_input(self, question: str, formatter: Formatter = None) -> str:
+    def process_input(self, question: str, formatter: ResponseFormatter = None) -> str:
         """
         Main function to process the input question and generate a formatted output.
         """
