@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
+import pytest
 
-from buster.db import DocumentsDB
+from buster.documents import DocumentsDB, DocumentsPickle
 
 
-def test_write_read():
-    db = DocumentsDB(":memory:")
+@pytest.mark.parametrize("documents_manager, extension", [(DocumentsDB, "db"), (DocumentsPickle, "tar.gz")])
+def test_write_read(tmp_path, documents_manager, extension):
+    db = documents_manager(tmp_path / f"test.{extension}")
 
     data = pd.DataFrame.from_dict(
         {
@@ -16,7 +18,7 @@ def test_write_read():
             "n_tokens": [10],
         }
     )
-    db.write_documents(source="test", df=data)
+    db.add(source="test", df=data)
 
     db_data = db.get_documents("test")
 
@@ -27,8 +29,9 @@ def test_write_read():
     assert db_data["n_tokens"].iloc[0] == data["n_tokens"].iloc[0]
 
 
-def test_write_write_read():
-    db = DocumentsDB(":memory:")
+@pytest.mark.parametrize("documents_manager, extension", [(DocumentsDB, "db"), (DocumentsPickle, "tar.gz")])
+def test_write_write_read(tmp_path, documents_manager, extension):
+    db = documents_manager(tmp_path / f"test.{extension}")
 
     data_1 = pd.DataFrame.from_dict(
         {
@@ -39,7 +42,7 @@ def test_write_write_read():
             "n_tokens": [10],
         }
     )
-    db.write_documents(source="test", df=data_1)
+    db.add(source="test", df=data_1)
 
     data_2 = pd.DataFrame.from_dict(
         {
@@ -50,7 +53,7 @@ def test_write_write_read():
             "n_tokens": [20],
         }
     )
-    db.write_documents(source="test", df=data_2)
+    db.add(source="test", df=data_2)
 
     db_data = db.get_documents("test")
 

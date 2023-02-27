@@ -5,6 +5,8 @@ import zlib
 import numpy as np
 import pandas as pd
 
+from buster.documents.base import DocumentsManager
+
 documents_table = """CREATE TABLE IF NOT EXISTS documents (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     source TEXT NOT NULL,
@@ -33,7 +35,7 @@ qa_table = """CREATE TABLE IF NOT EXISTS qa (
 )"""
 
 
-class DocumentsDB:
+class DocumentsDB(DocumentsManager):
     """Simple SQLite database for storing documents and questions/answers.
 
     The database is just a file on disk. It can store documents from different sources, and it can store multiple versions of the same document (e.g. if the document is updated).
@@ -41,13 +43,13 @@ class DocumentsDB:
 
     Example:
         >>> db = DocumentsDB("/path/to/the/db.db")
-        >>> db.write_documents("source", df)  # df is a DataFrame containing the documents from a given source, obtained e.g. by using buster.docparser.generate_embeddings
+        >>> db.add("source", df)  # df is a DataFrame containing the documents from a given source, obtained e.g. by using buster.docparser.generate_embeddings
         >>> df = db.get_documents("source")
     """
 
-    def __init__(self, db_path):
-        self.db_path = db_path
-        self.conn = sqlite3.connect(db_path)
+    def __init__(self, filepath: str):
+        self.db_path = filepath
+        self.conn = sqlite3.connect(filepath)
         self.cursor = self.conn.cursor()
 
         self.__initialize()
@@ -61,7 +63,7 @@ class DocumentsDB:
         self.cursor.execute(qa_table)
         self.conn.commit()
 
-    def write_documents(self, source: str, df: pd.DataFrame):
+    def add(self, source: str, df: pd.DataFrame):
         """Write all documents from the dataframe into the db. All previous documents from that source will be set to `current = 0`."""
         df = df.copy()
 
@@ -102,7 +104,10 @@ class DocumentsDB:
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
         # Execute the SQL statement and fetch the results
-        results = self.cursor.execute("SELECT * FROM documents WHERE source = ? AND current = 1", (source,))
+        if source is not None:
+            results = self.cursor.execute("SELECT * FROM documents WHERE source = ? AND current = 1", (source,))
+        else:
+            results = self.cursor.execute("SELECT * FROM documents WHERE current = 1")
         rows = results.fetchall()
 
         # Convert the results to a pandas DataFrame
