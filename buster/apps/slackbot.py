@@ -26,7 +26,7 @@ mila_doc_cfg = ChatbotConfig(
         "max_tokens": 200,
     },
     separator="\n",
-    link_format="slack",
+    response_format="slack",
     response_footnote="""I'm a bot 🤖 and not always perfect.
     For more info, view the full documentation here (https://docs.mila.quebec/) or contact support@mila.quebec
     """,
@@ -62,7 +62,7 @@ orion_cfg = ChatbotConfig(
         "max_tokens": 200,
     },
     separator="\n",
-    link_format="slack",
+    response_format="slack",
     text_before_prompt="""You are a slack chatbot assistant answering technical questions about orion, a hyperparameter optimization library written in python.
     Make sure to format your answers in Markdown format, including code block and snippets.
     Do not include any links to urls or hyperlinks in your answers.
@@ -94,7 +94,7 @@ pytorch_cfg = ChatbotConfig(
         "max_tokens": 500,
     },
     separator="\n",
-    link_format="slack",
+    response_format="slack",
     text_before_prompt="""You are a slack chatbot assistant answering technical questions about pytorch, a library to train neural networks written in python.
     Make sure to format your answers in Markdown format, including code block and snippets.
     Do not include any links to urls or hyperlinks in your answers.
@@ -126,7 +126,7 @@ hf_transformers_cfg = ChatbotConfig(
         "max_tokens": 500,
     },
     separator="\n",
-    link_format="slack",
+    response_format="slack",
     text_before_prompt="""You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.
     Make sure to format your answers in Markdown format, including code block and snippets.
     Do not include any links to urls or hyperlinks in your answers.

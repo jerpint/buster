@@ -4,4 +4,10 @@ from .markdown import MarkdownResponseFormatter
 from .slack import SlackResponseFormatter
 from .gradio import GradioResponseFormatter
 
-__all__ = [ResponseFormatter, HTMLResponseFormatter, MarkdownResponseFormatter, SlackResponseFormatter, GradioResponseFormatter]
+__all__ = [
+    ResponseFormatter,
+    HTMLResponseFormatter,
+    MarkdownResponseFormatter,
+    SlackResponseFormatter,
+    GradioResponseFormatter,
+]

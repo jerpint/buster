@@ -10,17 +10,8 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
-from buster.formatter import ResponseFormatter, HTMLResponseFormatter, MarkdownResponseFormatter, SlackResponseFormatter, GradioResponseFormatter
-from buster.formatter.base import Response, Source
-
-FORMATTERS = {
-    "text": ResponseFormatter,
-    "slack": SlackResponseFormatter,
-    "html": HTMLResponseFormatter,
-    "markdown": MarkdownResponseFormatter,
-    "gradio": GradioResponseFormatter,
-}
-
+from buster.formatter.factory import ResponseFormatterFactory
+from buster.formatter.base import Response, Source, ResponseFormatter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -47,7 +38,7 @@ class ChatbotConfig:
     max_words: maximum number of words the retrieved documents can be. Will truncate otherwise.
     completion_kwargs: kwargs for the OpenAI.Completion() method
     separator: the separator to use, can be either "\n" or <p> depending on rendering.
-    link_format: the type of format to render links with, e.g. slack or markdown
+    response_format: the type of format to render links with, e.g. slack or markdown
     unknown_prompt: Prompt to use to generate the "I don't know" embedding to compare to.
     text_before_prompt: Text to prompt GPT with before the user prompt, but after the documentation.
     reponse_footnote: Generic response to add the the chatbot's reply.
@@ -71,7 +62,7 @@ class ChatbotConfig:
         }
     )
     separator: str = "\n"
-    link_format: str = "slack"
+    response_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
     text_before_documents: str = "You are a chatbot answering questions.\n"
     text_before_prompt: str = "Answer the following question:\n"
@@ -87,9 +78,10 @@ class Chatbot:
         self._init_response_formatter()
 
     def _init_response_formatter(self):
-        if self.cfg.link_format not in FORMATTERS:
-            raise ValueError(f"Unknown link format {self.cfg.link_format}")
-        self.response_formatter = FORMATTERS[self.cfg.link_format](response_footnote=self.cfg.response_footnote)
+        self.response_formatter = ResponseFormatterFactory().get_formatter(
+            format=self.cfg.response_format,
+            response_footnote=self.cfg.response_footnote
+        )
 
     def _init_documents(self):
         filepath = self.cfg.documents_file
