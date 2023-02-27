@@ -48,7 +48,7 @@ class Formatter:
     def answer(self, response: Response, sources: Iterable[Source]) -> str:
         """Format an answer and its sources."""
         sources_list = self.sources_list(sources)
-        if not sources_list:
+        if sources_list:
             return self.sourced_answer_template.format(response=response, sources=sources_list)
 
         return self.unsourced_answer_template.format(response=response)
