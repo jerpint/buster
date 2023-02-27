@@ -79,8 +79,7 @@ class Chatbot:
 
     def _init_response_formatter(self):
         self.response_formatter = ResponseFormatterFactory().get_formatter(
-            format=self.cfg.response_format,
-            response_footnote=self.cfg.response_footnote
+            format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
         )
 
     def _init_documents(self):
