@@ -55,7 +55,9 @@ class ResponseFormatter:
         """Format an answer and its sources."""
         sources_list = self.sources_list(sources)
         if sources_list:
-            return self.sourced_answer_template.format(response=response, sources=sources_list, footnote=self.response_footnote)
+            return self.sourced_answer_template.format(
+                response=response, sources=sources_list, footnote=self.response_footnote
+            )
 
         return self.unsourced_answer_template.format(response=response, footnote=self.response_footnote)
 

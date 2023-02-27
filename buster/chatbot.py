@@ -13,7 +13,12 @@ from buster.docparser import read_documents
 from buster.formatter import ResponseFormatter, HTMLResponseFormatter, MarkdownResponseFormatter, SlackResponseFormatter
 from buster.formatter.base import Response, Source
 
-FORMATTERS = {"text": ResponseFormatter, "slack": SlackResponseFormatter, "html": HTMLResponseFormatter, "markdown": MarkdownResponseFormatter}
+FORMATTERS = {
+    "text": ResponseFormatter,
+    "slack": SlackResponseFormatter,
+    "html": HTMLResponseFormatter,
+    "markdown": MarkdownResponseFormatter,
+}
 
 
 logger = logging.getLogger(__name__)
@@ -69,7 +74,7 @@ class ChatbotConfig:
     unknown_prompt: str = "I Don't know how to answer your question."
     text_before_documents: str = "You are a chatbot answering questions.\n"
     text_before_prompt: str = "Answer the following question:\n"
-    response_footnote: str ="I'm a bot 🤖 and not always perfect."
+    response_footnote: str = "I'm a bot 🤖 and not always perfect."
 
 
 class Chatbot:
