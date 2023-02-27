@@ -1,11 +1,11 @@
 import logging
 
 from buster.formatter import (
-    ResponseFormatter,
+    GradioResponseFormatter,
     HTMLResponseFormatter,
     MarkdownResponseFormatter,
+    ResponseFormatter,
     SlackResponseFormatter,
-    GradioResponseFormatter,
 )
 
 logger = logging.getLogger(__name__)

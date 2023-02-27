@@ -2,7 +2,7 @@ import html
 from dataclasses import dataclass
 from typing import Iterable
 
-from buster.formatter.base import ResponseFormatter, Response, Source
+from buster.formatter.base import Response, ResponseFormatter, Source
 
 
 @dataclass
