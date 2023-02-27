@@ -44,7 +44,7 @@ class ChatbotConfig:
     link_format: the type of format to render links with, e.g. slack or markdown
     unknown_prompt: Prompt to use to generate the "I don't know" embedding to compare to.
     text_before_prompt: Text to prompt GPT with before the user prompt, but after the documentation.
-    text_after_response: Generic response to add the the chatbot's reply.
+    reponse_footnote: Generic response to add the the chatbot's reply.
     """
 
     documents_file: str = "buster/data/document_embeddings.csv"
@@ -69,7 +69,7 @@ class ChatbotConfig:
     unknown_prompt: str = "I Don't know how to answer your question."
     text_before_documents: str = "You are a chatbot answering questions.\n"
     text_before_prompt: str = "Answer the following question:\n"
-    text_after_response: str = "I'm a chatbot, bleep bloop."
+    response_footnote: str ="I'm a bot 🤖 and not always perfect."
 
 
 class Chatbot:
@@ -78,6 +78,12 @@ class Chatbot:
         self.cfg = cfg
         self._init_documents()
         self._init_unk_embedding()
+        self._init_response_formatter()
+
+    def _init_response_formatter(self):
+        if self.cfg.link_format not in FORMATTERS:
+            raise ValueError(f"Unknown link format {self.cfg.link_format}")
+        self.response_formatter = FORMATTERS[self.cfg.link_format](response_footnote=self.cfg.response_footnote)
 
     def _init_documents(self):
         filepath = self.cfg.documents_file
@@ -195,8 +201,8 @@ class Chatbot:
                     for dct in matched_documents.to_dict(orient="records")
                 )
             else:
-                # Override the answer with a generic unknown prompt.
-                response = self.cfg.unknown_prompt
+                # Override the answer with a generic unknown prompt, without sources.
+                response = Response(text=self.cfg.unknown_prompt)
                 sources = tuple()
 
         return response, sources
@@ -226,11 +232,6 @@ class Chatbot:
         Main function to process the input question and generate a formatted output.
         """
 
-        if formatter is None and self.cfg.link_format not in FORMATTERS:
-            raise ValueError(f"Unknown link format {self.cfg.link_format}")
-        elif formatter is None:
-            formatter = FORMATTERS[self.cfg.link_format]()
-
         logger.info(f"User Question:\n{question}")
 
         # We make sure there is always a newline at the end of the question to avoid completing the question.
@@ -252,4 +253,4 @@ class Chatbot:
         )
         response, sources = self.generate_response(prompt, matched_documents, self.cfg.unknown_prompt)
 
-        return formatter(response, sources)
+        return self.response_formatter(response, sources)

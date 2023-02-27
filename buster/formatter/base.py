@@ -21,10 +21,10 @@ class Response:
 
 @dataclass
 class ResponseFormatter:
+    response_footnote: str
     source_template: str = "{source.name} (relevance: {source.question_similarity:2.3f})"
     error_msg_template: str = """Something went wrong:\n{response.error_msg}"""
     error_fallback_template: str = "Something went very wrong."
-    response_footnote: str = "I'm a chatbot, bleep bloop."
     sourced_answer_template: str = (
         """{response.text}\n\n"""
         """📝 Here are the sources I used to answer your question:\n"""
