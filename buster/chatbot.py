@@ -10,8 +10,8 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
+from buster.formatter.base import Response, ResponseFormatter, Source
 from buster.formatter.factory import ResponseFormatterFactory
-from buster.formatter.base import Response, Source, ResponseFormatter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
