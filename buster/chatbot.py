@@ -195,6 +195,8 @@ class Chatbot:
                     for dct in matched_documents.to_dict(orient="records")
                 )
             else:
+                # Override the answer with a generic unknown prompt.
+                response = self.cfg.unknown_prompt
                 sources = tuple()
 
         return response, sources
