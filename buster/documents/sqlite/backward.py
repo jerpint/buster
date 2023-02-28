@@ -2,15 +2,13 @@
 
 import argparse
 import itertools
+import sqlite3
 from typing import Iterable, NamedTuple
 
 import numpy as np
-import sqlite3
 
-from buster.db import DocumentsDB
-
-import buster.db.documents as dest
-
+import buster.documents.sqlite.documents as dest
+from buster.documents.sqlite import DocumentsDB
 
 IMPORT_QUERY = (
     r"""SELECT source, url, title, content FROM documents WHERE current = 1 ORDER BY source, url, title, id"""
@@ -90,15 +88,14 @@ def main():
     db = DocumentsDB(args.destination)
 
     for source, content in get_documents(org):
-        sid, vid = db.start_version(source)
+        # sid, vid = db.start_version(source)
         sections = (dest.Section(section.title, section.url, section.content) for section in content)
-        db.add_sections(sid, vid, sections)
+        db.add_parse(source, sections)
 
     size = max(args.size, get_max_size(org))
     for source, chunks in get_chunks(org):
         sid, vid = db.get_current_version(source)
-        cid = db.add_chunking(sid, vid, size)
-        db.add_chunks(sid, vid, cid, chunks)
+        db.add_chunking(sid, vid, size, chunks)
     db.conn.commit()
 
     return

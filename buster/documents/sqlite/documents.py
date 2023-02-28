@@ -1,12 +1,15 @@
+import itertools
 import sqlite3
-from typing import Iterable, NamedTuple
 import warnings
 import zlib
+from pathlib import Path
+from typing import Iterable, NamedTuple
 
 import numpy as np
 import pandas as pd
 
-import buster.db.schema as schema
+import buster.documents.sqlite.schema as schema
+from buster.documents.base import DocumentsManager
 
 
 class Section(NamedTuple):
@@ -23,7 +26,7 @@ class Chunk(NamedTuple):
     emb: np.ndarray
 
 
-class DocumentsDB:
+class DocumentsDB(DocumentsManager):
     """Simple SQLite database for storing documents and questions/answers.
 
     The database is just a file on disk. It can store documents from different sources, and it can store multiple versions of the same document (e.g. if the document is updated).
@@ -36,13 +39,12 @@ class DocumentsDB:
     """
 
     def __init__(self, db_path: sqlite3.Connection | str):
-        if isinstance(db_path, str):
+        if isinstance(db_path, (str, Path)):
             self.db_path = db_path
-            self.conn = sqlite3.connect(db_path)
+            self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
         else:
             self.db_path = None
             self.conn = db_path
-        self.cursor = self.conn.cursor()
         schema.initialize_db(self.conn)
         schema.setup_db(self.conn)
 
@@ -51,6 +53,7 @@ class DocumentsDB:
             self.conn.close()
 
     def get_current_version(self, source: str) -> tuple[int, int]:
+        """Get the current version of a source."""
         cur = self.conn.execute("SELECT source, version FROM latest_version WHERE name = ?", (source,))
         row = cur.fetchone()
         if row is None:
@@ -59,6 +62,7 @@ class DocumentsDB:
         return sid, vid
 
     def get_source(self, source: str) -> int:
+        """Get the id of a source."""
         cur = self.conn.execute("SELECT id FROM sources WHERE name = ?", (source,))
         row = cur.fetchone()
         if row is not None:
@@ -71,7 +75,8 @@ class DocumentsDB:
 
         return sid
 
-    def start_version(self, source: str) -> tuple[int, int]:
+    def new_version(self, source: str) -> tuple[int, int]:
+        """Create a new version for a source."""
         cur = self.conn.execute("SELECT source, version FROM latest_version WHERE name = ?", (source,))
         row = cur.fetchone()
         if row is None:
@@ -83,7 +88,9 @@ class DocumentsDB:
         self.conn.execute("INSERT INTO versions (source, version) VALUES (?, ?)", (sid, vid))
         return sid, vid
 
-    def add_sections(self, sid: int, vid: int, sections: Iterable[Section]):
+    def add_parse(self, source: str, sections: Iterable[Section]) -> tuple[int, int]:
+        """Create a new version of a source filled with parsed sections."""
+        sid, vid = self.new_version(source)
         values = (
             (sid, vid, ind, section.title, section.url, section.content, section.parent, section.type)
             for ind, section in enumerate(sections)
@@ -94,9 +101,10 @@ class DocumentsDB:
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             values,
         )
-        return
+        return sid, vid
 
-    def add_chunking(self, sid: int, vid: int, size: int, overlap: int = 0, strategy: str = "simple") -> int:
+    def new_chunking(self, sid: int, vid: int, size: int, overlap: int = 0, strategy: str = "simple") -> int:
+        """Create a new chunking for a source."""
         self.conn.execute(
             "INSERT INTO chunkings (size, overlap, strategy, source, version) VALUES (?, ?, ?, ?, ?)",
             (size, overlap, strategy, sid, vid),
@@ -109,7 +117,9 @@ class DocumentsDB:
         (id,) = (id for id, in cur)
         return id
 
-    def add_chunks(self, sid: int, vid: int, cid: int, sections: Iterable[Iterable[Chunk]]):
+    def add_chunking(self, sid: int, vid: int, size: int, sections: Iterable[Iterable[Chunk]]) -> int:
+        """Create a new chunking for a source, filled with chunks organized by section."""
+        cid = self.new_chunking(sid, vid, size)
         chunks = ((ind, jnd, chunk) for ind, section in enumerate(sections) for jnd, chunk in enumerate(section))
         values = ((sid, vid, ind, cid, jnd, chunk.content, chunk.n_tokens, chunk.emb) for ind, jnd, chunk in chunks)
         self.conn.executemany(
@@ -118,51 +128,29 @@ class DocumentsDB:
             "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
             values,
         )
-        return
+        return cid
 
-    def write_documents(self, source: str, df: pd.DataFrame):
-        """Write all documents from the dataframe into the db. All previous documents from that source will be set to `current = 0`."""
-        df = df.copy()
+    def add(self, source: str, df: pd.DataFrame):
+        """Write all documents from the dataframe into the db as a new version."""
+        data = sorted(df.itertuples(), key=lambda chunk: (chunk.url, chunk.title))
+        sections = []
+        size = None
+        for (url, title), chunks in itertools.groupby(data, lambda chunk: (chunk.url, chunk.title)):
+            chunks = [Chunk(chunk.content, chunk.n_tokens, chunk.embedding) for chunk in chunks]
+            _size = max(len(chunk.content) for chunk in chunks)
+            size = max(_size, size or 0)
+            content = "".join(chunk.content for chunk in chunks)
+            sections.append((Section(title, url, content), chunks))
 
-        # Prepare the rows
-        df["source"] = source
-        df["current"] = 1
-        columns = ["source", "title", "url", "content", "current"]
-        if "embedding" in df.columns:
-            columns.extend(
-                [
-                    "n_tokens",
-                    "embedding",
-                ]
-            )
-
-            # Check that the embeddings are float32
-            if not df["embedding"].iloc[0].dtype == np.float32:
-                warnings.warn(
-                    f"Embeddings are not float32, converting them to float32 from {df['embedding'].iloc[0].dtype}.",
-                    RuntimeWarning,
-                )
-                df["embedding"] = df["embedding"].apply(lambda x: x.astype(np.float32))
-
-            # ZLIB compress the embeddings
-            df["embedding"] = df["embedding"].apply(lambda x: sqlite3.Binary(zlib.compress(x.tobytes())))
-
-        data = df[columns].values.tolist()
-
-        # Set `current` to 0 for all previous documents from that source
-        self.cursor.execute("UPDATE documents SET current = 0 WHERE source = ?", (source,))
-
-        # Insert the new documents
-        insert_statement = f"INSERT INTO documents ({', '.join(columns)}) VALUES ({', '.join(['?']*len(columns))})"
-        self.cursor.executemany(insert_statement, data)
-
-        self.conn.commit()
+        sid, vid = self.add_parse(source, (section for section, _ in sections))
+        self.add_chunking(sid, vid, size, (chunks for _, chunks in sections))
 
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
         # Execute the SQL statement and fetch the results
-        results = self.cursor.execute("SELECT * FROM documents WHERE source = ?", (source,))
+        results = self.conn.execute("SELECT * FROM documents WHERE source = ?", (source,))
         rows = results.fetchall()
+        print(rows[0])
 
         # Convert the results to a pandas DataFrame
         df = pd.DataFrame(rows, columns=[description[0] for description in results.description])

@@ -1,9 +1,7 @@
+import sqlite3
 import zlib
 
-
 import numpy as np
-import sqlite3
-
 
 SOURCE_TABLE = r"""CREATE TABLE IF NOT EXISTS sources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,5 +129,5 @@ def cosine_similarity(a: bytes, b: bytes) -> float:
 
 def setup_db(connection: sqlite3.Connection):
     sqlite3.register_adapter(np.ndarray, adapt_vector)
-    sqlite3.register_converter("VECTOR", convert_vector)
+    sqlite3.register_converter("vector", convert_vector)
     connection.create_function("sim", 2, cosine_similarity, deterministic=True)
