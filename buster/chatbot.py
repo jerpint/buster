@@ -9,7 +9,7 @@ import pandas as pd
 import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
-from buster.docparser import read_documents
+from buster.documents import get_documents_manager_from_extension
 from buster.formatter import Formatter, HTMLFormatter, MarkdownFormatter, SlackFormatter
 from buster.formatter.base import Response, Source
 
@@ -47,7 +47,7 @@ class ChatbotConfig:
     text_after_response: Generic response to add the the chatbot's reply.
     """
 
-    documents_file: str = "buster/data/document_embeddings.csv"
+    documents_file: str = "buster/data/document_embeddings.tar.gz"
     embedding_model: str = "text-embedding-ada-002"
     top_k: int = 3
     thresh: float = 0.7
@@ -82,7 +82,7 @@ class Chatbot:
     def _init_documents(self):
         filepath = self.cfg.documents_file
         logger.info(f"loading embeddings from {filepath}...")
-        self.documents = read_documents(filepath)
+        self.documents = get_documents_manager_from_extension(filepath)(filepath)
         logger.info(f"embeddings loaded.")
 
     def _init_unk_embedding(self):
@@ -94,7 +94,6 @@ class Chatbot:
 
     def rank_documents(
         self,
-        documents: pd.DataFrame,
         query: str,
         top_k: float,
         thresh: float,
@@ -108,14 +107,7 @@ class Chatbot:
             query,
             engine=engine,
         )
-        documents["similarity"] = documents.embedding.apply(lambda x: cosine_similarity(x, query_embedding))
-
-        # sort the matched_documents by score
-        matched_documents = documents.sort_values("similarity", ascending=False)
-
-        # limit search to top_k matched_documents.
-        top_k = len(matched_documents) if top_k == -1 else top_k
-        matched_documents = matched_documents.head(top_k)
+        matched_documents = self.documents.retrieve(query_embedding, top_k)
 
         # log matched_documents to the console
         logger.info(f"matched documents before thresh: {matched_documents}")
@@ -236,7 +228,6 @@ class Chatbot:
             question += "\n"
 
         matched_documents = self.rank_documents(
-            documents=self.documents,
             query=question,
             top_k=self.cfg.top_k,
             thresh=self.cfg.thresh,
