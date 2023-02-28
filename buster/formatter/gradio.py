@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Iterable
 
-from buster.formatter.base import ResponseFormatter, Source
+from buster.formatter import ResponseFormatter, Source
 
 
 @dataclass
