@@ -9,13 +9,13 @@ import pandas as pd
 import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
+from buster.documents import get_documents_manager_from_extension
 from buster.formatter import (
     Response,
     ResponseFormatter,
     Source,
     response_formatter_factory,
 )
-from buster.documents import get_documents_manager_from_extension
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
