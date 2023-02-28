@@ -2,14 +2,14 @@ import html
 from dataclasses import dataclass
 from typing import Iterable
 
-from buster.formatter.base import Formatter, Response, Source
+from buster.formatter.base import Response, ResponseFormatter, Source
 
 
 @dataclass
-class HTMLFormatter(Formatter):
+class HTMLResponseFormatter(ResponseFormatter):
     """Format the answer in HTML."""
 
-    source_template: str = """<li><a href='{source.url}'>🔗 {source.name}</a></li>"""
+    source_template: str = """<li><a href='{source.url}'>🔗 {source.source}</a></li>"""
     error_msg_template: str = """<div class="error">Something went wrong:\n<p>{response.error_msg}</p></div>"""
     error_fallback_template: str = """<div class="error">Something went very wrong.</div>"""
     sourced_answer_template: str = (
@@ -37,5 +37,5 @@ class HTMLFormatter(Formatter):
             response.error,
             html.escape(response.error_msg) if response.error_msg else response.error_msg,
         )
-        sources = (Source(html.escape(source.name), source.url, source.question_similarity) for source in sources)
+        sources = (Source(html.escape(source.source), source.url, source.question_similarity) for source in sources)
         return super().__call__(response, sources)

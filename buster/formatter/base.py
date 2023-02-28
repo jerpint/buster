@@ -4,7 +4,7 @@ from typing import Iterable, NamedTuple
 
 # Should be from the `documents` module.
 class Source(NamedTuple):
-    name: str
+    source: str
     url: str
     question_similarity: float
     # TODO Add answer similarity.
@@ -20,12 +20,18 @@ class Response:
 
 
 @dataclass
-class Formatter:
+class ResponseFormatter:
+    response_footnote: str
     source_template: str = "{source.name} (relevance: {source.question_similarity:2.3f})"
-    error_msg_template: str = "Something went wrong: {response.error_msg}"
+    error_msg_template: str = """Something went wrong:\n{response.error_msg}"""
     error_fallback_template: str = "Something went very wrong."
-    sourced_answer_template: str = "{response.text}\n\nSources:\n{sources}\n\nBut what do I know, I'm a chatbot."
-    unsourced_answer_template: str = "{response.text}\n\nBut what do I know, I'm a chatbot."
+    sourced_answer_template: str = (
+        """{response.text}\n\n"""
+        """📝 Here are the sources I used to answer your question:\n"""
+        """{sources}\n\n"""
+        """{footnote}"""
+    )
+    unsourced_answer_template: str = "{response.text}\n\n{footnote}"
 
     def source_item(self, source: Source) -> str:
         """Format a single source item."""
@@ -48,10 +54,12 @@ class Formatter:
     def answer(self, response: Response, sources: Iterable[Source]) -> str:
         """Format an answer and its sources."""
         sources_list = self.sources_list(sources)
-        if not sources_list:
-            return self.sourced_answer_template.format(response=response, sources=sources_list)
+        if sources_list:
+            return self.sourced_answer_template.format(
+                response=response, sources=sources_list, footnote=self.response_footnote
+            )
 
-        return self.unsourced_answer_template.format(response=response)
+        return self.unsourced_answer_template.format(response=response, footnote=self.response_footnote)
 
     def __call__(self, response: Response, sources: Iterable[Source]) -> str:
         """Format an answer and its sources, or an error message."""
