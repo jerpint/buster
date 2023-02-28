@@ -29,6 +29,9 @@ class DocumentsPickle(DocumentsManager):
         self.documents.to_pickle(self.filepath)
 
     def get_documents(self, source: str) -> pd.DataFrame:
+        if self.documents is None:
+            raise FileNotFoundError(f"No documents found at {self.filepath}. Are you sure this is the correct path?")
+
         documents = self.documents.copy()
         if "current" in documents.columns:
             documents = documents[documents.current == 1]
