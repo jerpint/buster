@@ -30,4 +30,4 @@ def test_chatbot_simple():
     )
     chatbot = Chatbot(hf_transformers_cfg)
     answer = chatbot.process_input("What is a transformer?")
-    assert type(answer) is str
+    assert isinstance(answer, str)
