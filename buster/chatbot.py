@@ -10,8 +10,12 @@ import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.docparser import read_documents
-from buster.formatter.base import Response, ResponseFormatter, Source
-from buster.formatter.factory import ResponseFormatterFactory
+from buster.formatter import (
+    Response,
+    ResponseFormatter,
+    Source,
+    response_formatter_factory,
+)
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -78,7 +82,7 @@ class Chatbot:
         self._init_response_formatter()
 
     def _init_response_formatter(self):
-        self.response_formatter = ResponseFormatterFactory().get_formatter(
+        self.response_formatter = response_formatter_factory(
             format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
         )
 
