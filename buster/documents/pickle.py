@@ -30,7 +30,8 @@ class DocumentsPickle(DocumentsManager):
 
     def get_documents(self, source: str) -> pd.DataFrame:
         documents = self.documents.copy()
-        documents = documents[documents.current == 1]
+        if 'current' in documents.columns:
+            documents = documents[documents.current == 1]
 
         if source is not None and "source" in documents.columns:
             documents = documents[documents.source == source]
