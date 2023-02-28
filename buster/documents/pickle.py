@@ -35,4 +35,7 @@ class DocumentsPickle(DocumentsManager):
         if source is not None and "source" in documents.columns:
             documents = documents[documents.source == source]
 
+        # Drop the `current` column
+        documents.drop(columns=["current"], inplace=True)
+
         return documents
