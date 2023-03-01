@@ -134,11 +134,10 @@ class DocumentsDB(DocumentsManager):
         """Write all documents from the dataframe into the db as a new version."""
         data = sorted(df.itertuples(), key=lambda chunk: (chunk.url, chunk.title))
         sections = []
-        size = None
+        size = 0
         for (url, title), chunks in itertools.groupby(data, lambda chunk: (chunk.url, chunk.title)):
             chunks = [Chunk(chunk.content, chunk.n_tokens, chunk.embedding) for chunk in chunks]
-            _size = max(len(chunk.content) for chunk in chunks)
-            size = max(_size, size or 0)
+            size = max(size, max(len(chunk.content) for chunk in chunks))
             content = "".join(chunk.content for chunk in chunks)
             sections.append((Section(title, url, content), chunks))
 
