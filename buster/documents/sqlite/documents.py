@@ -34,7 +34,7 @@ class DocumentsDB(DocumentsManager):
 
     Example:
         >>> db = DocumentsDB("/path/to/the/db.db")
-        >>> db.write_documents("source", df)  # df is a DataFrame containing the documents from a given source, obtained e.g. by using buster.docparser.generate_embeddings
+        >>> db.add("source", df)  # df is a DataFrame containing the documents from a given source, obtained e.g. by using buster.docparser.generate_embeddings
         >>> df = db.get_documents("source")
     """
 
@@ -150,7 +150,6 @@ class DocumentsDB(DocumentsManager):
         # Execute the SQL statement and fetch the results
         results = self.conn.execute("SELECT * FROM documents WHERE source = ?", (source,))
         rows = results.fetchall()
-        print(rows[0])
 
         # Convert the results to a pandas DataFrame
         df = pd.DataFrame(rows, columns=[description[0] for description in results.description])
