@@ -1,15 +1,43 @@
-import os
-from pathlib import Path
+import numpy as np
+import pandas as pd
 
 from buster.chatbot import Chatbot, ChatbotConfig
-
-TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
-DOCUMENTS_FILE = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingface_subset.tar.gz")
+from buster.documents import DocumentsManager
 
 
-def test_chatbot_simple():
+def get_fake_embedding(length=1536):
+    rng = np.random.default_rng()
+    return list(rng.random(length, dtype=np.float32))
+
+
+class DocumentsMock(DocumentsManager):
+    def __init__(self, filepath):
+        self.filepath = filepath
+
+        n_samples = 100
+        self.documents = pd.DataFrame.from_dict(
+            {
+                "title": ["test"] * n_samples,
+                "url": ["http://url.com"] * n_samples,
+                "content": ["cool text"] * n_samples,
+                "embedding": [get_fake_embedding()] * n_samples,
+                "n_tokens": [10] * n_samples,
+            }
+        )
+
+    def add(self, documents):
+        pass
+
+    def get_documents(self, source):
+        return self.documents
+
+
+def test_chatbot_simple(tmp_path, monkeypatch):
+    monkeypatch.setattr("buster.chatbot.get_documents_manager_from_extension", lambda filepath: DocumentsMock)
+    monkeypatch.setattr("buster.chatbot.get_embedding", lambda x, engine: get_fake_embedding())
+
     hf_transformers_cfg = ChatbotConfig(
-        documents_file=DOCUMENTS_FILE,
+        documents_file=tmp_path / "not_a_real_file.tar.gz",
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
         embedding_model="text-embedding-ada-002",
         top_k=3,
