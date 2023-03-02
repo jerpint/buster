@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from buster.chatbot import Buster, BusterConfig
+from buster.buster import Buster, BusterConfig
 
 TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
 DOCUMENTS_FILE = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingface_subset.tar.gz")
