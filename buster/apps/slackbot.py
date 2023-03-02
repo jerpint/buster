@@ -3,7 +3,7 @@ import os
 
 from slack_bolt import App
 
-from buster.chatbot import Chatbot, ChatbotConfig
+from buster.chatbot import Buster, BusterConfig
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -14,7 +14,7 @@ ORION_CHANNEL = "C04LYHGUYB0"
 PYTORCH_CHANNEL = "C04MEK6N882"
 HF_TRANSFORMERS_CHANNEL = "C04NJNCJWHE"
 
-mila_doc_cfg = ChatbotConfig(
+mila_doc_cfg = BusterConfig(
     documents_file="../data/document_embeddings_mila.tar.gz",
     unknown_prompt="This doesn't seem to be related to cluster usage.",
     embedding_model="text-embedding-ada-002",
@@ -48,9 +48,9 @@ mila_doc_cfg = ChatbotConfig(
     Now answer the following question:
     """,
 )
-mila_doc_chatbot = Chatbot(mila_doc_cfg)
+mila_doc_chatbot = Buster(mila_doc_cfg)
 
-orion_cfg = ChatbotConfig(
+orion_cfg = BusterConfig(
     documents_file="../data/document_embeddings_orion.tar.gz",
     unknown_prompt="This doesn't seem to be related to the orion library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
@@ -80,9 +80,9 @@ orion_cfg = ChatbotConfig(
     Now answer the following question:
     """,
 )
-orion_chatbot = Chatbot(orion_cfg)
+orion_chatbot = Buster(orion_cfg)
 
-pytorch_cfg = ChatbotConfig(
+pytorch_cfg = BusterConfig(
     documents_file="../data/document_embeddings_pytorch.tar.gz",
     unknown_prompt="This doesn't seem to be related to the pytorch library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
@@ -112,9 +112,9 @@ pytorch_cfg = ChatbotConfig(
     Now answer the following question:
     """,
 )
-pytorch_chatbot = Chatbot(pytorch_cfg)
+pytorch_chatbot = Buster(pytorch_cfg)
 
-hf_transformers_cfg = ChatbotConfig(
+hf_transformers_cfg = BusterConfig(
     documents_file="../data/document_embeddings_huggingface.tar.gz",
     unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
     embedding_model="text-embedding-ada-002",
@@ -144,7 +144,7 @@ hf_transformers_cfg = ChatbotConfig(
     Now answer the following question:
     """,
 )
-hf_transformers_chatbot = Chatbot(hf_transformers_cfg)
+hf_transformers_chatbot = Buster(hf_transformers_cfg)
 
 # TODO: eventually move this to a factory of sorts
 # Put all the bots in a dict by channel

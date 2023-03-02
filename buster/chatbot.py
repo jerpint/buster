@@ -32,7 +32,7 @@ if promptlayer_api_key:
 
 
 @dataclass
-class ChatbotConfig:
+class BusterConfig:
     """Configuration object for a chatbot.
 
     documents_csv: Path to the csv file containing the documents and their embeddings.
@@ -73,8 +73,8 @@ class ChatbotConfig:
     response_footnote: str = "I'm a bot 🤖 and not always perfect."
 
 
-class Chatbot:
-    def __init__(self, cfg: ChatbotConfig):
+class Buster:
+    def __init__(self, cfg: BusterConfig):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
         self.cfg = cfg
         self._init_documents()

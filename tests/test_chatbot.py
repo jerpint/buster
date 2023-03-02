@@ -1,14 +1,14 @@
 import os
 from pathlib import Path
 
-from buster.chatbot import Chatbot, ChatbotConfig
+from buster.chatbot import Buster, BusterConfig
 
 TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
 DOCUMENTS_FILE = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingface_subset.tar.gz")
 
 
 def test_chatbot_simple():
-    hf_transformers_cfg = ChatbotConfig(
+    hf_transformers_cfg = BusterConfig(
         documents_file=DOCUMENTS_FILE,
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
         embedding_model="text-embedding-ada-002",
@@ -28,6 +28,6 @@ def test_chatbot_simple():
             """Now answer the following question:\n"""
         ),
     )
-    chatbot = Chatbot(hf_transformers_cfg)
+    chatbot = Buster(hf_transformers_cfg)
     answer = chatbot.process_input("What is a transformer?")
     assert isinstance(answer, str)
