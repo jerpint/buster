@@ -22,6 +22,7 @@ class DocumentsMock(DocumentsManager):
                 "content": ["cool text"] * n_samples,
                 "embedding": [get_fake_embedding()] * n_samples,
                 "n_tokens": [10] * n_samples,
+                "source": ["fake source"] * n_samples,
             }
         )
 
