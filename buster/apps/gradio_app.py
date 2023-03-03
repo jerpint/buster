@@ -4,7 +4,7 @@ from buster.buster import Buster, BusterConfig
 
 buster_cfg = BusterConfig(
     documents_file="../data/document_embeddings_huggingface.tar.gz",
-    unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
+    unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
     embedding_model="text-embedding-ada-002",
     top_k=3,
     thresh=0.7,

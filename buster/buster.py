@@ -57,7 +57,6 @@ class BusterConfig:
             },
         }
     )
-    separator: str = "\n"
     response_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
     response_footnote: str = "I'm a bot 🤖 and not always perfect."
