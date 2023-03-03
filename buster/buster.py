@@ -1,14 +1,11 @@
 import logging
-import os
 from dataclasses import dataclass, field
-from typing import Iterable
 
 import numpy as np
-import openai
 import pandas as pd
-import promptlayer
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
+from buster.completers import get_completer
 from buster.documents import get_documents_manager_from_extension
 from buster.formatter import (
     Response,
@@ -20,19 +17,9 @@ from buster.formatter import (
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-# Check if an API key exists for promptlayer, if it does, use it
-promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
-if promptlayer_api_key:
-    logger.info("Enabling prompt layer...")
-    promptlayer.api_key = promptlayer_api_key
-
-    # replace openai with the promptlayer wrapper
-    openai = promptlayer.openai
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
-
 
 @dataclass
-class ChatbotConfig:
+class BusterConfig:
     """Configuration object for a chatbot.
 
     documents_csv: Path to the csv file containing the documents and their embeddings.
@@ -54,29 +41,32 @@ class ChatbotConfig:
     thresh: float = 0.7
     max_words: int = 3000
     unknown_threshold: float = 0.9  # set to 0 to deactivate
-
-    completion_kwargs: dict = field(
+    completer_cfg: dict = field(
+        # TODO: Put all this in its own config with sane defaults?
         default_factory=lambda: {
-            "engine": "text-davinci-003",
-            "max_tokens": 200,
-            "temperature": None,
-            "top_p": None,
-            "frequency_penalty": 1,
-            "presence_penalty": 1,
+            "name": "GPT3",
+            "text_before_documents": "You are a chatbot answering questions.\n",
+            "text_before_prompt": "Answer the following question:\n",
+            "completion_kwargs": {
+                "engine": "text-davinci-003",
+                "max_tokens": 200,
+                "temperature": None,
+                "top_p": None,
+                "frequency_penalty": 1,
+                "presence_penalty": 1,
+            },
         }
     )
-    separator: str = "\n"
     response_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
-    text_before_documents: str = "You are a chatbot answering questions.\n"
-    text_before_prompt: str = "Answer the following question:\n"
     response_footnote: str = "I'm a bot 🤖 and not always perfect."
 
 
-class Chatbot:
-    def __init__(self, cfg: ChatbotConfig):
+class Buster:
+    def __init__(self, cfg: BusterConfig):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
         self.cfg = cfg
+        self.completer = get_completer(cfg.completer_cfg)
         self._init_documents()
         self._init_unk_embedding()
         self._init_response_formatter()
@@ -141,67 +131,21 @@ class Chatbot:
 
         return documents_str
 
-    def prepare_prompt(
+    def add_sources(
         self,
-        question: str,
+        response,
         matched_documents: pd.DataFrame,
-        text_before_prompt: str,
-        text_before_documents: str,
-    ) -> str:
-        """
-        Prepare the prompt with prompt engineering.
-        """
-        documents_str: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
-        return text_before_documents + documents_str + text_before_prompt + question
+        unknown_prompt: str,
+    ):
+        logger.info(f"GPT Response:\n{response.text}")
+        sources = (
+            Source(dct["source"], dct["url"], dct["similarity"]) for dct in matched_documents.to_dict(orient="records")
+        )
 
-    def get_gpt_response(self, **completion_kwargs) -> Response:
-        # Call the API to generate a response
-        logger.info(f"querying GPT...")
-        try:
-            response = openai.Completion.create(**completion_kwargs)
-        except Exception as e:
-            # log the error and return a generic response instead.
-            logger.exception("Error connecting to OpenAI API. See traceback:")
-            return Response("", True, "We're having trouble connecting to OpenAI right now... Try again soon!")
-
-        text = response["choices"][0]["text"]
-        return Response(text)
-
-    def generate_response(
-        self, prompt: str, matched_documents: pd.DataFrame, unknown_prompt: str
-    ) -> tuple[Response, Iterable[Source]]:
-        """
-        Generate a response based on the retrieved documents.
-        """
-        if len(matched_documents) == 0:
-            # No matching documents were retrieved, return
-            sources = tuple()
-            return Response(unknown_prompt), sources
-
-        logger.info(f"Prompt:  {prompt}")
-        response = self.get_gpt_response(prompt=prompt, **self.cfg.completion_kwargs)
-        if response:
-            logger.info(f"GPT Response:\n{response.text}")
-            relevant = self.check_response_relevance(
-                response=response.text,
-                engine=self.cfg.embedding_model,
-                unk_embedding=self.unk_embedding,
-                unk_threshold=self.cfg.unknown_threshold,
-            )
-            if relevant:
-                sources = (
-                    Source(dct["source"], dct["url"], dct["similarity"])
-                    for dct in matched_documents.to_dict(orient="records")
-                )
-            else:
-                # Override the answer with a generic unknown prompt, without sources.
-                response = Response(text=self.cfg.unknown_prompt)
-                sources = tuple()
-
-        return response, sources
+        return sources
 
     def check_response_relevance(
-        self, response: str, engine: str, unk_embedding: np.array, unk_threshold: float
+        self, completion: str, engine: str, unk_embedding: np.array, unk_threshold: float
     ) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
@@ -211,7 +155,7 @@ class Chatbot:
         set the unk_threshold to 0 to essentially turn off this feature.
         """
         response_embedding = get_embedding(
-            response,
+            completion,
             engine=engine,
         )
         score = cosine_similarity(response_embedding, unk_embedding)
@@ -220,29 +164,45 @@ class Chatbot:
         # Likely that the answer is meaningful, add the top sources
         return score < unk_threshold
 
-    def process_input(self, question: str, formatter: ResponseFormatter = None) -> str:
+    def process_input(self, user_input: str, formatter: ResponseFormatter = None) -> str:
         """
         Main function to process the input question and generate a formatted output.
         """
 
-        logger.info(f"User Question:\n{question}")
+        logger.info(f"User Input:\n{user_input}")
 
         # We make sure there is always a newline at the end of the question to avoid completing the question.
-        if not question.endswith("\n"):
-            question += "\n"
+        if not user_input.endswith("\n"):
+            user_input += "\n"
 
         matched_documents = self.rank_documents(
-            query=question,
+            query=user_input,
             top_k=self.cfg.top_k,
             thresh=self.cfg.thresh,
             engine=self.cfg.embedding_model,
         )
-        prompt = self.prepare_prompt(
-            question=question,
-            matched_documents=matched_documents,
-            text_before_prompt=self.cfg.text_before_prompt,
-            text_before_documents=self.cfg.text_before_documents,
+
+        if len(matched_documents) == 0:
+            response = Response("I did not find any sources to answer your question.")
+            sources = tuple()
+            return self.response_formatter(response, sources)
+
+        # generate a completion
+        documents: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
+        response = self.completer.generate_response(user_input, documents)
+        sources = self.add_sources(response, matched_documents, self.cfg.unknown_prompt)
+
+        # check for relevance
+        relevant = self.check_response_relevance(
+            completion=response.text,
+            engine=self.cfg.embedding_model,
+            unk_embedding=self.unk_embedding,
+            unk_threshold=self.cfg.unknown_threshold,
         )
-        response, sources = self.generate_response(prompt, matched_documents, self.cfg.unknown_prompt)
+        if not relevant:
+            # answer generated was the chatbot saying it doesn't know how to answer
+            # override completion with generic "I don't know"
+            response = Response(text=self.cfg.unknown_prompt)
+            sources = tuple()
 
         return self.response_formatter(response, sources)
