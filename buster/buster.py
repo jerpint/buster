@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
-from buster.completers.base import get_completer
+from buster.completers import get_completer
 from buster.documents import get_documents_manager_from_extension
 from buster.formatter import (
     Response,
