@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import logging
 import os
 
@@ -20,12 +21,13 @@ if promptlayer_api_key:
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
-class Completer:
+class Completer(ABC):
     def __init__(self, cfg):
         self.cfg = cfg
 
+    @abstractmethod
     def complete(self, prompt) -> str:
-        pass
+        ...
 
     def generate_response(self, user_input, documents) -> Response:
         # Call the API to generate a response
@@ -60,21 +62,6 @@ class GPT3Completer(Completer):
     def complete(self, prompt, **completion_kwargs):
         response = openai.Completion.create(prompt=prompt, **completion_kwargs)
         return response["choices"][0]["text"]
-
-    def generate_response(self, user_input, documents) -> Response:
-        # Call the API to generate a response
-        prompt = self.prepare_prompt(user_input, documents)
-        logger.info(f"querying GPT...")
-        logger.info(f"{prompt=}")
-        try:
-            completion_kwargs = self.cfg["completion_kwargs"]
-            completion = self.complete(prompt=prompt, **completion_kwargs)
-        except Exception as e:
-            # log the error and return a generic response instead.
-            logger.exception("Error connecting to OpenAI API. See traceback:")
-            return Response("", True, "We're having trouble connecting to OpenAI right now... Try again soon!")
-
-        return Response(completion)
 
 
 class ChatGPTCompleter(Completer):
