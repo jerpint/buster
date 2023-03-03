@@ -44,17 +44,17 @@ class BusterConfig:
     completer_cfg: dict = field(
         # TODO: Put all this in its own config with sane defaults?
         default_factory=lambda: {
-        "name": "GPT3",
-        "text_before_documents": "You are a chatbot answering questions.\n",
-        "text_before_prompt": "Answer the following question:\n",
-        "completion_kwargs": {
+            "name": "GPT3",
+            "text_before_documents": "You are a chatbot answering questions.\n",
+            "text_before_prompt": "Answer the following question:\n",
+            "completion_kwargs": {
                 "engine": "text-davinci-003",
                 "max_tokens": 200,
                 "temperature": None,
                 "top_p": None,
                 "frequency_penalty": 1,
                 "presence_penalty": 1,
-            }
+            },
         }
     )
     separator: str = "\n"
@@ -132,14 +132,15 @@ class Buster:
 
         return documents_str
 
-
     def add_sources(
-        self, response, matched_documents: pd.DataFrame, unknown_prompt: str,
+        self,
+        response,
+        matched_documents: pd.DataFrame,
+        unknown_prompt: str,
     ):
         logger.info(f"GPT Response:\n{response.text}")
         sources = (
-            Source(dct["source"], dct["url"], dct["similarity"])
-            for dct in matched_documents.to_dict(orient="records")
+            Source(dct["source"], dct["url"], dct["similarity"]) for dct in matched_documents.to_dict(orient="records")
         )
 
         return sources

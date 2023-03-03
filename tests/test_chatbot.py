@@ -55,7 +55,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
         thresh=0.7,
         max_words=3000,
         response_format="slack",
-        completer_cfg = {
+        completer_cfg={
             "name": "GPT3",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
@@ -65,14 +65,14 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
             ),
             "text_before_documents": "",
             "completion_kwargs": {
-                    "engine": "text-davinci-003",
-                    "max_tokens": 200,
-                    "temperature": None,
-                    "top_p": None,
-                    "frequency_penalty": 1,
-                    "presence_penalty": 1,
-                },
-        }
+                "engine": "text-davinci-003",
+                "max_tokens": 200,
+                "temperature": None,
+                "top_p": None,
+                "frequency_penalty": 1,
+                "presence_penalty": 1,
+            },
+        },
     )
     buster = Buster(hf_transformers_cfg)
     answer = buster.process_input("What is a transformer?")
@@ -89,7 +89,7 @@ def test_chatbot_real_data__chatGPT():
         thresh=0.7,
         max_words=3000,
         response_format="slack",
-        completer_cfg = {
+        completer_cfg={
             "name": "ChatGPT",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
@@ -99,9 +99,9 @@ def test_chatbot_real_data__chatGPT():
             ),
             "text_before_documents": "Only use these documents as reference:\n",
             "completion_kwargs": {
-                    "model": "gpt-3.5-turbo",
-                },
-        }
+                "model": "gpt-3.5-turbo",
+            },
+        },
     )
     buster = Buster(hf_transformers_cfg)
     answer = buster.process_input("What is a transformer?")
@@ -117,7 +117,7 @@ def test_chatbot_real_data__GPT():
         thresh=0.7,
         max_words=3000,
         response_format="slack",
-        completer_cfg = {
+        completer_cfg={
             "name": "GPT3",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
@@ -127,14 +127,14 @@ def test_chatbot_real_data__GPT():
             ),
             "text_before_documents": "",
             "completion_kwargs": {
-                    "engine": "text-davinci-003",
-                    "max_tokens": 200,
-                    "temperature": None,
-                    "top_p": None,
-                    "frequency_penalty": 1,
-                    "presence_penalty": 1,
-                },
-        }
+                "engine": "text-davinci-003",
+                "max_tokens": 200,
+                "temperature": None,
+                "top_p": None,
+                "frequency_penalty": 1,
+                "presence_penalty": 1,
+            },
+        },
     )
     buster = Buster(hf_transformers_cfg)
     answer = buster.process_input("What is a transformer?")

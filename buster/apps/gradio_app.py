@@ -11,7 +11,7 @@ buster_cfg = BusterConfig(
     max_words=3000,
     response_format="gradio",
     response_footnote="I'm a bot 🤖 trained to answer huggingface 🤗 transformers questions. My answers aren't always perfect.",
-    completer_cfg = {
+    completer_cfg={
         "name": "ChatGPT",
         "text_before_prompt": (
             """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
@@ -26,11 +26,12 @@ buster_cfg = BusterConfig(
         ),
         "text_before_documents": "Only use these documents as reference:\n",
         "completion_kwargs": {
-                "model": "gpt-3.5-turbo",
-            },
-    }
+            "model": "gpt-3.5-turbo",
+        },
+    },
 )
 buster = Buster(buster_cfg)
+
 
 def chat(question, history):
     history = history or []
@@ -44,13 +45,11 @@ def chat(question, history):
     return history, history
 
 
-
 block = gr.Blocks(css=".gradio-container {background-color: lightgray}")
 
 with block:
     with gr.Row():
         gr.Markdown("<h3><center>Buster 🤖: A Question-Answering Bot for Huggingface 🤗 Transformers </center></h3>")
-
 
     chatbot = gr.Chatbot()
 
@@ -73,14 +72,11 @@ with block:
     )
 
     gr.Markdown(
-    """This simple application uses GPT to search the huggingface 🤗 transformers docs and answer questions.
+        """This simple application uses GPT to search the huggingface 🤗 transformers docs and answer questions.
     For more info on huggingface transformers view the [full documentation.](https://huggingface.co/docs/transformers/index)."""
     )
 
-
-    gr.HTML(
-        "️<center> Created with ❤️ by @jerpint and @hadrienbertrand"
-    )
+    gr.HTML("️<center> Created with ❤️ by @jerpint and @hadrienbertrand")
 
     state = gr.State()
     agent_state = gr.State()

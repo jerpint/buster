@@ -21,8 +21,10 @@ if promptlayer_api_key:
 class Completer:
     def __init__(self, cfg):
         self.cfg = cfg
+
     def complete(self, prompt) -> str:
         pass
+
     def generate_response(self, user_input, documents) -> Response:
         # Call the API to generate a response
         prompt = self.prepare_prompt(user_input, documents)
@@ -84,24 +86,23 @@ class ChatGPTCompleter(Completer):
         """
         text_before_docs = self.cfg["text_before_documents"]
         text_before_prompt = self.cfg["text_before_prompt"]
-        prompt=[
-                {"role": "system", "content": text_before_docs + documents + text_before_prompt},
-                {"role": "user", "content": user_input},
-            ]
+        prompt = [
+            {"role": "system", "content": text_before_docs + documents + text_before_prompt},
+            {"role": "user", "content": user_input},
+        ]
         return prompt
 
     def complete(self, prompt, **completion_kwargs) -> str:
         response = openai.ChatCompletion.create(
-          messages=prompt,
-          **completion_kwargs,
+            messages=prompt,
+            **completion_kwargs,
         )
 
-        return response['choices'][0]['message']['content']
-
+        return response["choices"][0]["message"]["content"]
 
 
 def get_completer(completer_cfg):
-    name = completer_cfg['name']
+    name = completer_cfg["name"]
     completers = {
         "GPT3": GPT3Completer,
         "ChatGPT": ChatGPTCompleter,
