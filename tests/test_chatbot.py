@@ -43,9 +43,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
     monkeypatch.setattr("buster.buster.get_documents_manager_from_extension", lambda filepath: DocumentsMock)
     monkeypatch.setattr("buster.buster.get_embedding", lambda x, engine: get_fake_embedding())
-    monkeypatch.setattr(
-        "openai.Completion.create", lambda **kwargs: {"choices": [{"text": gpt_expected_answer}]}
-    )
+    monkeypatch.setattr("openai.Completion.create", lambda **kwargs: {"choices": [{"text": gpt_expected_answer}]})
 
     hf_transformers_cfg = BusterConfig(
         documents_file=tmp_path / "not_a_real_file.tar.gz",
