@@ -83,7 +83,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
 def test_chatbot_real_data__chatGPT():
     hf_transformers_cfg = BusterConfig(
         documents_file=DOCUMENTS_FILE,
-        unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
+        unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
         top_k=3,
         thresh=0.7,
@@ -111,7 +111,7 @@ def test_chatbot_real_data__chatGPT():
 def test_chatbot_real_data__chatGPT_OOD():
     hf_transformers_cfg = BusterConfig(
         documents_file=DOCUMENTS_FILE,
-        unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
+        unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
         top_k=3,
         thresh=0.7,
@@ -123,11 +123,12 @@ def test_chatbot_real_data__chatGPT_OOD():
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
                 """Make sure to format your answers in Markdown format, including code block and snippets. """
                 """Do not include any links to urls or hyperlinks in your answers. """
-                """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, simply reply with: """
-                """'This doesn't seem to be related to the huggingface library.'\n"""
+                """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
                 """For example:\n"""
                 """What is the meaning of life for huggingface?\n"""
                 """This doesn't seem to be related to the huggingface library.\n"""
+                """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
+                """"""
                 """Now answer the following question:\n"""
             ),
             "text_before_documents": "Only use these documents as reference:\n",
