@@ -8,7 +8,6 @@ tiktoken
 promptlayer
 pytest
 openai
-gitpython
 
 # all openai[embeddings] deps, their list breaks our CI, see: https://github.com/openai/openai-python/issues/210 
 
