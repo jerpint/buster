@@ -5,7 +5,7 @@ colorFrom: red
 colorTo: blue
 sdk: gradio
 app_file: buster/apps/gradio_app.py
-python_version: 3.10
+python_version: 3.10.8
 pinned: false
 ---
 
