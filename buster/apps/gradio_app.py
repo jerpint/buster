@@ -3,21 +3,12 @@ import pathlib
 
 import gradio as gr
 
-import git
-
-
 from buster.buster import Buster, BusterConfig
 
+DATA_DIR = pathlib.Path(__file__).parent.parent.resolve() / "data"  # points to ../data/
 
-def get_git_working_dir():
-    path = pathlib.Path(__file__).resolve()
-    git_repo = git.Repo(path, search_parent_directories=True)
-    return git_repo.working_dir
-
-
-working_dir = get_git_working_dir()
 buster_cfg = BusterConfig(
-    documents_file=os.path.join(os.path.join(working_dir, "buster/data/document_embeddings_huggingface.tar.gz")),
+    documents_file=os.path.join(DATA_DIR, "document_embeddings_huggingface.tar.gz"),
     unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
     embedding_model="text-embedding-ada-002",
     top_k=3,
