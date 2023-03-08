@@ -1,3 +1,14 @@
+---
+title: Buster
+emoji: 🤖
+colorFrom: red
+colorTo: blue
+sdk: gradio
+app_file: buster/apps/gradio_app.py
+python_version: 3.10.8
+pinned: false
+---
+
 # Buster, the QA documentation chatbot!
 
 Buster is a question-answering chatbot that can be tuned to specific documentations. You can try it [here](https://huggingface.co/spaces/jerpint/buster), where it will answer questions about [🤗 Transformers](https://huggingface.co/docs/transformers/index).
@@ -23,7 +34,7 @@ We send the prompt to the [OpenAI API](https://beta.openai.com/docs/api-referenc
 ### Currently used models
 
 - For embeddings: "text-embedding-ada-002"
-- For completion: "text-davinci-003"
+- For completion: We support both "text-davinci-003" and "gpt-3.5-turbo"
 
 ### Livestream
 

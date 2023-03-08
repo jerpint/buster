@@ -1,10 +1,10 @@
-# Project specific stuff
-buster/data/
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Macos
+*.DS_Store*
 
 albenchmark/data/
 
