@@ -1,7 +1,5 @@
 import itertools
 import sqlite3
-import warnings
-import zlib
 from pathlib import Path
 from typing import Iterable, NamedTuple
 
@@ -41,7 +39,7 @@ class DocumentsDB(DocumentsManager):
     def __init__(self, db_path: sqlite3.Connection | str):
         if isinstance(db_path, (str, Path)):
             self.db_path = db_path
-            self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
+            self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
         else:
             self.db_path = None
             self.conn = db_path
@@ -143,6 +141,7 @@ class DocumentsDB(DocumentsManager):
 
         sid, vid = self.add_parse(source, (section for section, _ in sections))
         self.add_chunking(sid, vid, size, (chunks for _, chunks in sections))
+        self.conn.commit()
 
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
