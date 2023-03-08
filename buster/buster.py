@@ -33,6 +33,7 @@ class BusterConfig:
     unknown_prompt: Prompt to use to generate the "I don't know" embedding to compare to.
     text_before_prompt: Text to prompt GPT with before the user prompt, but after the documentation.
     reponse_footnote: Generic response to add the the chatbot's reply.
+    source: the source of the document to consider
     """
 
     documents_file: str = "buster/data/document_embeddings.tar.gz"
@@ -60,14 +61,17 @@ class BusterConfig:
     response_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
     response_footnote: str = "I'm a bot 🤖 and not always perfect."
+    source: str = ""
 
+
+from buster.documents.base import DocumentsManager
 
 class Buster:
-    def __init__(self, cfg: BusterConfig):
+    def __init__(self, cfg: BusterConfig, documents: DocumentsManager):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
         self.cfg = cfg
         self.completer = get_completer(cfg.completer_cfg)
-        self._init_documents()
+        self.documents = documents
         self._init_unk_embedding()
         self._init_response_formatter()
 
@@ -75,12 +79,6 @@ class Buster:
         self.response_formatter = response_formatter_factory(
             format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
         )
-
-    def _init_documents(self):
-        filepath = self.cfg.documents_file
-        logger.info(f"loading embeddings from {filepath}...")
-        self.documents = get_documents_manager_from_extension(filepath)(filepath)
-        logger.info(f"embeddings loaded.")
 
     def _init_unk_embedding(self):
         logger.info("Generating UNK embedding...")
@@ -95,6 +93,7 @@ class Buster:
         top_k: float,
         thresh: float,
         engine: str,
+        source: str,
     ) -> pd.DataFrame:
         """
         Compare the question to the series of documents and return the best matching documents.
@@ -104,7 +103,7 @@ class Buster:
             query,
             engine=engine,
         )
-        matched_documents = self.documents.retrieve(query_embedding, top_k)
+        matched_documents = self.documents.retrieve(query_embedding, top_k=top_k, source=source)
 
         # log matched_documents to the console
         logger.info(f"matched documents before thresh: {matched_documents}")
@@ -119,7 +118,9 @@ class Buster:
     def prepare_documents(self, matched_documents: pd.DataFrame, max_words: int) -> str:
         # gather the documents in one large plaintext variable
         documents_list = matched_documents.content.to_list()
-        documents_str = " ".join(documents_list)
+        documents_str = ""
+        for idx, doc in enumerate(documents_list):
+            documents_str += f"<DOCUMENT> {doc} <\DOCUMENT>"
 
         # truncate the documents to fit
         # TODO: increase to actual token count
@@ -180,6 +181,7 @@ class Buster:
             top_k=self.cfg.top_k,
             thresh=self.cfg.thresh,
             engine=self.cfg.embedding_model,
+            source=self.cfg.source,
         )
 
         if len(matched_documents) == 0:
