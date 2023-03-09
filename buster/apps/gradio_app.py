@@ -5,7 +5,7 @@ import gradio as gr
 
 from buster.apps.bot_configs import available_configs
 from buster.buster import Buster
-from buster.documents.utils import get_documents_manager_from_extension, download_db
+from buster.documents.utils import download_db, get_documents_manager_from_extension
 
 DEFAULT_CONFIG = "huggingface"
 DB_URL = "https://huggingface.co/datasets/jerpint/buster-data/resolve/main/documents.db"

@@ -1,7 +1,6 @@
 import os
-from typing import Type
-
 import urllib.request
+from typing import Type
 
 from buster.documents.base import DocumentsManager
 from buster.documents.pickle import DocumentsPickle
