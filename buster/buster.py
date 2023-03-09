@@ -1,3 +1,4 @@
+from functools import lru_cache
 import logging
 from dataclasses import dataclass, field
 
@@ -6,7 +7,6 @@ import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import get_completer
-from buster.documents import get_documents_manager_from_extension
 from buster.formatter import (
     Response,
     ResponseFormatter,
@@ -67,25 +67,46 @@ class BusterConfig:
 from buster.documents.base import DocumentsManager
 
 class Buster:
-    def __init__(self, cfg: BusterConfig, documents: DocumentsManager):
+    def __init__(self, documents: DocumentsManager):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
-        self.cfg = cfg
-        self.completer = get_completer(cfg.completer_cfg)
+        self._buster_cfg = None
+        self._unk_embedding = None
         self.documents = documents
-        self._init_unk_embedding()
-        self._init_response_formatter()
 
-    def _init_response_formatter(self):
+
+    @property
+    def unk_embedding(self):
+        return self._unk_embedding
+
+    @unk_embedding.setter
+    # @lru_cache
+    def unk_embedding(self, embedding):
+        logger.info("Setting new UNK embedding...")
+        self._unk_embedding = embedding
+        return self._unk_embedding
+
+
+    @property
+    def cfg(self):
+        return self._buster_cfg
+
+    @cfg.setter
+    def cfg(self, cfg: BusterConfig):
+        """Every time we set a new config, we update the things that need to be updated."""
+        logger.info(f"Swapping config to {cfg.source}")
+        logger.info(cfg)
+        self._buster_cfg = cfg
+        self.completer = get_completer(cfg.completer_cfg)
+        self.unk_embedding = self.get_embedding(self.cfg.unknown_prompt)
         self.response_formatter = response_formatter_factory(
             format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
         )
+        return self._buster_cfg
 
-    def _init_unk_embedding(self):
-        logger.info("Generating UNK embedding...")
-        self.unk_embedding = get_embedding(
-            self.cfg.unknown_prompt,
-            engine=self.cfg.embedding_model,
-        )
+    @lru_cache
+    def get_embedding(self, query: str):
+        logger.info("generating embedding")
+        return get_embedding(query, engine=self.cfg.embedding_model)
 
     def rank_documents(
         self,
@@ -136,7 +157,6 @@ class Buster:
         self,
         response,
         matched_documents: pd.DataFrame,
-        unknown_prompt: str,
     ):
         logger.info(f"GPT Response:\n{response.text}")
         sources = (
@@ -192,7 +212,7 @@ class Buster:
         # generate a completion
         documents: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
         response = self.completer.generate_response(user_input, documents)
-        sources = self.add_sources(response, matched_documents, self.cfg.unknown_prompt)
+        sources = self.add_sources(response, matched_documents)
 
         # check for relevance
         relevant = self.check_response_relevance(
