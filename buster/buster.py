@@ -1,6 +1,6 @@
-from functools import lru_cache
 import logging
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd

@@ -1,6 +1,5 @@
 from buster.buster import BusterConfig
 
-
 huggingface_cfg = BusterConfig(
     unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
     embedding_model="text-embedding-ada-002",

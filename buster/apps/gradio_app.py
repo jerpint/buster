@@ -3,9 +3,9 @@ import pathlib
 
 import gradio as gr
 
+from buster.apps.bot_configs import available_configs
 from buster.buster import Buster
 from buster.documents.utils import get_documents_manager_from_extension
-from buster.apps.bot_configs import available_configs
 
 DATA_DIR = pathlib.Path(__file__).parent.parent.resolve() / "data"  # points to ../data/
 DEFAULT_CONFIG = "huggingface"
