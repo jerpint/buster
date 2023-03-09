@@ -36,6 +36,16 @@ supported_docs = {
         "filename": "documents_huggingface.csv",
         "parser": HuggingfaceParser,
     },
+    "lightning": {
+        "base_url": "https://pytorch-lightning.readthedocs.io/en/stable/",
+        "filename": "documents_lightning.csv",
+        "parser": SphinxParser,
+    },
+    "godot": {
+        "base_url": "https://docs.godotengine.org/en/stable/",
+        "filename": "documents_godot.csv",
+        "parser": SphinxParser,
+    },
 }
 
 
