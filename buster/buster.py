@@ -70,8 +70,9 @@ from buster.documents.base import DocumentsManager
 class Buster:
     def __init__(self, documents: DocumentsManager):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
-        self._buster_cfg = None
         self._unk_embedding = None
+        self._buster_cfg = None
+
         self.documents = documents
 
     @property
