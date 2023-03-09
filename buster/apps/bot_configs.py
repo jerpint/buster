@@ -25,7 +25,7 @@ huggingface_cfg = BusterConfig(
             "Here are the rules you must follow:\n"
             "1) You must only respond with information contained in the documentation above. Say you do not know if the information is not provided.\n"
             "2) Make sure to format your answers in Markdown format, including code block and snippets.\n"
-            "3) Do not include any links, urls or hyperlinks in your answers.\n"
+            "3) Do not reference any links, urls or hyperlinks in your answers.\n"
             "4) If you do not know the answer to a question, or if it is completely irrelevant to the library usage, simply reply with:\n"
             "5) Do not refer to the documentation directly, but use the instructions provided within it to answer questions. "
             "'I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?'"
@@ -85,8 +85,7 @@ pytorch_cfg = BusterConfig(
 )
 
 
-def get_config(source):
-    if source == "huggingface":
-        return huggingface_cfg
-    elif source == "pytorch":
-        return pytorch_cfg
+available_configs = {
+    "huggingface": huggingface_cfg,
+    "pytorch": pytorch_cfg,
+}

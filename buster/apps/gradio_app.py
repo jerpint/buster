@@ -3,16 +3,18 @@ import pathlib
 
 import gradio as gr
 
-from buster.buster import Buster, BusterConfig
+from buster.buster import Buster
 from buster.documents.utils import get_documents_manager_from_extension
-from buster.apps.bot_configs import get_config
+from buster.apps.bot_configs import available_configs
 
 DATA_DIR = pathlib.Path(__file__).parent.parent.resolve() / "data"  # points to ../data/
+DEFAULT_CONFIG = "huggingface"
 
 documents_filepath = os.path.join(DATA_DIR, "documents.db")
 documents = get_documents_manager_from_extension(documents_filepath)(documents_filepath)
 
 buster = Buster(documents=documents)
+buster.cfg = available_configs.get(DEFAULT_CONFIG)
 
 
 def chat(question, history):
@@ -28,18 +30,18 @@ def chat(question, history):
 
 
 def update_config(bot_source: str):
-    buster.cfg = get_config(source=bot_source)
+    buster.cfg = available_configs.get(bot_source, DEFAULT_CONFIG)
 
 
 block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")
 
 with block:
     with gr.Row():
-        gr.Markdown("<h3><center>Buster 🤖: A Question-Answering Bot for Huggingface 🤗 Transformers </center></h3>")
+        gr.Markdown("<h3><center>Buster 🤖: A Question-Answering Bot for open-source libraries </center></h3>")
 
     doc_source = gr.Dropdown(
-        choices=["huggingface", "pytorch"],
-        value="huggingface",
+        choices=sorted(list(available_configs.keys())),
+        value=DEFAULT_CONFIG,
         interactive=True,
         multiselect=False,
         label="Source of Documentation",
@@ -57,10 +59,10 @@ with block:
         submit = gr.Button(value="Send", variant="secondary").style(full_width=False)
 
     examples = gr.Examples(
+        # TODO: seems not possible (for now) to update examples on change...
         examples=[
             "What kind of models should I use for images and text?",
             "When should I finetune a model vs. training it form scratch?",
-            "How can I deploy my trained huggingface model?",
             "Can you give me some python code to quickly finetune a model on my sentiment analysis dataset?",
         ],
         inputs=message,
