@@ -66,13 +66,13 @@ class BusterConfig:
 
 from buster.documents.base import DocumentsManager
 
+
 class Buster:
     def __init__(self, documents: DocumentsManager):
         # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
         self._buster_cfg = None
         self._unk_embedding = None
         self.documents = documents
-
 
     @property
     def unk_embedding(self):
@@ -84,7 +84,6 @@ class Buster:
         logger.info("Setting new UNK embedding...")
         self._unk_embedding = embedding
         return self._unk_embedding
-
 
     @property
     def cfg(self):

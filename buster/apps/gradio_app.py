@@ -9,14 +9,14 @@ from buster.apps.bot_configs import get_config
 
 DATA_DIR = pathlib.Path(__file__).parent.parent.resolve() / "data"  # points to ../data/
 
-documents_filepath=os.path.join(DATA_DIR, "documents.db")
+documents_filepath = os.path.join(DATA_DIR, "documents.db")
 documents = get_documents_manager_from_extension(documents_filepath)(documents_filepath)
 
 buster = Buster(documents=documents)
 
+
 def chat(question, history):
     history = history or []
-
 
     answer = buster.process_input(question)
 
@@ -30,6 +30,7 @@ def chat(question, history):
 def update_config(bot_source: str):
     buster.cfg = get_config(source=bot_source)
 
+
 block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")
 
 with block:
@@ -37,11 +38,15 @@ with block:
         gr.Markdown("<h3><center>Buster 🤖: A Question-Answering Bot for Huggingface 🤗 Transformers </center></h3>")
 
     doc_source = gr.Dropdown(
-        choices=["huggingface", "pytorch"] , value="huggingface", interactive=True, multiselect=False, label="Source of Documentation", info="The source of documentation to select from"
+        choices=["huggingface", "pytorch"],
+        value="huggingface",
+        interactive=True,
+        multiselect=False,
+        label="Source of Documentation",
+        info="The source of documentation to select from",
     )
 
     chatbot = gr.Chatbot()
-
 
     with gr.Row():
         message = gr.Textbox(
@@ -50,7 +55,6 @@ with block:
             lines=1,
         )
         submit = gr.Button(value="Send", variant="secondary").style(full_width=False)
-
 
     examples = gr.Examples(
         examples=[
