@@ -68,10 +68,10 @@ from buster.documents.base import DocumentsManager
 
 
 class Buster:
-    def __init__(self, documents: DocumentsManager):
-        # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
+    def __init__(self, cfg: BusterConfig, documents: DocumentsManager):
         self._unk_embedding = None
-        self._buster_cfg = None
+        self.cfg = cfg
+        self.update_cfg(cfg)
 
         self.documents = documents
 
@@ -80,28 +80,21 @@ class Buster:
         return self._unk_embedding
 
     @unk_embedding.setter
-    # @lru_cache
     def unk_embedding(self, embedding):
         logger.info("Setting new UNK embedding...")
         self._unk_embedding = embedding
         return self._unk_embedding
 
-    @property
-    def cfg(self):
-        return self._buster_cfg
-
-    @cfg.setter
-    def cfg(self, cfg: BusterConfig):
+    def update_cfg(self, cfg: BusterConfig):
         """Every time we set a new config, we update the things that need to be updated."""
-        logger.info(f"Swapping config to {cfg.source}")
-        logger.info(cfg)
-        self._buster_cfg = cfg
+        logger.info(f"Updating config to {cfg.source}:\n{cfg}")
+        self.cfg = cfg
         self.completer = get_completer(cfg.completer_cfg)
         self.unk_embedding = self.get_embedding(self.cfg.unknown_prompt)
         self.response_formatter = response_formatter_factory(
             format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
         )
-        return self._buster_cfg
+        logger.info(f"Config Updated.")
 
     @lru_cache
     def get_embedding(self, query: str):

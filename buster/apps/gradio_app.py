@@ -4,7 +4,8 @@ import pathlib
 import gradio as gr
 
 from buster.apps.bot_configs import available_configs
-from buster.buster import Buster
+from buster.buster import Buster, BusterConfig
+from buster.documents.base import DocumentsManager
 from buster.documents.utils import download_db, get_documents_manager_from_extension
 
 DEFAULT_CONFIG = "huggingface"
@@ -12,11 +13,11 @@ DB_URL = "https://huggingface.co/datasets/jerpint/buster-data/resolve/main/docum
 
 # Download the db...
 documents_filepath = download_db(db_url=DB_URL, output_dir="./data")
-documents = get_documents_manager_from_extension(documents_filepath)(documents_filepath)
+documents: DocumentsManager = get_documents_manager_from_extension(documents_filepath)(documents_filepath)
 
 # initialize buster with the default config...
-buster = Buster(documents=documents)
-buster.cfg = available_configs.get(DEFAULT_CONFIG)
+default_cfg: BusterConfig = available_configs.get(DEFAULT_CONFIG)
+buster = Buster(cfg=default_cfg, documents=documents)
 
 
 def chat(question, history):
@@ -31,8 +32,8 @@ def chat(question, history):
     return history, history
 
 
-def update_config(bot_source: str):
-    buster.cfg = available_configs.get(bot_source, DEFAULT_CONFIG)
+def update_source(bot_source: str):
+    buster.update_cfg(available_configs.get(bot_source, DEFAULT_CONFIG))
 
 
 block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")
@@ -82,7 +83,7 @@ with block:
 
     submit.click(chat, inputs=[message, state], outputs=[chatbot, state])
     message.submit(chat, inputs=[message, state], outputs=[chatbot, state])
-    doc_source.change(update_config, inputs=[doc_source])
+    doc_source.change(update_source, inputs=[doc_source])
 
 
 block.launch(debug=True)
