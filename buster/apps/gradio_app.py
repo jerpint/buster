@@ -22,7 +22,7 @@ buster = Buster(cfg=default_cfg, documents=documents)
 
 def chat(question, history, bot_source):
     history = history or []
-    cfg = available_configs.get(bot_source) # , DEFAULT_CONFIG)
+    cfg = available_configs.get(bot_source)
     buster.update_cfg(cfg)
     answer = buster.process_input(question)
 
