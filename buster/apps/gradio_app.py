@@ -20,9 +20,10 @@ default_cfg: BusterConfig = available_configs.get(DEFAULT_CONFIG)
 buster = Buster(cfg=default_cfg, documents=documents)
 
 
-def chat(question, history):
+def chat(question, history, bot_source):
     history = history or []
-
+    cfg = available_configs.get(bot_source) # , DEFAULT_CONFIG)
+    buster.update_cfg(cfg)
     answer = buster.process_input(question)
 
     # formatting hack for code blocks to render properly every time
@@ -30,10 +31,6 @@ def chat(question, history):
 
     history.append((question, answer))
     return history, history
-
-
-def update_source(bot_source: str):
-    buster.update_cfg(available_configs.get(bot_source, DEFAULT_CONFIG))
 
 
 block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")
@@ -81,9 +78,8 @@ with block:
     state = gr.State()
     agent_state = gr.State()
 
-    submit.click(chat, inputs=[message, state], outputs=[chatbot, state])
-    message.submit(chat, inputs=[message, state], outputs=[chatbot, state])
-    doc_source.change(update_source, inputs=[doc_source])
+    submit.click(chat, inputs=[message, state, doc_source], outputs=[chatbot, state])
+    message.submit(chat, inputs=[message, state, doc_source], outputs=[chatbot, state])
 
 
 block.launch(debug=True)
