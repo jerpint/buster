@@ -14,7 +14,6 @@ def get_file_extension(filepath: str) -> str:
 
 
 def download_db(db_url: str, output_dir: str):
-
     os.makedirs(output_dir, exist_ok=True)
     fname = os.path.join(output_dir, "documents.db")
     if not os.path.exists(fname):
