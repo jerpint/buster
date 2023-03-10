@@ -17,7 +17,7 @@ class GradioResponseFormatter(ResponseFormatter):
         """{footnote}"""
     )
     unsourced_answer_template: str = "{response.text}<br><br>{footnote}"
-    source_template: str = """[🔗 {source.source}]({source.url}), relevance: {source.question_similarity:2.3f}"""
+    source_template: str = """[🔗 {source.title}]({source.url}), relevance: {source.question_similarity:2.3f}"""
 
     def sources_list(self, sources: Iterable[Source]) -> str | None:
         """Format sources into a list."""

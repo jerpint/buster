@@ -4,9 +4,10 @@ from typing import Iterable, NamedTuple
 
 # Should be from the `documents` module.
 class Source(NamedTuple):
-    source: str
+    title: str
     url: str
     question_similarity: float
+    source: str = ""
     # TODO Add answer similarity.
     # answer_similarity: float
 
