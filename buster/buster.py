@@ -153,7 +153,9 @@ class Buster:
     ):
         logger.info(f"GPT Response:\n{response.text}")
         sources = (
-            Source(source=dct["source"], title=dct["title"], url=dct["url"], question_similarity=dct["similarity"]*100)
+            Source(
+                source=dct["source"], title=dct["title"], url=dct["url"], question_similarity=dct["similarity"] * 100
+            )
             for dct in matched_documents.to_dict(orient="records")
         )
 
