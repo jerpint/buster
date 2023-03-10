@@ -23,7 +23,7 @@ class Response:
 @dataclass
 class ResponseFormatter:
     response_footnote: str
-    source_template: str = "{source.name} (relevance: {source.question_similarity:2.3f})"
+    source_template: str = "{source.name} (relevance: {source.question_similarity:2.1f})"
     error_msg_template: str = """Something went wrong:\n{response.error_msg}"""
     error_fallback_template: str = "Something went very wrong."
     sourced_answer_template: str = (
