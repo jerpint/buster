@@ -29,7 +29,6 @@ class MockCompleter(Completer):
         return Response(self.expected_answer)
 
 
-
 class DocumentsMock(DocumentsManager):
     def __init__(self, filepath):
         self.filepath = filepath
@@ -52,8 +51,11 @@ class DocumentsMock(DocumentsManager):
     def get_documents(self, source):
         return self.documents
 
+
 import logging
+
 logging.basicConfig(level=logging.INFO)
+
 
 def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
