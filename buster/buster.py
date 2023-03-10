@@ -198,13 +198,13 @@ class Buster:
         )
 
         if len(matched_documents) == 0:
-            response = Response("I did not find any sources to answer your question.")
+            response = Response(self.cfg.unknown_prompt)
             sources = tuple()
             return self.response_formatter(response, sources)
 
         # generate a completion
         documents: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
-        response = self.completer.generate_response(user_input, documents)
+        response: Response = self.completer.generate_response(user_input, documents)
         sources = self.add_sources(response, matched_documents)
 
         # check for relevance

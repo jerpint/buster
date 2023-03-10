@@ -101,14 +101,14 @@ def test_chatbot_real_data__chatGPT():
             },
         },
     )
-    buster = Buster(hf_transformers_cfg)
+    documents =  get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=hf_transformers_cfg, documents=documents)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
 
 
 def test_chatbot_real_data__chatGPT_OOD():
     buster_cfg = BusterConfig(
-        documents_file=DOCUMENTS_FILE,
         unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
         top_k=3,
@@ -122,7 +122,7 @@ def test_chatbot_real_data__chatGPT_OOD():
                 """Do not include any links to urls or hyperlinks in your answers. """
                 """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
                 """Use this response: """
-                """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
+                """'I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?'\n"""
                 """For example:\n"""
                 """What is the meaning of life for huggingface?\n"""
                 """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
@@ -135,7 +135,8 @@ def test_chatbot_real_data__chatGPT_OOD():
         },
         response_format="gradio",
     )
-    buster = Buster(buster_cfg)
+    documents =  get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=buster_cfg, documents=documents)
     answer = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(answer, str)
     assert buster_cfg.unknown_prompt in answer
@@ -169,6 +170,7 @@ def test_chatbot_real_data__GPT():
             },
         },
     )
+    documents =  get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(hf_transformers_cfg)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
