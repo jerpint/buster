@@ -90,16 +90,16 @@ class Buster:
         logger.info(f"Updating config to {cfg.source}:\n{cfg}")
         self.cfg = cfg
         self.completer = get_completer(cfg.completer_cfg)
-        self.unk_embedding = self.get_embedding(self.cfg.unknown_prompt)
+        self.unk_embedding = self.get_embedding(self.cfg.unknown_prompt, engine=self.cfg.embedding_model)
         self.response_formatter = response_formatter_factory(
             format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
         )
         logger.info(f"Config Updated.")
 
     @lru_cache
-    def get_embedding(self, query: str):
+    def get_embedding(self, query: str, engine: str):
         logger.info("generating embedding")
-        return get_embedding(query, engine=self.cfg.embedding_model)
+        return get_embedding(query, engine=engine)
 
     def rank_documents(
         self,
@@ -113,7 +113,7 @@ class Buster:
         Compare the question to the series of documents and return the best matching documents.
         """
 
-        query_embedding = get_embedding(
+        query_embedding = self.get_embedding(
             query,
             engine=engine,
         )
@@ -171,7 +171,7 @@ class Buster:
 
         set the unk_threshold to 0 to essentially turn off this feature.
         """
-        response_embedding = get_embedding(
+        response_embedding = self.get_embedding(
             completion,
             engine=engine,
         )
