@@ -8,7 +8,7 @@ from buster.formatter.base import ResponseFormatter, Source
 class MarkdownResponseFormatter(ResponseFormatter):
     """Format the answer in markdown."""
 
-    source_template: str = """[🔗 {source.source}]({source.url}), relevance: {source.question_similarity:2.3f}"""
+    source_template: str = """[🔗 {source.title}]({source.url}), relevance: {source.question_similarity:2.3f}"""
 
     def sources_list(self, sources: Iterable[Source]) -> str | None:
         """Format sources into a list."""

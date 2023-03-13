@@ -1,12 +1,12 @@
 import logging
 from dataclasses import dataclass, field
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import get_completer
-from buster.documents import get_documents_manager_from_extension
 from buster.formatter import (
     Response,
     ResponseFormatter,
@@ -33,6 +33,7 @@ class BusterConfig:
     unknown_prompt: Prompt to use to generate the "I don't know" embedding to compare to.
     text_before_prompt: Text to prompt GPT with before the user prompt, but after the documentation.
     reponse_footnote: Generic response to add the the chatbot's reply.
+    source: the source of the document to consider
     """
 
     documents_file: str = "buster/data/document_embeddings.tar.gz"
@@ -60,34 +61,45 @@ class BusterConfig:
     response_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
     response_footnote: str = "I'm a bot 🤖 and not always perfect."
+    source: str = ""
+
+
+from buster.documents.base import DocumentsManager
 
 
 class Buster:
-    def __init__(self, cfg: BusterConfig):
-        # TODO: right now, the cfg is being passed as an omegaconf, is this what we want?
+    def __init__(self, cfg: BusterConfig, documents: DocumentsManager):
+        self._unk_embedding = None
+        self.cfg = cfg
+        self.update_cfg(cfg)
+
+        self.documents = documents
+
+    @property
+    def unk_embedding(self):
+        return self._unk_embedding
+
+    @unk_embedding.setter
+    def unk_embedding(self, embedding):
+        logger.info("Setting new UNK embedding...")
+        self._unk_embedding = embedding
+        return self._unk_embedding
+
+    def update_cfg(self, cfg: BusterConfig):
+        """Every time we set a new config, we update the things that need to be updated."""
+        logger.info(f"Updating config to {cfg.source}:\n{cfg}")
         self.cfg = cfg
         self.completer = get_completer(cfg.completer_cfg)
-        self._init_documents()
-        self._init_unk_embedding()
-        self._init_response_formatter()
-
-    def _init_response_formatter(self):
+        self.unk_embedding = self.get_embedding(self.cfg.unknown_prompt, engine=self.cfg.embedding_model)
         self.response_formatter = response_formatter_factory(
             format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
         )
+        logger.info(f"Config Updated.")
 
-    def _init_documents(self):
-        filepath = self.cfg.documents_file
-        logger.info(f"loading embeddings from {filepath}...")
-        self.documents = get_documents_manager_from_extension(filepath)(filepath)
-        logger.info(f"embeddings loaded.")
-
-    def _init_unk_embedding(self):
-        logger.info("Generating UNK embedding...")
-        self.unk_embedding = get_embedding(
-            self.cfg.unknown_prompt,
-            engine=self.cfg.embedding_model,
-        )
+    @lru_cache
+    def get_embedding(self, query: str, engine: str):
+        logger.info("generating embedding")
+        return get_embedding(query, engine=engine)
 
     def rank_documents(
         self,
@@ -95,16 +107,17 @@ class Buster:
         top_k: float,
         thresh: float,
         engine: str,
+        source: str,
     ) -> pd.DataFrame:
         """
         Compare the question to the series of documents and return the best matching documents.
         """
 
-        query_embedding = get_embedding(
+        query_embedding = self.get_embedding(
             query,
             engine=engine,
         )
-        matched_documents = self.documents.retrieve(query_embedding, top_k)
+        matched_documents = self.documents.retrieve(query_embedding, top_k=top_k, source=source)
 
         # log matched_documents to the console
         logger.info(f"matched documents before thresh: {matched_documents}")
@@ -119,7 +132,9 @@ class Buster:
     def prepare_documents(self, matched_documents: pd.DataFrame, max_words: int) -> str:
         # gather the documents in one large plaintext variable
         documents_list = matched_documents.content.to_list()
-        documents_str = " ".join(documents_list)
+        documents_str = ""
+        for idx, doc in enumerate(documents_list):
+            documents_str += f"<DOCUMENT> {doc} <\DOCUMENT>"
 
         # truncate the documents to fit
         # TODO: increase to actual token count
@@ -135,11 +150,13 @@ class Buster:
         self,
         response,
         matched_documents: pd.DataFrame,
-        unknown_prompt: str,
     ):
         logger.info(f"GPT Response:\n{response.text}")
         sources = (
-            Source(dct["source"], dct["url"], dct["similarity"]) for dct in matched_documents.to_dict(orient="records")
+            Source(
+                source=dct["source"], title=dct["title"], url=dct["url"], question_similarity=dct["similarity"] * 100
+            )
+            for dct in matched_documents.to_dict(orient="records")
         )
 
         return sources
@@ -154,7 +171,7 @@ class Buster:
 
         set the unk_threshold to 0 to essentially turn off this feature.
         """
-        response_embedding = get_embedding(
+        response_embedding = self.get_embedding(
             completion,
             engine=engine,
         )
@@ -180,17 +197,18 @@ class Buster:
             top_k=self.cfg.top_k,
             thresh=self.cfg.thresh,
             engine=self.cfg.embedding_model,
+            source=self.cfg.source,
         )
 
         if len(matched_documents) == 0:
-            response = Response("I did not find any sources to answer your question.")
+            response = Response(self.cfg.unknown_prompt)
             sources = tuple()
             return self.response_formatter(response, sources)
 
         # generate a completion
         documents: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
-        response = self.completer.generate_response(user_input, documents)
-        sources = self.add_sources(response, matched_documents, self.cfg.unknown_prompt)
+        response: Response = self.completer.generate_response(user_input, documents)
+        sources = self.add_sources(response, matched_documents)
 
         # check for relevance
         relevant = self.check_response_relevance(

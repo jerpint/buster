@@ -3,53 +3,27 @@ import pathlib
 
 import gradio as gr
 
+from buster.apps.bot_configs import available_configs
 from buster.buster import Buster, BusterConfig
+from buster.documents.base import DocumentsManager
+from buster.documents.utils import download_db, get_documents_manager_from_extension
 
-DATA_DIR = pathlib.Path(__file__).parent.parent.resolve() / "data"  # points to ../data/
+DEFAULT_CONFIG = "huggingface"
+DB_URL = "https://huggingface.co/datasets/jerpint/buster-data/resolve/main/documents.db"
 
-buster_cfg = BusterConfig(
-    documents_file=os.path.join(DATA_DIR, "document_embeddings_huggingface.tar.gz"),
-    unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
-    embedding_model="text-embedding-ada-002",
-    top_k=3,
-    thresh=0.7,
-    max_words=3000,
-    completer_cfg={
-        "name": "ChatGPT",
-        "text_before_documents": (
-            "You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. "
-            "You can only respond to a question if the content necessary to answer the question is contained in the following provided documentation. "
-            "If it isn't, simply reply that you cannot answer the question. "
-            "Here is the documentation: "
-            "<BEGIN_DOCUMENTATION> "
-        ),
-        "text_before_prompt": (
-            "<\END_DOCUMENTATION>\n"
-            "REMINDER:\n"
-            "You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. "
-            "Here are the rules you must follow:\n"
-            "1) You must only respond with information contained in the documentation above. Say you do not know if the information is not provided.\n"
-            "2) Make sure to format your answers in Markdown format, including code block and snippets.\n"
-            "3) Do not include any links to urls or hyperlinks in your answers.\n"
-            "4) If you do not know the answer to a question, or if it is completely irrelevant to the library usage, simply reply with:\n"
-            "'I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?'"
-            "For example:\n"
-            "What is the meaning of life for huggingface?\n"
-            "I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"
-            "Now answer the following question:\n"
-        ),
-        "completion_kwargs": {
-            "model": "gpt-3.5-turbo",
-        },
-    },
-    response_format="gradio",
-)
-buster = Buster(buster_cfg)
+# Download the db...
+documents_filepath = download_db(db_url=DB_URL, output_dir="./data")
+documents: DocumentsManager = get_documents_manager_from_extension(documents_filepath)(documents_filepath)
+
+# initialize buster with the default config...
+default_cfg: BusterConfig = available_configs.get(DEFAULT_CONFIG)
+buster = Buster(cfg=default_cfg, documents=documents)
 
 
-def chat(question, history):
+def chat(question, history, bot_source):
     history = history or []
-
+    cfg = available_configs.get(bot_source)
+    buster.update_cfg(cfg)
     answer = buster.process_input(question)
 
     # formatting hack for code blocks to render properly every time
@@ -59,11 +33,20 @@ def chat(question, history):
     return history, history
 
 
-block = gr.Blocks(css=".gradio-container {background-color: lightgray}")
+block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")
 
 with block:
     with gr.Row():
-        gr.Markdown("<h3><center>Buster 🤖: A Question-Answering Bot for Huggingface 🤗 Transformers </center></h3>")
+        gr.Markdown("<h3><center>Buster 🤖: A Question-Answering Bot for open-source libraries </center></h3>")
+
+    doc_source = gr.Dropdown(
+        choices=sorted(list(available_configs.keys())),
+        value=DEFAULT_CONFIG,
+        interactive=True,
+        multiselect=False,
+        label="Source of Documentation",
+        info="The source of documentation to select from",
+    )
 
     chatbot = gr.Chatbot()
 
@@ -75,11 +58,11 @@ with block:
         )
         submit = gr.Button(value="Send", variant="secondary").style(full_width=False)
 
-    gr.Examples(
+    examples = gr.Examples(
+        # TODO: seems not possible (for now) to update examples on change...
         examples=[
             "What kind of models should I use for images and text?",
             "When should I finetune a model vs. training it form scratch?",
-            "How can I deploy my trained huggingface model?",
             "Can you give me some python code to quickly finetune a model on my sentiment analysis dataset?",
         ],
         inputs=message,
@@ -95,8 +78,8 @@ with block:
     state = gr.State()
     agent_state = gr.State()
 
-    submit.click(chat, inputs=[message, state], outputs=[chatbot, state])
-    message.submit(chat, inputs=[message, state], outputs=[chatbot, state])
+    submit.click(chat, inputs=[message, state, doc_source], outputs=[chatbot, state])
+    message.submit(chat, inputs=[message, state, doc_source], outputs=[chatbot, state])
 
 
 block.launch(debug=True)
