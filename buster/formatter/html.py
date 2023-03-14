@@ -37,5 +37,5 @@ class HTMLResponseFormatter(ResponseFormatter):
             response.error,
             html.escape(response.error_msg) if response.error_msg else response.error_msg,
         )
-        sources = (Source(html.escape(source.source), source.url, source.question_similarity) for source in sources)
+        sources = (Source(html.escape(source.title), source.url, source.question_similarity) for source in sources)
         return super().__call__(response, sources)

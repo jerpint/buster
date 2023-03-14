@@ -5,7 +5,9 @@ import numpy as np
 import pandas as pd
 
 from buster.buster import Buster, BusterConfig
-from buster.documents import DocumentsManager
+from buster.completers.base import Completer
+from buster.documents import DocumentsManager, get_documents_manager_from_extension
+from buster.formatter.base import Response
 
 TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
 DOCUMENTS_FILE = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingface_subset.tar.gz")
@@ -14,6 +16,17 @@ DOCUMENTS_FILE = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingfa
 def get_fake_embedding(length=1536):
     rng = np.random.default_rng()
     return list(rng.random(length, dtype=np.float32))
+
+
+class MockCompleter(Completer):
+    def __init__(self, expected_answer):
+        self.expected_answer = expected_answer
+
+    def complete(self):
+        return
+
+    def generate_response(self, user_input, documents) -> Response:
+        return Response(self.expected_answer)
 
 
 class DocumentsMock(DocumentsManager):
@@ -39,20 +52,24 @@ class DocumentsMock(DocumentsManager):
         return self.documents
 
 
+import logging
+
+logging.basicConfig(level=logging.INFO)
+
+
 def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
-    monkeypatch.setattr("buster.buster.get_documents_manager_from_extension", lambda filepath: DocumentsMock)
-    monkeypatch.setattr("buster.buster.get_embedding", lambda x, engine: get_fake_embedding())
-    monkeypatch.setattr("openai.Completion.create", lambda **kwargs: {"choices": [{"text": gpt_expected_answer}]})
+    monkeypatch.setattr(Buster, "get_embedding", lambda self, prompt, engine: get_fake_embedding())
+    monkeypatch.setattr("buster.buster.get_completer", lambda x: MockCompleter(expected_answer=gpt_expected_answer))
 
     hf_transformers_cfg = BusterConfig(
-        documents_file=tmp_path / "not_a_real_file.tar.gz",
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
         embedding_model="text-embedding-ada-002",
         top_k=3,
-        thresh=0.7,
+        thresh=0,
         max_words=3000,
         response_format="slack",
+        source="fake source",
         completer_cfg={
             "name": "GPT3",
             "text_before_prompt": (
@@ -72,7 +89,9 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
             },
         },
     )
-    buster = Buster(hf_transformers_cfg)
+    filepath = tmp_path / "not_a_real_file.tar.gz"
+    documents = DocumentsMock(filepath)
+    buster = Buster(cfg=hf_transformers_cfg, documents=documents)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
     assert answer.startswith(gpt_expected_answer)
@@ -80,7 +99,6 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
 
 def test_chatbot_real_data__chatGPT():
     hf_transformers_cfg = BusterConfig(
-        documents_file=DOCUMENTS_FILE,
         unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
         top_k=3,
@@ -101,14 +119,14 @@ def test_chatbot_real_data__chatGPT():
             },
         },
     )
-    buster = Buster(hf_transformers_cfg)
+    documents = get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=hf_transformers_cfg, documents=documents)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
 
 
 def test_chatbot_real_data__chatGPT_OOD():
     buster_cfg = BusterConfig(
-        documents_file=DOCUMENTS_FILE,
         unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
         top_k=3,
@@ -122,7 +140,7 @@ def test_chatbot_real_data__chatGPT_OOD():
                 """Do not include any links to urls or hyperlinks in your answers. """
                 """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
                 """Use this response: """
-                """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
+                """'I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?'\n"""
                 """For example:\n"""
                 """What is the meaning of life for huggingface?\n"""
                 """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
@@ -135,7 +153,8 @@ def test_chatbot_real_data__chatGPT_OOD():
         },
         response_format="gradio",
     )
-    buster = Buster(buster_cfg)
+    documents = get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=buster_cfg, documents=documents)
     answer = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(answer, str)
     assert buster_cfg.unknown_prompt in answer
@@ -143,7 +162,6 @@ def test_chatbot_real_data__chatGPT_OOD():
 
 def test_chatbot_real_data__GPT():
     hf_transformers_cfg = BusterConfig(
-        documents_file=DOCUMENTS_FILE,
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
         embedding_model="text-embedding-ada-002",
         top_k=3,
@@ -169,6 +187,7 @@ def test_chatbot_real_data__GPT():
             },
         },
     )
-    buster = Buster(hf_transformers_cfg)
+    documents = get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=hf_transformers_cfg, documents=documents)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
