@@ -3,7 +3,7 @@ import os
 
 from slack_bolt import App
 
-from buster.buster import Buster, BusterConfig
+from buster.busterbot import Buster, BusterConfig
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
