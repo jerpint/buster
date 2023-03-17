@@ -7,7 +7,7 @@ from buster.documents import get_documents_manager_from_extension
 
 def test_generate_embeddings(tmp_path, monkeypatch):
     # Create fake data
-    data = pd.DataFrame.from_dict({"title": ["test"], "url": ["http://url.com"], "content": ["cool text"]})
+    data = pd.DataFrame.from_dict({"title": ["test"], "url": ["http://url.com"], "content": ["cool text"], "source": ["my_source"]})
 
     # Patch the get_embedding function to return a fixed embedding
     monkeypatch.setattr("buster.docparser.get_embedding", lambda x, engine: [-0.005, 0.0018])
@@ -15,10 +15,10 @@ def test_generate_embeddings(tmp_path, monkeypatch):
 
     # Generate embeddings, store in a file
     output_file = tmp_path / "test_document_embeddings.tar.gz"
-    df = generate_embeddings(tmp_path, output_file, source="mila")
+    df = generate_embeddings(data, output_file)
 
     # Read the embeddings from the file
-    read_df = get_documents_manager_from_extension(output_file)(output_file).get_documents("mila")
+    read_df = get_documents_manager_from_extension(output_file)(output_file).get_documents("my_source")
 
     # Check all the values are correct across the files
     assert df["title"].iloc[0] == data["title"].iloc[0] == read_df["title"].iloc[0]

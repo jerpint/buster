@@ -122,7 +122,7 @@ def compute_embeddings(df: pd.DataFrame, engine: str = EMBEDDING_MODEL) -> pd.Da
 
 def generate_embeddings_parser(root_dir: str, output_filepath: str, source: str) -> pd.DataFrame:
     documents = get_all_documents(root_dir, supported_docs[source]["base_url"], supported_docs[source]["parser"])
-    return generate_embeddings(documents, output_filepath, source)
+    return generate_embeddings(documents, output_filepath)
 
 
 def documents_to_db(documents: pd.DataFrame, output_filepath: str):

@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from buster.busterbotbot import Buster, BusterConfig
+from buster.busterbot import Buster, BusterConfig
 from buster.completers.base import Completer
 from buster.documents import DocumentsManager, get_documents_manager_from_extension
 from buster.formatter.base import Response
