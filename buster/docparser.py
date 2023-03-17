@@ -2,8 +2,8 @@ import glob
 import logging
 import os
 from typing import Type
-import click
 
+import click
 import numpy as np
 import pandas as pd
 import tiktoken
@@ -126,11 +126,12 @@ def generate_embeddings_parser(root_dir: str, output_filepath: str, source: str)
 
 
 def documents_to_db(documents: pd.DataFrame, output_filepath: str):
-    logger.info(f"Converting documents to {output_filepath}")
+    logger.info("Preparing database...")
     sources = documents["source"].unique()
     for source in sources:
         documents_manager = get_documents_manager_from_extension(output_filepath)(output_filepath)
         documents_manager.add(source, documents)
+    logger.info(f"Documents saved to: {output_filepath}")
 
 
 def generate_embeddings(
@@ -156,17 +157,14 @@ def generate_embeddings(
     return documents
 
 
-def hello(count, name):
-    for x in range(count):
-        click.echo(f"Hello {name}!")
-
-
 @click.command()
 @click.argument("documents-csv")
 @click.option(
     "--output-filepath", default="documents.db", help='Where your database will be saved. Default is "documents.db"'
 )
-@click.option("--max-words", default=500, help="Number of max. words per content. Default is 500")
+@click.option(
+    "--max-words", default=500, help="Number of maximum allowed words per document, excess is trimmed. Default is 500"
+)
 @click.option(
     "--embeddings-engine", default=EMBEDDING_MODEL, help=f"Embedding model to use. Default is {EMBEDDING_MODEL}"
 )
