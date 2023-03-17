@@ -7,7 +7,9 @@ from buster.documents import get_documents_manager_from_extension
 
 def test_generate_embeddings(tmp_path, monkeypatch):
     # Create fake data
-    data = pd.DataFrame.from_dict({"title": ["test"], "url": ["http://url.com"], "content": ["cool text"], "source": ["my_source"]})
+    data = pd.DataFrame.from_dict(
+        {"title": ["test"], "url": ["http://url.com"], "content": ["cool text"], "source": ["my_source"]}
+    )
 
     # Patch the get_embedding function to return a fixed embedding
     monkeypatch.setattr("buster.docparser.get_embedding", lambda x, engine: [-0.005, 0.0018])
