@@ -1,0 +1,52 @@
+,source,title,content,url
+0,stackoverflow,stackoverflow question #1,"""Backprop"" is the same as ""backpropagation"": it's just a shorter way to say it. It is sometimes abbreviated as ""BP"".
+",https://ai.stackexchange.com/questions/1
+1,stackoverflow,stackoverflow question #2,"Noise in the data, to a reasonable amount, may help the network to generalize better. Sometimes, it has the opposite effect. It partly depends on the kind of noise (""true"" vs. artificial).
+The AI FAQ on ANN gives a good overview. Excerpt:
+
+Noise in the actual data is never a good thing, since it limits the accuracy of generalization that can be achieved no matter how extensive the training set is. On the other hand, injecting artificial noise (jitter) into the inputs during training is one of several ways to improve generalization for smooth functions when you have a small training set.
+
+In some field, such as computer vision, it's common to increase the size of the training set by copying some samples and adding some noises or other transformation.
+",https://ai.stackexchange.com/questions/2
+2,stackoverflow,stackoverflow question #4,"There is no direct way to find the optimal number of them: people empirically try and see (e.g., using cross-validation). The most common search techniques are random, manual, and grid searches. 
+There exist more advanced techniques such as Gaussian processes, e.g. Optimizing Neural Network Hyperparameters with Gaussian Processes for Dialog Act Classification, IEEE SLT 2016.
+",https://ai.stackexchange.com/questions/4
+3,stackoverflow,stackoverflow question #6,"It rather depends on how one defines several of the terms used. For example:
+
+Whether the term ""expected"" is interpreted in a formal (i.e.
+statistical) sense.  
+Whether it's assumed that humans have any kind of utilitarian
+""performance measure"".
+
+The motivation for this description of ""agent"" arose from a desire to have a quantitative model - it's not clear that such a model is a good fit for human cognition.
+However, there are alternative definitions of agents, for example the BDI model, which are rather more open-ended and hence more obviously applicable to humans.
+",https://ai.stackexchange.com/questions/6
+4,stackoverflow,stackoverflow question #7,"
+To put it simply in layman terms, what are the possible threats from AI? 
+
+Currently, there are no threat. 
+The threat comes if humans create a so-called ultraintelligent machine, a machine that can surpass all intellectual activities by any human. This would be the last invention man would need to do, since this machine is better in inventing machines than humans are (since that is an intellectual activity).  However, this could cause the machine to invent machines that can destruct humans, and we can't stop them because they are so much smarter than we are.
+This is all hypothetical, no one has even a clue of what an ultraintelligent machine looks like. 
+
+If we know that AI is so dangerous why are we still promoting it? Why is it not banned?
+
+As I said before, the existence of a ultraintelligent machine is hypothetical. Artificial Intelligence has lots of useful applications (more than this answer can contain), and if we develop it, we get even more useful applications. We just have to be careful that the machines won't overtake us. 
+",https://ai.stackexchange.com/questions/7
+5,stackoverflow,stackoverflow question #10,"It's analogous to analogue versus digital, or the many shades of gray in between black and white: when evaluating the truthiness of a result, in binary boolean it's either true or false (0 or 1), but when utilizing fuzzy logic, it's an estimated probability between 0 and 1 (such as 0.75 being mostly probably true). It's useful for making calculated decisions when all information needed isn't necessarily available.
+Wikipedia has a fantastic page for this.
+",https://ai.stackexchange.com/questions/10
+6,stackoverflow,stackoverflow question #15,"The problem of the Turing Test is that it tests the machines ability to resemble humans. Not necessarily every form of AI has to resemble humans. This makes the Turing Test less reliable. However, it is still useful since it is an actual test. It is also noteworthy that there is a prize for passing or coming closest to passing the Turing Test, the Loebner Prize.
+The intelligent agent definition of intelligence states that an agent is intelligent if it acts so to maximize the expected value of a performance measure based on past experience and knowledge. (paraphrased from Wikipedia). This definition is used more often and does not depend on the ability to resemble humans. However, it is harder to test this. 
+",https://ai.stackexchange.com/questions/15
+7,stackoverflow,stackoverflow question #17,"The concept of ""the singularity"" is when machines outsmart the humans. Although Stephen Hawking opinion is that this situation is inevitable, but I think it'll be very difficult to reach that point, because every A.I. algorithm needs to be programmed by humans, therefore it would be always more limited than its creator.
+We would probably know when that point when humanity will lose control over Artificial Intelligence where super-smart AI would be in competition with humans and maybe creating more sophisticated intelligent beings occurred, but currently, it's more like science fiction (aka Terminator's Skynet).
+The risk could involve killing people (like self-flying war drones making their own decision), destroying countries or even the whole planet (like A.I. connected to the nuclear weapons (aka WarGames movie), but it doesn't prove the point that the machines would be smarter than humans.
+",https://ai.stackexchange.com/questions/17
+8,stackoverflow,stackoverflow question #26,"I think your question fits nowadays more in the field of Human-Robot Interaction, which relies largely on vision for recognition of gestures and follow movements, as well as soft, natural movements as a response. Note that the movements of the face and hands belong to the most complex tasks, involving many muscles at a time.
+I strongly recommend the film Plug & Pray to have an idea of what people are researching in this area.
+You may also find Eliza (which you can try here) interesting. It is classical in the history of AI and pretends to mimic an analyst (psychology). (I am thinking of Eliza not because of its emotional intelligence, but because it was apparently taken seriously by a couple of humans. Could this be taken as a sort of (approved) Turing test? What does it say about the humans it met?)
+On the purely human end of the scale, I sometimes wonder about our (my) emotional intelligence myself. Would I want to implement such an intelligence in an artificial agent at all?
+",https://ai.stackexchange.com/questions/26
+9,stackoverflow,stackoverflow question #28,"This is probably more a question of philosophy than anything. In terms of how things are commonly defined, I'll say ""yes, genetic algorithms are part of AI"".  If you pick up a comprehensive book on artificial intelligence, there will probably be a chapter on genetic algorithms (or more broadly, evolutionary algorithms). 
+One area that has been extensively studied in the past is the idea of using genetic algorithms to train neural networks.  I don't know if people are still actively researching this topic or not, but it at least illustrates that GA's are part of the overall rubric of AI in one regard.
+",https://ai.stackexchange.com/questions/28
