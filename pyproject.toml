@@ -10,6 +10,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 dynamic = ["dependencies"]
 
+[project.scripts]
+buster_csv_parser = "buster.docparser:main"
+
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
@@ -22,3 +25,4 @@ line-length = 120
 [tool.pytest.ini_options]
 log_cli = true
 log_cli_level = "INFO"
+
