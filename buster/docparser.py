@@ -113,9 +113,9 @@ def max_word_count(df: pd.DataFrame, max_words: int, col: str = "content") -> pd
     return df
 
 
-def compute_embeddings(df: pd.DataFrame, engine: str = EMBEDDING_MODEL) -> pd.DataFrame:
+def compute_embeddings(df: pd.DataFrame, engine: str = EMBEDDING_MODEL, col="embedding") -> pd.DataFrame:
     logger.info(f"Computing embeddings for {len(df)} documents...")
-    df["embedding"] = df.content.apply(lambda x: np.asarray(get_embedding(x, engine=engine), dtype=np.float32))
+    df[col] = df.content.apply(lambda x: np.asarray(get_embedding(x, engine=engine), dtype=np.float32))
     logger.info(f"Done computing embeddings for {len(df)} documents.")
     return df
 
@@ -127,9 +127,9 @@ def generate_embeddings_parser(root_dir: str, output_filepath: str, source: str)
 
 def documents_to_db(documents: pd.DataFrame, output_filepath: str):
     logger.info("Preparing database...")
+    documents_manager = get_documents_manager_from_extension(output_filepath)(output_filepath)
     sources = documents["source"].unique()
     for source in sources:
-        documents_manager = get_documents_manager_from_extension(output_filepath)(output_filepath)
         documents_manager.add(source, documents)
     logger.info(f"Documents saved to: {output_filepath}")
 
