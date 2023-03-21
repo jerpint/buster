@@ -11,12 +11,38 @@ pinned: false
 
 # Buster, the QA documentation chatbot!
 
-Buster is a question-answering chatbot that can be tuned to specific documentations. You can try it [here](https://huggingface.co/spaces/jerpint/buster), where it will answer questions about [🤗 Transformers](https://huggingface.co/docs/transformers/index).
+Buster is a question-answering chatbot that can be tuned to any source of documentations.
+
+# Demo
+
+You can try out our [live demo here](https://huggingface.co/spaces/jerpint/buster), where it will answer questions about a bunch of libraries we've already scraped, including [🤗 Transformers](https://huggingface.co/docs/transformers/index).
 
 
-![Question: How do I load a Huggingface model?](buster/imgs/qa_web_load.png)
+# Quickstart
 
-![Question: My code is crashing with "CUDA out of memory". What can I do to solve this?](buster/imgs/qa_web_oom.png)
+Here is a quick guide to help you deploy buster on your own dataset!
+
+First step, install buster locally. Note that buster requires python>=3.10.
+
+```
+git clone https://github.com/jerpint/buster.git
+pip install -e .
+```
+
+Then, go to the examples folder. We've attached a sample `stackoverflow.csv` file to help you get started. You will convert the .csv to a `documents.db` file.
+
+```
+buster_csv_parser stackoverflow.csv --output-filepath documents.db
+```
+
+This will generate the embeddings and save them locally. Finally, run
+
+```
+gradio gradio_app.py
+```
+
+This will launch the gradio app locally, which you should be able to view on [localhost]( http://127.0.0.1:7860)
+
 
 ## How does Buster work?
 
@@ -31,7 +57,7 @@ Finally, we craft the prompt:
 
 We send the prompt to the [OpenAI API](https://beta.openai.com/docs/api-reference/completions), and display the answer to the user!
 
-### Currently used models
+### Currently available models
 
 - For embeddings: "text-embedding-ada-002"
 - For completion: We support both "text-davinci-003" and "gpt-3.5-turbo"

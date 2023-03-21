@@ -1,3 +1,6 @@
+# database files
+*.db
+
 buster/apps/data/
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -1,7 +1,9 @@
 import glob
+import logging
 import os
 from typing import Type
 
+import click
 import numpy as np
 import pandas as pd
 import tiktoken
@@ -10,6 +12,9 @@ from openai.embeddings_utils import get_embedding
 
 from buster.documents import get_documents_manager_from_extension
 from buster.parser import HuggingfaceParser, Parser, SphinxParser
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 EMBEDDING_MODEL = "text-embedding-ada-002"
 EMBEDDING_ENCODING = "cl100k_base"  # this the encoding for text-embedding-ada-002
@@ -84,25 +89,89 @@ def get_all_documents(
     return documents_df
 
 
-def compute_n_tokens(df: pd.DataFrame) -> pd.DataFrame:
-    encoding = tiktoken.get_encoding(EMBEDDING_ENCODING)
+def compute_n_tokens(
+    df: pd.DataFrame, embedding_encoding: str = EMBEDDING_ENCODING, col: str = "content"
+) -> pd.DataFrame:
+    """Counts the tokens in the content column and adds the count to a n_tokens column."""
+    logger.info("Computing tokens counts...")
+    encoding = tiktoken.get_encoding(encoding_name=embedding_encoding)
     # TODO are there unexpected consequences of allowing endoftext?
-    df["n_tokens"] = df.content.apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
+    df["n_tokens"] = df[col].apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
     return df
 
 
-def precompute_embeddings(df: pd.DataFrame) -> pd.DataFrame:
-    df["embedding"] = df.content.apply(lambda x: np.asarray(get_embedding(x, engine=EMBEDDING_MODEL), dtype=np.float32))
+def max_word_count(df: pd.DataFrame, max_words: int, col: str = "content") -> pd.DataFrame:
+    """Trim the word count of an entry to max_words"""
+    assert df[col].apply(lambda s: isinstance(s, str)).all(), f"Column {col} must contain only strings"
+    word_counts_before = df[col].apply(lambda x: len(x.split()))
+    df[col] = df[col].apply(lambda x: " ".join(x.split()[:max_words]))
+    word_counts_after = df[col].apply(lambda x: len(x.split()))
+
+    trimmed = df[word_counts_before == word_counts_after]
+    logger.info(f"trimmed {len(trimmed)} documents to {max_words} words.")
+
     return df
 
 
-def generate_embeddings(root_dir: str, output_filepath: str, source: str) -> pd.DataFrame:
-    # Get all documents and precompute their embeddings
+def compute_embeddings(df: pd.DataFrame, engine: str = EMBEDDING_MODEL, col="embedding") -> pd.DataFrame:
+    logger.info(f"Computing embeddings for {len(df)} documents...")
+    df[col] = df.content.apply(lambda x: np.asarray(get_embedding(x, engine=engine), dtype=np.float32))
+    logger.info(f"Done computing embeddings for {len(df)} documents.")
+    return df
+
+
+def generate_embeddings_parser(root_dir: str, output_filepath: str, source: str) -> pd.DataFrame:
     documents = get_all_documents(root_dir, supported_docs[source]["base_url"], supported_docs[source]["parser"])
-    documents = compute_n_tokens(documents)
-    documents = precompute_embeddings(documents)
+    return generate_embeddings(documents, output_filepath)
 
+
+def documents_to_db(documents: pd.DataFrame, output_filepath: str):
+    logger.info("Preparing database...")
     documents_manager = get_documents_manager_from_extension(output_filepath)(output_filepath)
-    documents_manager.add(source, documents)
+    sources = documents["source"].unique()
+    for source in sources:
+        documents_manager.add(source, documents)
+    logger.info(f"Documents saved to: {output_filepath}")
+
+
+def generate_embeddings(
+    documents: pd.DataFrame,
+    output_filepath: str = "documents.db",
+    max_words=500,
+    embedding_engine: str = EMBEDDING_MODEL,
+) -> pd.DataFrame:
+    # check that we have the appropriate columns in our dataframe
+
+    assert set(required_cols := ["content", "title", "url"]).issubset(
+        set(documents.columns)
+    ), f"Your dataframe must contain {required_cols}."
+
+    # Get all documents and precompute their embeddings
+    documents = max_word_count(documents, max_words=max_words)
+    documents = compute_n_tokens(documents)
+    documents = compute_embeddings(documents, engine=embedding_engine)
+
+    # save the documents to a db for later use
+    documents_to_db(documents, output_filepath)
 
     return documents
+
+
+@click.command()
+@click.argument("documents-csv")
+@click.option(
+    "--output-filepath", default="documents.db", help='Where your database will be saved. Default is "documents.db"'
+)
+@click.option(
+    "--max-words", default=500, help="Number of maximum allowed words per document, excess is trimmed. Default is 500"
+)
+@click.option(
+    "--embeddings-engine", default=EMBEDDING_MODEL, help=f"Embedding model to use. Default is {EMBEDDING_MODEL}"
+)
+def main(documents_csv: str, output_filepath: str, max_words: int, embeddings_engine: str):
+    documents = pd.read_csv(documents_csv)
+    documents = generate_embeddings(documents, output_filepath, max_words, embeddings_engine)
+
+
+if __name__ == "__main__":
+    main()

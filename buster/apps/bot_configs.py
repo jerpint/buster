@@ -1,4 +1,4 @@
-from buster.buster import BusterConfig
+from buster.busterbot import BusterConfig
 
 huggingface_cfg = BusterConfig(
     unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",

@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from buster.buster import Buster, BusterConfig
+from buster.busterbot import Buster, BusterConfig
 from buster.completers.base import Completer
 from buster.documents import DocumentsManager, get_documents_manager_from_extension
 from buster.formatter.base import Response
@@ -60,7 +60,7 @@ logging.basicConfig(level=logging.INFO)
 def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
     monkeypatch.setattr(Buster, "get_embedding", lambda self, prompt, engine: get_fake_embedding())
-    monkeypatch.setattr("buster.buster.get_completer", lambda x: MockCompleter(expected_answer=gpt_expected_answer))
+    monkeypatch.setattr("buster.busterbot.get_completer", lambda x: MockCompleter(expected_answer=gpt_expected_answer))
 
     hf_transformers_cfg = BusterConfig(
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
