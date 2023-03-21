@@ -96,16 +96,16 @@ def compute_n_tokens(
     logger.info("Computing tokens counts...")
     encoding = tiktoken.get_encoding(encoding_name=embedding_encoding)
     # TODO are there unexpected consequences of allowing endoftext?
-    df[f"n_tokens"] = df[col].apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
+    df["n_tokens"] = df[col].apply(lambda x: len(encoding.encode(x, allowed_special={"<|endoftext|>"})))
     return df
 
 
 def max_word_count(df: pd.DataFrame, max_words: int, col: str = "content") -> pd.DataFrame:
     """Trim the word count of an entry to max_words"""
-    assert df[col].apply(lambda s: isinstance(s, str)).all(), "Column {col} must contain only strings"
-    word_counts_before = df[col].apply(lambda x: len(x.split(" ")))
+    assert df[col].apply(lambda s: isinstance(s, str)).all(), f"Column {col} must contain only strings"
+    word_counts_before = df[col].apply(lambda x: len(x.split()))
     df[col] = df[col].apply(lambda x: " ".join(x.split()[:max_words]))
-    word_counts_after = df[col].apply(lambda x: len(x.split(" ")))
+    word_counts_after = df[col].apply(lambda x: len(x.split()))
 
     trimmed = df[word_counts_before == word_counts_after]
     logger.info(f"trimmed {len(trimmed)} documents to {max_words} words.")
@@ -144,7 +144,7 @@ def generate_embeddings(
 
     assert set(required_cols := ["content", "title", "url"]).issubset(
         set(documents.columns)
-    ), f"Your datafraem must contain {required_cols}."
+    ), f"Your dataframe must contain {required_cols}."
 
     # Get all documents and precompute their embeddings
     documents = max_word_count(documents, max_words=max_words)
