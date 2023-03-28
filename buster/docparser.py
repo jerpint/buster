@@ -10,7 +10,7 @@ import tiktoken
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
-from buster.parser import HuggingfaceParser, Parser, SphinxParser
+from buster.parser import HuggingfaceParser, Parser, SphinxParser, CanLiiParser
 from buster.utils import get_documents_manager_from_extension
 
 logger = logging.getLogger(__name__)
@@ -50,6 +50,11 @@ supported_docs = {
         "base_url": "https://docs.godotengine.org/en/stable/",
         "filename": "documents_godot.csv",
         "parser": SphinxParser,
+    },
+    "qccm": {
+        "base_url": "https://www.canlii.org/fr/qc/qccm/doc/",
+        "filename": "documents_canlii.csv",
+        "parser": CanLiiParser,
     },
 }
 
