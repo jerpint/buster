@@ -64,16 +64,16 @@ class BusterConfig:
     source: str = ""
 
 
-from buster.documents.base import DocumentsManager
+from buster.retriever import Retriever
 
 
 class Buster:
-    def __init__(self, cfg: BusterConfig, documents: DocumentsManager):
+    def __init__(self, cfg: BusterConfig, retriever: Retriever):
         self._unk_embedding = None
         self.cfg = cfg
         self.update_cfg(cfg)
 
-        self.documents = documents
+        self.retriever = retriever
 
     @property
     def unk_embedding(self):
@@ -117,7 +117,7 @@ class Buster:
             query,
             engine=engine,
         )
-        matched_documents = self.documents.retrieve(query_embedding, top_k=top_k, source=source)
+        matched_documents = self.retriever.retrieve(query_embedding, top_k=top_k, source=source)
 
         # log matched_documents to the console
         logger.info(f"matched documents before thresh: {matched_documents}")

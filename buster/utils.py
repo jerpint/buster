@@ -2,9 +2,8 @@ import os
 import urllib.request
 from typing import Type
 
-from buster.documents.base import DocumentsManager
-from buster.documents.pickle import DocumentsPickle
-from buster.documents.sqlite import DocumentsDB
+from buster.documents import DocumentsDB, DocumentsManager, DocumentsPickle
+from buster.retriever import PickleRetriever, Retriever, SQLiteRetriever
 
 PICKLE_EXTENSIONS = [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]
 
@@ -32,5 +31,16 @@ def get_documents_manager_from_extension(filepath: str) -> Type[DocumentsManager
         return DocumentsPickle
     elif ext == ".db":
         return DocumentsDB
+    else:
+        raise ValueError(f"Unsupported format: {ext}.")
+
+
+def get_retriever_from_extension(filepath: str) -> Type[Retriever]:
+    ext = get_file_extension(filepath)
+
+    if ext in PICKLE_EXTENSIONS:
+        return PickleRetriever
+    elif ext == ".db":
+        return SQLiteRetriever
     else:
         raise ValueError(f"Unsupported format: {ext}.")

@@ -5,19 +5,19 @@ import gradio as gr
 
 from buster.apps.bot_configs import available_configs
 from buster.busterbot import Buster, BusterConfig
-from buster.documents.base import DocumentsManager
-from buster.documents.utils import download_db, get_documents_manager_from_extension
+from buster.retriever import Retriever
+from buster.utils import download_db, get_retriever_from_extension
 
 DEFAULT_CONFIG = "huggingface"
 DB_URL = "https://huggingface.co/datasets/jerpint/buster-data/resolve/main/documents.db"
 
 # Download the db...
 documents_filepath = download_db(db_url=DB_URL, output_dir="./data")
-documents: DocumentsManager = get_documents_manager_from_extension(documents_filepath)(documents_filepath)
+retriever: Retriever = get_retriever_from_extension(documents_filepath)(documents_filepath)
 
 # initialize buster with the default config...
 default_cfg: BusterConfig = available_configs.get(DEFAULT_CONFIG)
-buster = Buster(cfg=default_cfg, documents=documents)
+buster = Buster(cfg=default_cfg, retriever=retriever)
 
 
 def chat(question, history, bot_source):

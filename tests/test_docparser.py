@@ -1,11 +1,13 @@
 import numpy as np
 import pandas as pd
+import pytest
 
 from buster.docparser import generate_embeddings
-from buster.documents import get_documents_manager_from_extension
+from buster.utils import get_retriever_from_extension
 
 
-def test_generate_embeddings(tmp_path, monkeypatch):
+@pytest.mark.parametrize("extension", ["db", "tar.gz"])
+def test_generate_embeddings(tmp_path, monkeypatch, extension):
     # Create fake data
     data = pd.DataFrame.from_dict(
         {"title": ["test"], "url": ["http://url.com"], "content": ["cool text"], "source": ["my_source"]}
@@ -16,11 +18,11 @@ def test_generate_embeddings(tmp_path, monkeypatch):
     monkeypatch.setattr("buster.docparser.get_all_documents", lambda a, b, c: data)
 
     # Generate embeddings, store in a file
-    output_file = tmp_path / "test_document_embeddings.tar.gz"
+    output_file = tmp_path / f"test_document_embeddings.{extension}"
     df = generate_embeddings(data, output_file)
 
     # Read the embeddings from the file
-    read_df = get_documents_manager_from_extension(output_file)(output_file).get_documents("my_source")
+    read_df = get_retriever_from_extension(output_file)(output_file).get_documents("my_source")
 
     # Check all the values are correct across the files
     assert df["title"].iloc[0] == data["title"].iloc[0] == read_df["title"].iloc[0]
