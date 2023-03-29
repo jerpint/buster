@@ -13,7 +13,7 @@ class PickleRetriever(Retriever):
             raise FileNotFoundError(f"No documents found at {self.filepath}. Are you sure this is the correct path?")
 
         documents = self.documents.copy()
-        # The `current` column exists when multiple versions of a document exist 
+        # The `current` column exists when multiple versions of a document exist
         if "current" in documents.columns:
             documents = documents[documents.current == 1]
 
