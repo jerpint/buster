@@ -6,9 +6,9 @@ import pandas as pd
 
 from buster.busterbot import Buster, BusterConfig
 from buster.completers.base import Completer
+from buster.formatter.base import Response
 from buster.retriever import Retriever
 from buster.utils import get_retriever_from_extension
-from buster.formatter.base import Response
 
 TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
 DOCUMENTS_FILE = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingface_subset.tar.gz")

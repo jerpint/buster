@@ -10,13 +10,14 @@ from buster.retriever.base import Retriever
 class SQLiteRetriever(Retriever):
     """Simple SQLite database for retrieval of documents.
 
-    The database is just a file on disk. It can store documents from different sources, and it 
+    The database is just a file on disk. It can store documents from different sources, and it
     can store multiple versions of the same document (e.g. if the document is updated).
 
     Example:
         >>> db = DocumentsDB("/path/to/the/db.db")
         >>> df = db.get_documents("source")
     """
+
     def __init__(self, db_path: sqlite3.Connection | str):
         if isinstance(db_path, (str, Path)):
             self.db_path = db_path
@@ -34,7 +35,7 @@ class SQLiteRetriever(Retriever):
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
         # Execute the SQL statement and fetch the results.
-        if source is '':
+        if source is "":
             results = self.conn.execute("SELECT * FROM documents")
         else:
             results = self.conn.execute("SELECT * FROM documents WHERE source = ?", (source,))

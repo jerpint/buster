@@ -6,7 +6,10 @@ from buster.documents import DocumentsDB, DocumentsPickle
 from buster.retriever import PickleRetriever, SQLiteRetriever
 
 
-@pytest.mark.parametrize("documents_manager, retriever, extension", [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")])
+@pytest.mark.parametrize(
+    "documents_manager, retriever, extension",
+    [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")],
+)
 def test_write_read(tmp_path, documents_manager, retriever, extension):
     db = documents_manager(tmp_path / f"test.{extension}")
 
@@ -30,7 +33,10 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
     assert db_data["n_tokens"].iloc[0] == data["n_tokens"].iloc[0]
 
 
-@pytest.mark.parametrize("documents_manager, retriever, extension", [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")])
+@pytest.mark.parametrize(
+    "documents_manager, retriever, extension",
+    [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")],
+)
 def test_write_write_read(tmp_path, documents_manager, retriever, extension):
     db = documents_manager(tmp_path / f"test.{extension}")
 

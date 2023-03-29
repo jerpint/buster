@@ -2,9 +2,8 @@ import os
 import urllib.request
 from typing import Type
 
-from buster.documents import DocumentsManager, DocumentsPickle, DocumentsDB
-from buster.retriever import Retriever, PickleRetriever, SQLiteRetriever
-
+from buster.documents import DocumentsDB, DocumentsManager, DocumentsPickle
+from buster.retriever import PickleRetriever, Retriever, SQLiteRetriever
 
 PICKLE_EXTENSIONS = [".gz", ".bz2", ".zip", ".xz", ".zst", ".tar", ".tar.gz", ".tar.xz", ".tar.bz2"]
 
