@@ -6,8 +6,8 @@ from buster.retriever import Retriever
 from buster.utils import get_retriever_from_extension
 
 # initialize buster with the config in config.py (adapt to your needs) ...
-documents: Retriever = get_retriever_from_extension(cfg.documents_filepath)(cfg.documents_filepath)
-buster: Buster = Buster(cfg=cfg.buster_cfg, documents=documents)
+retriever: Retriever = get_retriever_from_extension(cfg.documents_filepath)(cfg.documents_filepath)
+buster: Buster = Buster(cfg=cfg.buster_cfg, retriever=retriever)
 
 
 def chat(question, history):

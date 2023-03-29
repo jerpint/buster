@@ -13,11 +13,11 @@ DB_URL = "https://huggingface.co/datasets/jerpint/buster-data/resolve/main/docum
 
 # Download the db...
 documents_filepath = download_db(db_url=DB_URL, output_dir="./data")
-documents: Retriever = get_retriever_from_extension(documents_filepath)(documents_filepath)
+retriever: Retriever = get_retriever_from_extension(documents_filepath)(documents_filepath)
 
 # initialize buster with the default config...
 default_cfg: BusterConfig = available_configs.get(DEFAULT_CONFIG)
-buster = Buster(cfg=default_cfg, documents=documents)
+buster = Buster(cfg=default_cfg, retriever=retriever)
 
 
 def chat(question, history, bot_source):

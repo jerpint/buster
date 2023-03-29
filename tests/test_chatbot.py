@@ -88,8 +88,8 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
         },
     )
     filepath = tmp_path / "not_a_real_file.tar.gz"
-    documents = MockRetriever(filepath)
-    buster = Buster(cfg=hf_transformers_cfg, documents=documents)
+    retriever = MockRetriever(filepath)
+    buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
     assert answer.startswith(gpt_expected_answer)
@@ -117,8 +117,8 @@ def test_chatbot_real_data__chatGPT():
             },
         },
     )
-    documents = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
-    buster = Buster(cfg=hf_transformers_cfg, documents=documents)
+    retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
 
@@ -151,8 +151,8 @@ def test_chatbot_real_data__chatGPT_OOD():
         },
         response_format="gradio",
     )
-    documents = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
-    buster = Buster(cfg=buster_cfg, documents=documents)
+    retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=buster_cfg, retriever=retriever)
     answer = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(answer, str)
     assert buster_cfg.unknown_prompt in answer
@@ -185,7 +185,7 @@ def test_chatbot_real_data__GPT():
             },
         },
     )
-    documents = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
-    buster = Buster(cfg=hf_transformers_cfg, documents=documents)
+    retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
