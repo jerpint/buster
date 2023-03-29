@@ -6,7 +6,8 @@ import pandas as pd
 
 from buster.busterbot import Buster, BusterConfig
 from buster.completers.base import Completer
-from buster.documents import DocumentsManager, get_documents_manager_from_extension
+from buster.retriever import Retriever
+from buster.utils import get_retriever_from_extension
 from buster.formatter.base import Response
 
 TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
@@ -29,7 +30,7 @@ class MockCompleter(Completer):
         return Response(self.expected_answer)
 
 
-class DocumentsMock(DocumentsManager):
+class MockRetriever(Retriever):
     def __init__(self, filepath):
         self.filepath = filepath
 
@@ -44,9 +45,6 @@ class DocumentsMock(DocumentsManager):
                 "source": ["fake source"] * n_samples,
             }
         )
-
-    def add(self, documents):
-        pass
 
     def get_documents(self, source):
         return self.documents
@@ -90,7 +88,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
         },
     )
     filepath = tmp_path / "not_a_real_file.tar.gz"
-    documents = DocumentsMock(filepath)
+    documents = MockRetriever(filepath)
     buster = Buster(cfg=hf_transformers_cfg, documents=documents)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
@@ -119,7 +117,7 @@ def test_chatbot_real_data__chatGPT():
             },
         },
     )
-    documents = get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    documents = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(cfg=hf_transformers_cfg, documents=documents)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)
@@ -153,7 +151,7 @@ def test_chatbot_real_data__chatGPT_OOD():
         },
         response_format="gradio",
     )
-    documents = get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    documents = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(cfg=buster_cfg, documents=documents)
     answer = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(answer, str)
@@ -187,7 +185,7 @@ def test_chatbot_real_data__GPT():
             },
         },
     )
-    documents = get_documents_manager_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    documents = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(cfg=hf_transformers_cfg, documents=documents)
     answer = buster.process_input("What is a transformer?")
     assert isinstance(answer, str)

@@ -64,11 +64,11 @@ class BusterConfig:
     source: str = ""
 
 
-from buster.documents.base import DocumentsManager
+from buster.retriever import Retriever
 
 
 class Buster:
-    def __init__(self, cfg: BusterConfig, documents: DocumentsManager):
+    def __init__(self, cfg: BusterConfig, documents: Retriever):
         self._unk_embedding = None
         self.cfg = cfg
         self.update_cfg(cfg)

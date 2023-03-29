@@ -2,11 +2,11 @@ import cfg
 import gradio as gr
 
 from buster.busterbot import Buster
-from buster.documents.base import DocumentsManager
-from buster.documents.utils import get_documents_manager_from_extension
+from buster.retriever import Retriever
+from buster.utils import get_retriever_from_extension
 
 # initialize buster with the config in config.py (adapt to your needs) ...
-documents: DocumentsManager = get_documents_manager_from_extension(cfg.documents_filepath)(cfg.documents_filepath)
+documents: Retriever = get_retriever_from_extension(cfg.documents_filepath)(cfg.documents_filepath)
 buster: Buster = Buster(cfg=cfg.buster_cfg, documents=documents)
 
 

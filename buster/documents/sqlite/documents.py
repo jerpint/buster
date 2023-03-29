@@ -33,7 +33,6 @@ class DocumentsDB(DocumentsManager):
     Example:
         >>> db = DocumentsDB("/path/to/the/db.db")
         >>> db.add("source", df)  # df is a DataFrame containing the documents from a given source, obtained e.g. by using buster.docparser.generate_embeddings
-        >>> df = db.get_documents("source")
     """
 
     def __init__(self, db_path: sqlite3.Connection | str):
@@ -142,13 +141,3 @@ class DocumentsDB(DocumentsManager):
         sid, vid = self.add_parse(source, (section for section, _ in sections))
         self.add_chunking(sid, vid, size, (chunks for _, chunks in sections))
         self.conn.commit()
-
-    def get_documents(self, source: str) -> pd.DataFrame:
-        """Get all current documents from a given source."""
-        # Execute the SQL statement and fetch the results
-        results = self.conn.execute("SELECT * FROM documents WHERE source = ?", (source,))
-        rows = results.fetchall()
-
-        # Convert the results to a pandas DataFrame
-        df = pd.DataFrame(rows, columns=[description[0] for description in results.description])
-        return df

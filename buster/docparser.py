@@ -10,7 +10,7 @@ import tiktoken
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
-from buster.documents import get_documents_manager_from_extension
+from buster.utils import get_documents_manager_from_extension
 from buster.parser import HuggingfaceParser, Parser, SphinxParser
 
 logger = logging.getLogger(__name__)

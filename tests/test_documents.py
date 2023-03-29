@@ -3,10 +3,11 @@ import pandas as pd
 import pytest
 
 from buster.documents import DocumentsDB, DocumentsPickle
+from buster.retriever import PickleRetriever, SQLiteRetriever
 
 
-@pytest.mark.parametrize("documents_manager, extension", [(DocumentsDB, "db"), (DocumentsPickle, "tar.gz")])
-def test_write_read(tmp_path, documents_manager, extension):
+@pytest.mark.parametrize("documents_manager, retriever, extension", [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")])
+def test_write_read(tmp_path, documents_manager, retriever, extension):
     db = documents_manager(tmp_path / f"test.{extension}")
 
     data = pd.DataFrame.from_dict(
@@ -20,7 +21,7 @@ def test_write_read(tmp_path, documents_manager, extension):
     )
     db.add(source="test", df=data)
 
-    db_data = db.get_documents("test")
+    db_data = retriever(tmp_path / f"test.{extension}").get_documents("test")
 
     assert db_data["title"].iloc[0] == data["title"].iloc[0]
     assert db_data["url"].iloc[0] == data["url"].iloc[0]
@@ -29,8 +30,8 @@ def test_write_read(tmp_path, documents_manager, extension):
     assert db_data["n_tokens"].iloc[0] == data["n_tokens"].iloc[0]
 
 
-@pytest.mark.parametrize("documents_manager, extension", [(DocumentsDB, "db"), (DocumentsPickle, "tar.gz")])
-def test_write_write_read(tmp_path, documents_manager, extension):
+@pytest.mark.parametrize("documents_manager, retriever, extension", [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")])
+def test_write_write_read(tmp_path, documents_manager, retriever, extension):
     db = documents_manager(tmp_path / f"test.{extension}")
 
     data_1 = pd.DataFrame.from_dict(
@@ -55,7 +56,7 @@ def test_write_write_read(tmp_path, documents_manager, extension):
     )
     db.add(source="test", df=data_2)
 
-    db_data = db.get_documents("test")
+    db_data = retriever(tmp_path / f"test.{extension}").get_documents("test")
 
     assert len(db_data) == len(data_2)
     assert db_data["title"].iloc[0] == data_2["title"].iloc[0]
