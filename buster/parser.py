@@ -27,17 +27,16 @@ class Section:
             else:
                 node_text = node.text
             section.append(node_text)
-        self.text = "".join(section).strip()
+        self.text = "\n".join(section).strip()
 
         # Remove tabs
-        self.text = self.text.replace('\t', '')
-        
+        self.text = self.text.replace("\t", "")
+
         # Replace group of newlines with a single newline
-        self.text = re.sub('\n{2,}', '\n', self.text)
+        self.text = re.sub("\n{2,}", "\n", self.text)
 
         # Replace non-breaking spaces with regular spaces
-        self.text = self.text.replace('\xa0', ' ')
-
+        self.text = self.text.replace("\xa0", " ")
 
     def __len__(self) -> int:
         return len(self.text)
@@ -132,21 +131,3 @@ class HuggingfaceParser(Parser):
     def build_url(self, suffix: str) -> str:
         # The splitext is to remove the .html extension
         return self.base_url + os.path.splitext(self.filename)[0] + suffix
-
-
-class CanLiiParser(Parser):
-    def find_sections(self) -> Iterator[Section]:
-        for section in self.soup.find_all("div", id="documentContainer", class_="canliiContent"):
-            url = self.build_url("")
-            name = section.find("h2").text.strip().replace("\n", "")
-
-            # Clean up soup
-            for tag in section.find_all(class_=["alert", "nav", "subTab"]):
-                tag.decompose()
-
-            yield Section(url, name, section.children)
-
-        return
-
-    def build_url(self, suffix: str) -> str:
-        return self.base_url + self.filename[:4] + "/" + os.path.splitext(self.filename)[0] + "/" + self.filename

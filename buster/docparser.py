@@ -10,7 +10,7 @@ import tiktoken
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
-from buster.parser import HuggingfaceParser, Parser, SphinxParser, CanLiiParser
+from buster.parser import HuggingfaceParser, Parser, SphinxParser
 from buster.utils import get_documents_manager_from_extension
 
 logger = logging.getLogger(__name__)
@@ -51,12 +51,34 @@ supported_docs = {
         "filename": "documents_godot.csv",
         "parser": SphinxParser,
     },
-    "qccm": {
-        "base_url": "https://www.canlii.org/fr/qc/qccm/doc/",
-        "filename": "documents_canlii.csv",
-        "parser": CanLiiParser,
-    },
 }
+
+
+def get_document(
+    filepath: str,
+    base_url: str,
+    parser_cls: Type[Parser],
+    min_section_length: int = 100,
+    max_section_length: int = 2000,
+) -> pd.DataFrame:
+    with open(filepath, "r") as f:
+        source = f.read()
+
+    filename = os.path.split(filepath)[-1]
+    soup = BeautifulSoup(source, "html.parser")
+    parser = parser_cls(soup, base_url, filename, min_section_length, max_section_length)
+
+    sections = []
+    urls = []
+    names = []
+    for section in parser.parse():
+        sections.append(section.text)
+        urls.append(section.url)
+        names.append(section.name)
+
+    documents_df = pd.DataFrame.from_dict({"title": names, "url": urls, "content": sections})
+
+    return documents_df
 
 
 def get_all_documents(
@@ -73,23 +95,13 @@ def get_all_documents(
     """
     files = glob.glob("**/*.html", root_dir=root_dir, recursive=True)
 
-    sections = []
-    urls = []
-    names = []
+    dfs = []
     for file in files:
         filepath = os.path.join(root_dir, file)
-        with open(filepath, "r") as f:
-            source = f.read()
+        df = get_document(filepath, base_url, parser_cls, min_section_length, max_section_length)
+        dfs.append(df)
 
-        soup = BeautifulSoup(source, "html.parser")
-        parser = parser_cls(soup, base_url, file, min_section_length, max_section_length)
-        # sections_file, urls_file, names_file =
-        for section in parser.parse():
-            sections.append(section.text)
-            urls.append(section.url)
-            names.append(section.name)
-
-    documents_df = pd.DataFrame.from_dict({"title": names, "url": urls, "content": sections})
+    documents_df = pd.concat(dfs, ignore_index=True)
 
     return documents_df
 
