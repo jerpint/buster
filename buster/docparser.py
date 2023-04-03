@@ -1,6 +1,7 @@
 import glob
 import logging
 import os
+from pathlib import Path
 from typing import Type
 
 import click
@@ -61,10 +62,15 @@ def get_document(
     min_section_length: int = 100,
     max_section_length: int = 2000,
 ) -> pd.DataFrame:
+    """Extract all sections from one file.
+
+    Sections are broken into subsections if they are longer than `max_section_length`.
+    Sections correspond to `section` HTML tags that have a headerlink attached.
+    """
     with open(filepath, "r") as f:
         source = f.read()
 
-    filename = os.path.split(filepath)[-1]
+    filename = Path(filepath).name
     soup = BeautifulSoup(source, "html.parser")
     parser = parser_cls(soup, base_url, filename, min_section_length, max_section_length)
 
