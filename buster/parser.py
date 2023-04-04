@@ -1,4 +1,5 @@
 import os
+import re
 from abc import ABC, abstractmethod
 from dataclasses import InitVar, dataclass, field
 from itertools import takewhile, zip_longest
@@ -26,7 +27,16 @@ class Section:
             else:
                 node_text = node.text
             section.append(node_text)
-        self.text = "".join(section).strip()
+        self.text = "\n".join(section).strip()
+
+        # Remove tabs
+        self.text = self.text.replace("\t", "")
+
+        # Replace group of newlines with a single newline
+        self.text = re.sub("\n{2,}", "\n", self.text)
+
+        # Replace non-breaking spaces with regular spaces
+        self.text = self.text.replace("\xa0", " ")
 
     def __len__(self) -> int:
         return len(self.text)

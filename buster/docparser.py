@@ -1,6 +1,7 @@
 import glob
 import logging
 import os
+from pathlib import Path
 from typing import Type
 
 import click
@@ -54,6 +55,38 @@ supported_docs = {
 }
 
 
+def get_document(
+    filepath: str,
+    base_url: str,
+    parser_cls: Type[Parser],
+    min_section_length: int = 100,
+    max_section_length: int = 2000,
+) -> pd.DataFrame:
+    """Extract all sections from one file.
+
+    Sections are broken into subsections if they are longer than `max_section_length`.
+    Sections correspond to `section` HTML tags that have a headerlink attached.
+    """
+    with open(filepath, "r") as f:
+        source = f.read()
+
+    filename = Path(filepath).name
+    soup = BeautifulSoup(source, "html.parser")
+    parser = parser_cls(soup, base_url, filename, min_section_length, max_section_length)
+
+    sections = []
+    urls = []
+    names = []
+    for section in parser.parse():
+        sections.append(section.text)
+        urls.append(section.url)
+        names.append(section.name)
+
+    documents_df = pd.DataFrame.from_dict({"title": names, "url": urls, "content": sections})
+
+    return documents_df
+
+
 def get_all_documents(
     root_dir: str,
     base_url: str,
@@ -68,23 +101,13 @@ def get_all_documents(
     """
     files = glob.glob("**/*.html", root_dir=root_dir, recursive=True)
 
-    sections = []
-    urls = []
-    names = []
+    dfs = []
     for file in files:
         filepath = os.path.join(root_dir, file)
-        with open(filepath, "r") as f:
-            source = f.read()
+        df = get_document(filepath, base_url, parser_cls, min_section_length, max_section_length)
+        dfs.append(df)
 
-        soup = BeautifulSoup(source, "html.parser")
-        parser = parser_cls(soup, base_url, file, min_section_length, max_section_length)
-        # sections_file, urls_file, names_file =
-        for section in parser.parse():
-            sections.append(section.text)
-            urls.append(section.url)
-            names.append(section.name)
-
-    documents_df = pd.DataFrame.from_dict({"title": names, "url": urls, "content": sections})
+    documents_df = pd.concat(dfs, ignore_index=True)
 
     return documents_df
 
