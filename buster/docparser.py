@@ -157,6 +157,11 @@ def documents_to_db(documents: pd.DataFrame, output_filepath: str):
     logger.info(f"Documents saved to: {output_filepath}")
 
 
+def update_source(source: str, output_filepath: str, display_name: str = None, note: str = None):
+    documents_manager = get_documents_manager_from_extension(output_filepath)(output_filepath)
+    documents_manager.update_source(source, display_name, note)
+
+
 def generate_embeddings(
     documents: pd.DataFrame,
     output_filepath: str = "documents.db",

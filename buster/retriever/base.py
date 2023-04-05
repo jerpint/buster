@@ -4,11 +4,19 @@ from dataclasses import dataclass
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity
 
+ALL_SOURCES = "All"
+
 
 @dataclass
 class Retriever(ABC):
     @abstractmethod
     def get_documents(self, source: str) -> pd.DataFrame:
+        """Get all current documents from a given source."""
+        ...
+
+    @abstractmethod
+    def get_source_display_name(self, source: str) -> str:
+        """Get the display name of a source."""
         ...
 
     def retrieve(self, query_embedding: list[float], top_k: int, source: str = None) -> pd.DataFrame:

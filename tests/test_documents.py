@@ -70,3 +70,14 @@ def test_write_write_read(tmp_path, documents_manager, retriever, extension):
     assert db_data["content"].iloc[0] == data_2["content"].iloc[0]
     assert np.allclose(db_data["embedding"].iloc[0], data_2["embedding"].iloc[0])
     assert db_data["n_tokens"].iloc[0] == data_2["n_tokens"].iloc[0]
+
+
+def test_update_source(tmp_path):
+    display_name = "Super Test"
+    db = DocumentsDB(tmp_path / "test.db")
+
+    db.update_source(source="test", display_name=display_name)
+
+    returned_display_name = SQLiteRetriever(tmp_path / "test.db").get_source_display_name("test")
+
+    assert display_name == returned_display_name

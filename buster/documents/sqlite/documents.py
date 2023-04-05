@@ -141,3 +141,13 @@ class DocumentsDB(DocumentsManager):
         sid, vid = self.add_parse(source, (section for section, _ in sections))
         self.add_chunking(sid, vid, size, (chunks for _, chunks in sections))
         self.conn.commit()
+
+    def update_source(self, source: str, display_name: str = None, note: str = None):
+        """Update the display name and/or note of a source. Also create the source if it does not exist."""
+        sid = self.get_source(source)
+
+        if display_name is not None:
+            self.conn.execute("UPDATE sources SET display_name = ? WHERE id = ?", (display_name, sid))
+        if note is not None:
+            self.conn.execute("UPDATE sources SET note = ? WHERE id = ?", (note, sid))
+        self.conn.commit()

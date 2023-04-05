@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 import buster.documents.sqlite.schema as schema
-from buster.retriever.base import Retriever
+from buster.retriever.base import ALL_SOURCES, Retriever
 
 
 class SQLiteRetriever(Retriever):
@@ -44,3 +44,15 @@ class SQLiteRetriever(Retriever):
         # Convert the results to a pandas DataFrame
         df = pd.DataFrame(rows, columns=[description[0] for description in results.description])
         return df
+
+    def get_source_display_name(self, source: str) -> str:
+        """Get the display name of a source."""
+        if source is "":
+            return ALL_SOURCES
+        else:
+            cur = self.conn.execute("SELECT display_name FROM sources WHERE name = ?", (source,))
+            row = cur.fetchone()
+            if row is None:
+                raise KeyError(f'"{source}" is not a known source')
+            (display_name,) = row
+            return display_name
