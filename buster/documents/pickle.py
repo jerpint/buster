@@ -15,6 +15,7 @@ class DocumentsPickle(DocumentsManager):
             self.documents = None
 
     def add(self, source: str, df: pd.DataFrame):
+        """Write all documents from the dataframe into the db as a new version."""
         if source is not None:
             df["source"] = source
 
@@ -27,3 +28,7 @@ class DocumentsPickle(DocumentsManager):
             self.documents = df
 
         self.documents.to_pickle(self.filepath)
+
+    def update_source(self, source: str, display_name: str = None, note: str = None):
+        """Update the display name and/or note of a source. Also create the source if it does not exist."""
+        print("If you need this function, please switch your backend to DocumentsDB.")

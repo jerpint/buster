@@ -44,3 +44,15 @@ class SQLiteRetriever(Retriever):
         # Convert the results to a pandas DataFrame
         df = pd.DataFrame(rows, columns=[description[0] for description in results.description])
         return df
+
+    def get_source_display_name(self, source: str) -> str:
+        """Get the display name of a source."""
+        if source is "":
+            return "All"
+        else:
+            cur = self.conn.execute("SELECT display_name FROM sources WHERE name = ?", (source,))
+            row = cur.fetchone()
+            if row is None:
+                raise KeyError(f'"{source}" is not a known source')
+            (display_name,) = row
+            return display_name

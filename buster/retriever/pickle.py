@@ -9,6 +9,7 @@ class PickleRetriever(Retriever):
         self.documents = pd.read_pickle(filepath)
 
     def get_documents(self, source: str) -> pd.DataFrame:
+        """Get all current documents from a given source."""
         if self.documents is None:
             raise FileNotFoundError(f"No documents found at {self.filepath}. Are you sure this is the correct path?")
 
@@ -24,3 +25,10 @@ class PickleRetriever(Retriever):
             documents = documents[documents.source == source]
 
         return documents
+
+    def get_source_display_name(self, source: str) -> str:
+        """Get the display name of a source."""
+        if source is None:
+            return "All"
+        else:
+            return source

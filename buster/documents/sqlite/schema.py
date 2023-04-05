@@ -6,6 +6,7 @@ import numpy as np
 SOURCE_TABLE = r"""CREATE TABLE IF NOT EXISTS sources (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
+    display_name TEXT,
     note TEXT,
     UNIQUE(name)
 )"""
