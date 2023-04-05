@@ -1,6 +1,6 @@
 import pandas as pd
 
-from buster.retriever.base import Retriever
+from buster.retriever.base import Retriever, ALL_SOURCES
 
 
 class PickleRetriever(Retriever):
@@ -29,6 +29,6 @@ class PickleRetriever(Retriever):
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
         if source is None:
-            return "All"
+            return ALL_SOURCES
         else:
             return source

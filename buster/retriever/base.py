@@ -5,6 +5,9 @@ import pandas as pd
 from openai.embeddings_utils import cosine_similarity
 
 
+ALL_SOURCES = "All"
+
+
 @dataclass
 class Retriever(ABC):
     @abstractmethod
