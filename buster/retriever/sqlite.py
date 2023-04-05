@@ -4,7 +4,7 @@ from pathlib import Path
 import pandas as pd
 
 import buster.documents.sqlite.schema as schema
-from buster.retriever.base import Retriever, ALL_SOURCES
+from buster.retriever.base import ALL_SOURCES, Retriever
 
 
 class SQLiteRetriever(Retriever):

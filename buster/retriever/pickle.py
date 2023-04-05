@@ -1,6 +1,6 @@
 import pandas as pd
 
-from buster.retriever.base import Retriever, ALL_SOURCES
+from buster.retriever.base import ALL_SOURCES, Retriever
 
 
 class PickleRetriever(Retriever):

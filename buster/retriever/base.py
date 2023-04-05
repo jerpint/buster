@@ -4,7 +4,6 @@ from dataclasses import dataclass
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity
 
-
 ALL_SOURCES = "All"
 
 
