@@ -48,7 +48,7 @@ class MockRetriever(Retriever):
 
     def get_documents(self, source):
         return self.documents
-    
+
     def get_source_display_name(self, source):
         return source
 
