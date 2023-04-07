@@ -148,10 +148,8 @@ class Buster:
 
     def add_sources(
         self,
-        response,
         matched_documents: pd.DataFrame,
     ):
-        logger.info(f"GPT Response:\n{response.text}")
         sources = (
             Source(
                 source=dct["source"], title=dct["title"], url=dct["url"], question_similarity=dct["similarity"] * 100
@@ -208,7 +206,9 @@ class Buster:
         # generate a completion
         documents: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
         response: Response = self.completer.generate_response(user_input, documents)
-        sources = self.add_sources(response, matched_documents)
+        logger.info(f"GPT Response:\n{response.text}")
+
+        sources = self.add_sources(matched_documents)
 
         # check for relevance
         relevant = self.check_response_relevance(
