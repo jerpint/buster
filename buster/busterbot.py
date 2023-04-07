@@ -7,15 +7,17 @@ import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import get_completer
-from buster.formatter import (
-    Response,
-    ResponseFormatter,
-    Source,
-    response_formatter_factory,
-)
+from buster.completers.base import Completion
+from buster.formatters.prompts import SystemPromptFormatter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
+
+
+@dataclass(slots=True)
+class Response:
+    completion: Completion
+    matched_documents: pd.DataFrame | None = None
 
 
 @dataclass
@@ -36,7 +38,7 @@ class BusterConfig:
     source: the source of the document to consider
     """
 
-    documents_file: str = "buster/data/document_embeddings.tar.gz"
+    documents_file: str = ""
     embedding_model: str = "text-embedding-ada-002"
     top_k: int = 3
     thresh: float = 0.7
@@ -58,9 +60,8 @@ class BusterConfig:
             },
         }
     )
-    response_format: str = "slack"
     unknown_prompt: str = "I Don't know how to answer your question."
-    response_footnote: str = "I'm a bot 🤖 and not always perfect."
+    response_format: str = "slack"
     source: str = ""
 
 
@@ -91,9 +92,13 @@ class Buster:
         self.cfg = cfg
         self.completer = get_completer(cfg.completer_cfg)
         self.unk_embedding = self.get_embedding(self.cfg.unknown_prompt, engine=self.cfg.embedding_model)
-        self.response_formatter = response_formatter_factory(
-            format=self.cfg.response_format, response_footnote=self.cfg.response_footnote
+
+        self.prompt_formatter = SystemPromptFormatter(
+            text_before_docs=self.cfg.completer_cfg["text_before_documents"],
+            text_after_docs=self.cfg.completer_cfg["text_before_prompt"],
+            max_words=self.cfg.max_words,
         )
+
         logger.info(f"Config Updated.")
 
     @lru_cache
@@ -129,38 +134,8 @@ class Buster:
 
         return matched_documents
 
-    def prepare_documents(self, matched_documents: pd.DataFrame, max_words: int) -> str:
-        # gather the documents in one large plaintext variable
-        documents_list = matched_documents.content.to_list()
-        documents_str = ""
-        for idx, doc in enumerate(documents_list):
-            documents_str += f"<DOCUMENT> {doc} <\DOCUMENT>"
-
-        # truncate the documents to fit
-        # TODO: increase to actual token count
-        word_count = len(documents_str.split(" "))
-        if word_count > max_words:
-            logger.info("truncating documents to fit...")
-            documents_str = " ".join(documents_str.split(" ")[0:max_words])
-            logger.info(f"Documents after truncation: {documents_str}")
-
-        return documents_str
-
-    def add_sources(
-        self,
-        matched_documents: pd.DataFrame,
-    ):
-        sources = (
-            Source(
-                source=dct["source"], title=dct["title"], url=dct["url"], question_similarity=dct["similarity"] * 100
-            )
-            for dct in matched_documents.to_dict(orient="records")
-        )
-
-        return sources
-
     def check_response_relevance(
-        self, completion: str, engine: str, unk_embedding: np.array, unk_threshold: float
+        self, completion_text: str, engine: str, unk_embedding: np.array, unk_threshold: float
     ) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
@@ -170,7 +145,7 @@ class Buster:
         set the unk_threshold to 0 to essentially turn off this feature.
         """
         response_embedding = self.get_embedding(
-            completion,
+            completion_text,
             engine=engine,
         )
         score = cosine_similarity(response_embedding, unk_embedding)
@@ -179,7 +154,7 @@ class Buster:
         # Likely that the answer is meaningful, add the top sources
         return score < unk_threshold
 
-    def process_input(self, user_input: str, formatter: ResponseFormatter = None) -> str:
+    def process_input(self, user_input: str) -> str:
         """
         Main function to process the input question and generate a formatted output.
         """
@@ -199,28 +174,29 @@ class Buster:
         )
 
         if len(matched_documents) == 0:
-            response = Response(self.cfg.unknown_prompt)
-            sources = tuple()
-            return self.response_formatter(response, sources)
+            logger.warning("No documents found...")
+            completion = Completion(text="No documents found.")
+            matched_documents = pd.DataFrame(columns=matched_documents.columns)
+            response = Response(completion=completion, matched_documents=matched_documents)
+            return response
 
-        # generate a completion
-        documents: str = self.prepare_documents(matched_documents, max_words=self.cfg.max_words)
-        response: Response = self.completer.generate_response(user_input, documents)
-        logger.info(f"GPT Response:\n{response.text}")
-
-        sources = self.add_sources(matched_documents)
+        # prepare the prompt
+        system_prompt = self.prompt_formatter.format(matched_documents)
+        completion: Completion = self.completer.generate_response(user_input=user_input, system_prompt=system_prompt)
+        logger.info(f"GPT Response:\n{completion.text}")
 
         # check for relevance
         relevant = self.check_response_relevance(
-            completion=response.text,
+            completion_text=completion.text,
             engine=self.cfg.embedding_model,
             unk_embedding=self.unk_embedding,
             unk_threshold=self.cfg.unknown_threshold,
         )
         if not relevant:
+            matched_documents = pd.DataFrame(columns=matched_documents.columns)
             # answer generated was the chatbot saying it doesn't know how to answer
-            # override completion with generic "I don't know"
-            response = Response(text=self.cfg.unknown_prompt)
-            sources = tuple()
+        # uncomment override completion with unknown prompt
+        # completion = Completion(text=self.cfg.unknown_prompt)
 
-        return self.response_formatter(response, sources)
+        response = Response(completion=completion, matched_documents=matched_documents)
+        return response

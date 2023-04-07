@@ -19,11 +19,13 @@ if promptlayer_api_key:
     openai = promptlayer.openai
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
+
 @dataclass(slots=True)
 class Completion:
     text: str
     error: bool = False
     error_msg: str | None = None
+
 
 class Completer(ABC):
     def __init__(self, completion_kwargs: dict):
