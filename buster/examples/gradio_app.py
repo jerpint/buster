@@ -1,3 +1,4 @@
+import pandas as pd
 import cfg
 import gradio as gr
 
@@ -10,14 +11,34 @@ retriever: Retriever = get_retriever_from_extension(cfg.documents_filepath)(cfg.
 buster: Buster = Buster(cfg=cfg.buster_cfg, retriever=retriever)
 
 
+def format_sources(matched_documents: pd.DataFrame) -> str:
+    if len(matched_documents) == 0:
+        return ""
+
+    sourced_answer_template: str = (
+        """📝 Here are the sources I used to answer your question:<br>""" """{sources}<br><br>""" """{footnote}"""
+    )
+    source_template: str = """[🔗 {source.title}]({source.url}), relevance: {source.similarity:2.1f} %"""
+
+    matched_documents.similarity = matched_documents.similarity * 100
+    sources = "<br>".join([source_template.format(source=source) for _, source in matched_documents.iterrows()])
+    footnote: str = "I'm a bot 🤖 and not always perfect."
+
+    return sourced_answer_template.format(sources=sources, footnote=footnote)
+
+
 def chat(question, history):
     history = history or []
-    answer = buster.process_input(question)
+    response = buster.process_input(question)
 
-    # formatting hack for code blocks to render properly every time
-    answer = answer.replace("```", "\n```\n")
+    # formatted_sources = source_formatter(sources)
+    matched_documents = response.matched_documents
 
-    history.append((question, answer))
+    formatted_sources = format_sources(matched_documents)
+    formatted_response = f"{response.completion.text}<br><br>" + formatted_sources
+
+    history.append((question, formatted_response))
+
     return history, history
 
 
