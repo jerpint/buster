@@ -67,28 +67,31 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     hf_transformers_cfg = BusterConfig(
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
         embedding_model="text-embedding-ada-002",
-        top_k=3,
-        thresh=0,
-        max_words=3000,
-        response_format="slack",
-        source="fake source",
-        completer_cfg={
-            "name": "GPT3",
-            "text_before_prompt": (
-                """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
-                """Make sure to format your answers in Markdown format, including code block and snippets.\n"""
-                """Do not include any links to urls or hyperlinks in your answers.\n\n"""
-                """Now answer the following question:\n"""
-            ),
-            "text_before_documents": "",
+        retriever_cfg={
+            "top_k": 3,
+            "thresh": 0.7,
+        },
+        document_source="fake source",
+        completion_cfg={
+            "name": "ChatGPT",
             "completion_kwargs": {
-                "engine": "text-davinci-003",
+                "engine": "gpt-3.5-turbo",
                 "max_tokens": 200,
                 "temperature": None,
                 "top_p": None,
                 "frequency_penalty": 1,
                 "presence_penalty": 1,
             },
+        },
+        prompt_cfg={
+            "max_words": 2000,
+            "text_before_documents": "",
+            "text_before_prompt": (
+                """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
+                """Make sure to format your answers in Markdown format, including code block and snippets.\n"""
+                """Do not include any links to urls or hyperlinks in your answers.\n\n"""
+                """Now answer the following question:\n"""
+            ),
         },
     )
     filepath = tmp_path / "not_a_real_file.tar.gz"
@@ -103,22 +106,21 @@ def test_chatbot_real_data__chatGPT():
     hf_transformers_cfg = BusterConfig(
         unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
-        top_k=3,
-        thresh=0.7,
-        max_words=3000,
-        response_format="slack",
-        completer_cfg={
+        completion_cfg={
             "name": "ChatGPT",
+            "completion_kwargs": {
+                "model": "gpt-3.5-turbo",
+            },
+        },
+        prompt_cfg={
+            "max_words": 2000,
+            "text_before_documents": "",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
                 """Make sure to format your answers in Markdown format, including code block and snippets.\n"""
                 """Do not include any links to urls or hyperlinks in your answers.\n\n"""
                 """Now answer the following question:\n"""
             ),
-            "text_before_documents": "Only use these documents as reference:\n",
-            "completion_kwargs": {
-                "model": "gpt-3.5-turbo",
-            },
         },
     )
     retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
@@ -131,11 +133,18 @@ def test_chatbot_real_data__chatGPT_OOD():
     buster_cfg = BusterConfig(
         unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
-        top_k=3,
-        thresh=0.7,
-        max_words=3000,
-        completer_cfg={
+        completion_cfg={
             "name": "ChatGPT",
+            "completion_kwargs": {
+                "model": "gpt-3.5-turbo",
+            },
+        },
+        retriever_cfg={
+            "top_k": 3,
+            "thresh": 0.7,
+        },
+        prompt_cfg={
+            "max_words": 3000,
             "text_before_prompt": (
                 """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
                 """Make sure to format your answers in Markdown format, including code block and snippets. """
@@ -149,11 +158,7 @@ def test_chatbot_real_data__chatGPT_OOD():
                 """Now answer the following question:\n"""
             ),
             "text_before_documents": "Only use these documents as reference:\n",
-            "completion_kwargs": {
-                "model": "gpt-3.5-turbo",
-            },
         },
-        response_format="gradio",
     )
     retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(cfg=buster_cfg, retriever=retriever)
@@ -163,34 +168,38 @@ def test_chatbot_real_data__chatGPT_OOD():
 
 
 def test_chatbot_real_data__GPT():
-    hf_transformers_cfg = BusterConfig(
-        unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
+    buster_cfg = BusterConfig(
+        unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         embedding_model="text-embedding-ada-002",
-        top_k=3,
-        thresh=0,  # ensures documents aren't empty
-        max_words=3000,
-        response_format="slack",
-        completer_cfg={
-            "name": "GPT3",
+        completion_cfg={
+            "name": "ChatGPT",
+            "completion_kwargs": {
+                "model": "gpt-3.5-turbo",
+            },
+        },
+        retriever_cfg={
+            "top_k": 3,
+            "thresh": 0.7,
+        },
+        prompt_cfg={
+            "max_words": 3000,
             "text_before_prompt": (
-                """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
-                """Make sure to format your answers in Markdown format, including code block and snippets.\n"""
-                """Do not include any links to urls or hyperlinks in your answers.\n\n"""
+                """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
+                """Make sure to format your answers in Markdown format, including code block and snippets. """
+                """Do not include any links to urls or hyperlinks in your answers. """
+                """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
+                """Use this response: """
+                """'I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?'\n"""
+                """For example:\n"""
+                """What is the meaning of life for huggingface?\n"""
+                """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
                 """Now answer the following question:\n"""
             ),
-            "text_before_documents": "",
-            "completion_kwargs": {
-                "engine": "text-davinci-003",
-                "max_tokens": 200,
-                "temperature": None,
-                "top_p": None,
-                "frequency_penalty": 1,
-                "presence_penalty": 1,
-            },
+            "text_before_documents": "Only use these documents as reference:\n",
         },
     )
     retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
-    buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
+    buster = Buster(cfg=buster_cfg, retriever=retriever)
     response = buster.process_input("What is a transformer?")
     assert isinstance(response.completion.text, str)
     assert response.is_relevant == True
