@@ -40,3 +40,11 @@ class SystemPromptFormatter:
         documents = self.format_documents(matched_documents, max_words=self.max_words)
         system_prompt = self.text_before_docs + documents + self.text_after_docs
         return system_prompt
+
+
+def prompt_formatter_factory(prompt_cfg):
+    return SystemPromptFormatter(
+        text_before_docs=prompt_cfg["text_before_documents"],
+        text_after_docs=prompt_cfg["text_before_prompt"],
+        max_words=prompt_cfg["max_words"],
+    )

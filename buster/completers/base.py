@@ -91,7 +91,7 @@ class ChatGPTCompleter(Completer):
         return response["choices"][0]["message"]["content"]
 
 
-def get_completer(completer_cfg):
+def completer_factory(completer_cfg):
     name = completer_cfg["name"]
     completers = {
         "GPT3": GPT3Completer,

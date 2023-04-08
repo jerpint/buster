@@ -60,7 +60,9 @@ logging.basicConfig(level=logging.INFO)
 def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
     monkeypatch.setattr(Buster, "get_embedding", lambda self, prompt, engine: get_fake_embedding())
-    monkeypatch.setattr("buster.busterbot.get_completer", lambda x: MockCompleter(expected_answer=gpt_expected_answer))
+    monkeypatch.setattr(
+        "buster.busterbot.completer_factory", lambda x: MockCompleter(expected_answer=gpt_expected_answer)
+    )
 
     hf_transformers_cfg = BusterConfig(
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",

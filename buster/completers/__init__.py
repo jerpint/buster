@@ -1,7 +1,7 @@
-from .base import ChatGPTCompleter, GPT3Completer, get_completer
+from .base import ChatGPTCompleter, GPT3Completer, completer_factory
 
 __all__ = [
-    get_completer,
+    completer_factory,
     GPT3Completer,
     ChatGPTCompleter,
 ]

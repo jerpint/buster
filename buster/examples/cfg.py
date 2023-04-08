@@ -2,13 +2,20 @@ from buster.busterbot import BusterConfig
 
 documents_filepath = "./documents.db"
 buster_cfg = BusterConfig(
-    unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
     embedding_model="text-embedding-ada-002",
-    top_k=3,
-    thresh=0.7,
-    max_words=3000,
-    completer_cfg={
+    unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
+    retriever_cfg={
+        "top_k": 3,
+        "thresh": 0.7,
+    },
+    completion_cfg={
         "name": "ChatGPT",
+        "completion_kwargs": {
+            "model": "gpt-3.5-turbo",
+        },
+    },
+    prompt_cfg={
+        "max_words": 3000,
         "text_before_documents": (
             "You are a chatbot assistant answering technical questions about artificial intelligence (AI)."
             "You can only respond to a question if the content necessary to answer the question is contained in the following provided documentation. "
@@ -34,10 +41,6 @@ buster_cfg = BusterConfig(
             "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"
             "Now answer the following question:\n"
         ),
-        "completion_kwargs": {
-            "model": "gpt-3.5-turbo",
-        },
     },
-    response_format="gradio",
-    source="stackoverflow",
+    document_source="stackoverflow",
 )
