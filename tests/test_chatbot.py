@@ -4,9 +4,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from buster.busterbot import Buster, BusterConfig
-from buster.completers.base import Completer
-from buster.formatter.base import Response
+from buster.busterbot import Buster, BusterConfig, Response
+from buster.completers.base import Completer, Completion
 from buster.retriever import Retriever
 from buster.utils import get_retriever_from_extension
 
@@ -26,8 +25,8 @@ class MockCompleter(Completer):
     def complete(self):
         return
 
-    def generate_response(self, user_input, documents) -> Response:
-        return Response(self.expected_answer)
+    def generate_response(self, user_input, system_prompt) -> Completion:
+        return Completion(self.expected_answer)
 
 
 class MockRetriever(Retriever):
@@ -93,9 +92,9 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     filepath = tmp_path / "not_a_real_file.tar.gz"
     retriever = MockRetriever(filepath)
     buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
-    answer = buster.process_input("What is a transformer?")
-    assert isinstance(answer, str)
-    assert answer.startswith(gpt_expected_answer)
+    response = buster.process_input("What is a transformer?")
+    assert isinstance(response.completion.text, str)
+    assert response.completion.text.startswith(gpt_expected_answer)
 
 
 def test_chatbot_real_data__chatGPT():
@@ -122,8 +121,8 @@ def test_chatbot_real_data__chatGPT():
     )
     retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
-    answer = buster.process_input("What is a transformer?")
-    assert isinstance(answer, str)
+    response = buster.process_input("What is a transformer?")
+    assert isinstance(response.completion.text, str)
 
 
 def test_chatbot_real_data__chatGPT_OOD():
@@ -136,7 +135,7 @@ def test_chatbot_real_data__chatGPT_OOD():
         completer_cfg={
             "name": "ChatGPT",
             "text_before_prompt": (
-                """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
+                """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
                 """Make sure to format your answers in Markdown format, including code block and snippets. """
                 """Do not include any links to urls or hyperlinks in your answers. """
                 """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
@@ -156,9 +155,9 @@ def test_chatbot_real_data__chatGPT_OOD():
     )
     retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(cfg=buster_cfg, retriever=retriever)
-    answer = buster.process_input("What is a good recipe for brocolli soup?")
-    assert isinstance(answer, str)
-    assert buster_cfg.unknown_prompt in answer
+    response = buster.process_input("What is a good recipe for brocolli soup?")
+    assert isinstance(response.completion.text, str)
+    assert response.is_relevant is False
 
 
 def test_chatbot_real_data__GPT():
@@ -166,13 +165,13 @@ def test_chatbot_real_data__GPT():
         unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
         embedding_model="text-embedding-ada-002",
         top_k=3,
-        thresh=0.7,
+        thresh=0,  # ensures documents aren't empty
         max_words=3000,
         response_format="slack",
         completer_cfg={
             "name": "GPT3",
             "text_before_prompt": (
-                """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
+                """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
                 """Make sure to format your answers in Markdown format, including code block and snippets.\n"""
                 """Do not include any links to urls or hyperlinks in your answers.\n\n"""
                 """Now answer the following question:\n"""
@@ -190,5 +189,6 @@ def test_chatbot_real_data__GPT():
     )
     retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
     buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
-    answer = buster.process_input("What is a transformer?")
-    assert isinstance(answer, str)
+    response = buster.process_input("What is a transformer?")
+    assert isinstance(response.completion.text, str)
+    assert response.is_relevant is True

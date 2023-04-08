@@ -56,8 +56,6 @@ def chat(question, history, bot_source):
     cfg = available_configs.get(bot_source)
     buster.update_cfg(cfg)
 
-    # formatting hack for code blocks to render properly every time
-    # answer = answer.replace("```", "\n```\n")
     response = buster.process_input(question)
 
     # formatted_sources = source_formatter(sources)

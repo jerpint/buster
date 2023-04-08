@@ -17,6 +17,7 @@ logging.basicConfig(level=logging.INFO)
 @dataclass(slots=True)
 class Response:
     completion: Completion
+    is_relevant: bool
     matched_documents: pd.DataFrame | None = None
 
 
@@ -177,7 +178,7 @@ class Buster:
             logger.warning("No documents found...")
             completion = Completion(text="No documents found.")
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
-            response = Response(completion=completion, matched_documents=matched_documents)
+            response = Response(completion=completion, matched_documents=matched_documents, is_relevant=False)
             return response
 
         # prepare the prompt
@@ -186,17 +187,17 @@ class Buster:
         logger.info(f"GPT Response:\n{completion.text}")
 
         # check for relevance
-        relevant = self.check_response_relevance(
+        is_relevant = self.check_response_relevance(
             completion_text=completion.text,
             engine=self.cfg.embedding_model,
             unk_embedding=self.unk_embedding,
             unk_threshold=self.cfg.unknown_threshold,
         )
-        if not relevant:
+        if not is_relevant:
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
             # answer generated was the chatbot saying it doesn't know how to answer
         # uncomment override completion with unknown prompt
         # completion = Completion(text=self.cfg.unknown_prompt)
 
-        response = Response(completion=completion, matched_documents=matched_documents)
+        response = Response(completion=completion, matched_documents=matched_documents, is_relevant=is_relevant)
         return response
