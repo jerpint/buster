@@ -1,6 +1,6 @@
-import pandas as pd
 import cfg
 import gradio as gr
+import pandas as pd
 
 from buster.busterbot import Buster
 from buster.retriever import Retriever

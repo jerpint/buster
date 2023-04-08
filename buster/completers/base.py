@@ -1,7 +1,7 @@
-from dataclasses import dataclass
 import logging
 import os
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 import openai
 import promptlayer
