@@ -157,7 +157,7 @@ def test_chatbot_real_data__chatGPT_OOD():
     buster = Buster(cfg=buster_cfg, retriever=retriever)
     response = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(response.completion.text, str)
-    assert response.is_relevant is False
+    assert response.is_relevant == False
 
 
 def test_chatbot_real_data__GPT():
@@ -191,4 +191,4 @@ def test_chatbot_real_data__GPT():
     buster = Buster(cfg=hf_transformers_cfg, retriever=retriever)
     response = buster.process_input("What is a transformer?")
     assert isinstance(response.completion.text, str)
-    assert response.is_relevant is True
+    assert response.is_relevant == True

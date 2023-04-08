@@ -155,7 +155,7 @@ class Buster:
         # Likely that the answer is meaningful, add the top sources
         return score < unk_threshold
 
-    def process_input(self, user_input: str) -> str:
+    def process_input(self, user_input: str) -> Response:
         """
         Main function to process the input question and generate a formatted output.
         """
