@@ -8,7 +8,7 @@ from huggingface_hub import hf_hub_download
 from buster.apps.bot_configs import available_configs
 from buster.busterbot import Buster, BusterConfig
 from buster.retriever import Retriever
-from buster.utils import download_db, get_retriever_from_extension
+from buster.utils import get_retriever_from_extension
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
