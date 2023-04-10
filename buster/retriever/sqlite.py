@@ -25,7 +25,6 @@ class SQLiteRetriever(Retriever):
         else:
             self.db_path = None
             self.conn = db_path
-        schema.initialize_db(self.conn)
         schema.setup_db(self.conn)
 
     def __del__(self):

@@ -1,11 +1,10 @@
 import logging
 import os
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 import openai
 import promptlayer
-
-from buster.formatter.base import Response
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -21,43 +20,47 @@ if promptlayer_api_key:
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
+@dataclass(slots=True)
+class Completion:
+    text: str
+    error: bool = False
+    error_msg: str | None = None
+
+
 class Completer(ABC):
-    def __init__(self, cfg):
-        self.cfg = cfg
+    def __init__(self, completion_kwargs: dict):
+        self.completion_kwargs = completion_kwargs
 
     @abstractmethod
     def complete(self, prompt) -> str:
         ...
 
-    def generate_response(self, user_input, documents) -> Response:
+    def generate_response(self, system_prompt, user_input) -> Completion:
         # Call the API to generate a response
-        prompt = self.prepare_prompt(user_input, documents)
-        name = self.cfg["name"]
-        logger.info(f"querying model {name}...")
-        logger.info(f"{prompt=}")
+        prompt = self.prepare_prompt(system_prompt, user_input)
+        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
+        logger.info(f"{system_prompt=}")
+        logger.info(f"{user_input=}")
         try:
-            completion_kwargs = self.cfg["completion_kwargs"]
-            completion = self.complete(prompt=prompt, **completion_kwargs)
+            completion = self.complete(prompt=prompt, **self.completion_kwargs)
         except Exception as e:
             # log the error and return a generic response instead.
             logger.exception("Error connecting to OpenAI API. See traceback:")
-            return Response("", True, "We're having trouble connecting to OpenAI right now... Try again soon!")
+            return Completion("", True, "We're having trouble connecting to OpenAI right now... Try again soon!")
 
-        return Response(completion)
+        return Completion(completion)
 
 
 class GPT3Completer(Completer):
     def prepare_prompt(
         self,
+        system_prompt: str,
         user_input: str,
-        documents: str,
     ) -> str:
         """
         Prepare the prompt with prompt engineering.
         """
-        text_before_docs = self.cfg["text_before_documents"]
-        text_before_prompt = self.cfg["text_before_prompt"]
-        return text_before_docs + documents + text_before_prompt + user_input
+        return system_prompt + user_input
 
     def complete(self, prompt, **completion_kwargs):
         response = openai.Completion.create(prompt=prompt, **completion_kwargs)
@@ -67,16 +70,14 @@ class GPT3Completer(Completer):
 class ChatGPTCompleter(Completer):
     def prepare_prompt(
         self,
+        system_prompt: str,
         user_input: str,
-        documents: str,
     ) -> list:
         """
         Prepare the prompt with prompt engineering.
         """
-        text_before_docs = self.cfg["text_before_documents"]
-        text_before_prompt = self.cfg["text_before_prompt"]
         prompt = [
-            {"role": "system", "content": text_before_docs + documents + text_before_prompt},
+            {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input},
         ]
         return prompt
@@ -90,10 +91,10 @@ class ChatGPTCompleter(Completer):
         return response["choices"][0]["message"]["content"]
 
 
-def get_completer(completer_cfg):
+def completer_factory(completer_cfg):
     name = completer_cfg["name"]
     completers = {
         "GPT3": GPT3Completer,
         "ChatGPT": ChatGPTCompleter,
     }
-    return completers[name](completer_cfg)
+    return completers[name](completer_cfg["completion_kwargs"])

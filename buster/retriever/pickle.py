@@ -21,7 +21,7 @@ class PickleRetriever(Retriever):
             # Drop the `current` column
             documents.drop(columns=["current"], inplace=True)
 
-        if source is not None and "source" in documents.columns:
+        if source not in [None, ""] and "source" in documents.columns:
             documents = documents[documents.source == source]
 
         return documents

@@ -1,35 +1,71 @@
+import logging
 import os
-import pathlib
 
 import gradio as gr
+import pandas as pd
+from huggingface_hub import hf_hub_download
 
 from buster.apps.bot_configs import available_configs
 from buster.busterbot import Buster, BusterConfig
 from buster.retriever import Retriever
-from buster.utils import download_db, get_retriever_from_extension
+from buster.utils import get_retriever_from_extension
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 DEFAULT_CONFIG = "huggingface"
-DB_URL = "https://huggingface.co/datasets/jerpint/buster-data/resolve/main/documents.db"
 
-# Download the db...
-documents_filepath = download_db(db_url=DB_URL, output_dir="./data")
-retriever: Retriever = get_retriever_from_extension(documents_filepath)(documents_filepath)
+# DOWNLOAD FROM HF HUB
+HUB_TOKEN = os.getenv("HUB_TOKEN")
+REPO_ID = "jerpint/buster-data"
+HUB_DB_FILE = "documents.db"
+logger.info(f"Downloading {HUB_DB_FILE} from hub...")
+hf_hub_download(
+    repo_id=REPO_ID,
+    repo_type="dataset",
+    filename=HUB_DB_FILE,
+    token=HUB_TOKEN,
+    local_dir=".",
+)
+logger.info(f"Downloaded.")
+retriever: Retriever = get_retriever_from_extension(HUB_DB_FILE)(HUB_DB_FILE)
 
 # initialize buster with the default config...
 default_cfg: BusterConfig = available_configs.get(DEFAULT_CONFIG)
 buster = Buster(cfg=default_cfg, retriever=retriever)
 
 
+def format_sources(matched_documents: pd.DataFrame) -> str:
+    if len(matched_documents) == 0:
+        return ""
+
+    sourced_answer_template: str = (
+        """📝 Here are the sources I used to answer your question:<br>""" """{sources}<br><br>""" """{footnote}"""
+    )
+    source_template: str = """[🔗 {source.title}]({source.url}), relevance: {source.similarity:2.1f} %"""
+
+    matched_documents.similarity = matched_documents.similarity * 100
+    sources = "<br>".join([source_template.format(source=source) for _, source in matched_documents.iterrows()])
+    footnote: str = "I'm a bot 🤖 and not always perfect."
+
+    return sourced_answer_template.format(sources=sources, footnote=footnote)
+
+
 def chat(question, history, bot_source):
     history = history or []
     cfg = available_configs.get(bot_source)
     buster.update_cfg(cfg)
-    answer = buster.process_input(question)
 
-    # formatting hack for code blocks to render properly every time
-    answer = answer.replace("```", "\n```\n")
+    response = buster.process_input(question)
 
-    history.append((question, answer))
+    # formatted_sources = source_formatter(sources)
+    matched_documents = response.matched_documents
+
+    formatted_sources = format_sources(matched_documents)
+    formatted_response = f"{response.completion.text}<br><br>" + formatted_sources
+
+    history.append((question, formatted_response))
+
     return history, history
 
 
