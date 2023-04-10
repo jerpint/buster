@@ -18,7 +18,7 @@ class SystemPromptFormatter:
         documents_list = matched_documents.content.to_list()
         documents_str = ""
         for idx, doc in enumerate(documents_list):
-            documents_str += f"<DOCUMENT> {doc} <\DOCUMENT>"
+            documents_str += f"<DOCUMENT> {doc} <\\DOCUMENT>"
 
         # truncate the documents to fit
         # TODO: increase to actual token count
