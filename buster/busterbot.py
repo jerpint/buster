@@ -27,7 +27,7 @@ class BusterConfig:
     """Configuration object for a chatbot."""
 
     embedding_model: str = "text-embedding-ada-002"
-    unknown_threshold: float = 0.9
+    unknown_threshold: float = 0.85
     unknown_prompt: str = "I Don't know how to answer your question."
     document_source: str = ""
     retriever_cfg: dict = field(
