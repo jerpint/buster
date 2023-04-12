@@ -147,7 +147,7 @@ class Buster:
         logger.info(f"UNK score: {score}")
 
         # Likely that the answer is meaningful, add the top sources
-        return score < unk_threshold
+        return bool(score < unk_threshold)
 
     def process_input(self, user_input: str) -> Response:
         """
