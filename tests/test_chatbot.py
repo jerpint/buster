@@ -110,6 +110,7 @@ def test_chatbot_real_data__chatGPT():
             "name": "ChatGPT",
             "completion_kwargs": {
                 "model": "gpt-3.5-turbo",
+                "temperature": 0,
             },
         },
         prompt_cfg={
@@ -137,6 +138,7 @@ def test_chatbot_real_data__chatGPT_OOD():
             "name": "ChatGPT",
             "completion_kwargs": {
                 "model": "gpt-3.5-turbo",
+                "temperature": 0,
             },
         },
         retriever_cfg={
@@ -175,6 +177,7 @@ def test_chatbot_real_data__GPT():
             "name": "ChatGPT",
             "completion_kwargs": {
                 "model": "gpt-3.5-turbo",
+                "temperature": 0,
             },
         },
         retriever_cfg={
