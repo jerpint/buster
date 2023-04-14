@@ -32,12 +32,13 @@ class SystemPromptFormatter:
 
     def format(
         self,
-        matched_documents: str,
+        matched_documents: str = None,
     ) -> str:
         """
         Prepare the system prompt with prompt engineering.
         """
-        documents = self.format_documents(matched_documents, max_words=self.max_words)
+        documents = self.format_documents(matched_documents, max_words=self.max_words) \
+            if matched_documents is not None else ""
         system_prompt = self.text_before_docs + documents + self.text_after_docs
         return system_prompt
 

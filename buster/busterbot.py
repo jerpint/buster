@@ -131,7 +131,7 @@ class Buster:
         return matched_documents
 
     def check_response_relevance(
-        self, completion_text: str, engine: str, unk_embedding: np.array, unk_threshold: float
+        self, response_embedding: np.array, unk_embedding: np.array, unk_threshold: float
     ) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
@@ -140,10 +140,6 @@ class Buster:
 
         set the unk_threshold to 0 to essentially turn off this feature.
         """
-        response_embedding = self.get_embedding(
-            completion_text,
-            engine=engine,
-        )
         score = cosine_similarity(response_embedding, unk_embedding)
         logger.info(f"UNK score: {score}")
 
@@ -182,11 +178,11 @@ class Buster:
         system_prompt = self.prompt_formatter.format(matched_documents)
         completion: Completion = self.completer.generate_response(user_input=user_input, system_prompt=system_prompt)
         logger.info(f"GPT Response:\n{completion.text}")
-
+        response_embedding = self.get_embedding(completion.text, engine=self.embedding_model)
+        
         # check for relevance
         is_relevant = self.check_response_relevance(
-            completion_text=completion.text,
-            engine=self.embedding_model,
+            response_embedding=response_embedding,
             unk_embedding=self.unk_embedding,
             unk_threshold=self.unknown_threshold,
         )
@@ -195,6 +191,31 @@ class Buster:
             # answer generated was the chatbot saying it doesn't know how to answer
         # uncomment override completion with unknown prompt
         # completion = Completion(text=self.unknown_prompt)
+        
+        # Check if the retrieved document helps 
+        # It generate a document effect score, from 0 to 1. 
+        # 0 means document has no effect of output. 
+        # 1 means document drastically change output
+        else:
+            raw_prompt = self.prompt_formatter.format()
+            raw_completion: Completion = self.completer.generate_response(user_input=user_input, system_prompt=raw_prompt)
+            raw_embedding = self.get_embedding(raw_completion.text, engine=self.embedding_model)
+            raw_is_relevant = self.check_response_relevance(
+                response_embedding=raw_embedding,
+                unk_embedding=self.unk_embedding,
+                unk_threshold=self.unknown_threshold,
+            )
+            
+            # If the raw output is UNK, but system output is relevant.
+            # The result uses the documents, but if the raw output is still relevant
+            # Two situations:
+            # 1. The response is still correct, since the knowldge might be global
+            # 2. The reponse is hallucinating    
+            if raw_is_relevant:
+                logger.info(f"Potentially Hallucinating!")
+                completion.text = completion.text + "\n*** The model is hallucinating or using global knowledge ***"
+            else:
+                completion.text = completion.text + "\n*** The model is using documents ***"
 
         response = Response(
             completion=completion, matched_documents=matched_documents, is_relevant=is_relevant, user_input=user_input
