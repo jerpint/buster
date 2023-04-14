@@ -18,7 +18,7 @@ class DocumentsService(DocumentsManager):
         pinecone_index: str,
         mongo_uri: str,
         mongo_db_name: str,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(**kwargs)
 
