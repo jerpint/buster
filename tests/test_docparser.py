@@ -3,7 +3,10 @@ import pandas as pd
 import pytest
 
 from buster.docparser import generate_embeddings
-from buster.utils import get_retriever_from_extension, get_documents_manager_from_extension
+from buster.utils import (
+    get_documents_manager_from_extension,
+    get_retriever_from_extension,
+)
 
 
 @pytest.mark.parametrize("extension", ["db", "tar.gz"])
