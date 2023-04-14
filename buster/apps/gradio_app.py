@@ -13,11 +13,11 @@ logging.basicConfig(level=logging.INFO)
 
 DEFAULT_CONFIG = "huggingface"
 
-PINECONE_API_KEY=os.getenv("PINECONE_API_KEY")
-PINECONE_ENV=os.getenv("PINECONE_ENV")
-PINECONE_INDEX=os.getenv("PINECONE_INDEX")
-MONGO_URI=os.getenv("MONGO_URI")
-MONGO_DB=os.getenv("MONGO_DB")
+PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
+PINECONE_ENV = os.getenv("PINECONE_ENV")
+PINECONE_INDEX = os.getenv("PINECONE_INDEX")
+MONGO_URI = os.getenv("MONGO_URI")
+MONGO_DB = os.getenv("MONGO_DB")
 retriever = ServiceRetriever(PINECONE_API_KEY, PINECONE_ENV, PINECONE_INDEX, MONGO_URI, MONGO_DB)
 
 # initialize buster with the default config...

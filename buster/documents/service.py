@@ -10,13 +10,19 @@ from buster.documents.base import DocumentsManager
 
 class DocumentsService(DocumentsManager):
     """Manager to use in production. Mixed Pinecone and MongoDB backend."""
-    def __init__(self, pinecone_api_key: str, pinecone_env: str, pinecone_index: str, mongo_uri: str, mongo_db_name: str, **kwargs):
+
+    def __init__(
+        self,
+        pinecone_api_key: str,
+        pinecone_env: str,
+        pinecone_index: str,
+        mongo_uri: str,
+        mongo_db_name: str,
+        **kwargs
+    ):
         super().__init__(**kwargs)
 
-        pinecone.init(
-            api_key=pinecone_api_key,
-            environment=pinecone_env
-        )
+        pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
 
         self.index = pinecone.Index(pinecone_index)
 
@@ -28,7 +34,7 @@ class DocumentsService(DocumentsManager):
         source_exists = self.db.sources.find_one({"name": source})
         if source_exists is None:
             self.db.sources.insert_one({"name": source})
-        
+
         source_id = str(self.db.sources.find_one({"name": source})["_id"])
 
         for _, row in df.iterrows():
@@ -44,4 +50,6 @@ class DocumentsService(DocumentsManager):
 
     def update_source(self, source: str, display_name: str = None, note: str = None):
         """Update the display name and/or note of a source. Also create the source if it does not exist."""
-        self.db.sources.update_one({"name": source}, {"$set": {"display_name": display_name, "note": note}}, upsert=True)
+        self.db.sources.update_one(
+            {"name": source}, {"$set": {"display_name": display_name, "note": note}}, upsert=True
+        )

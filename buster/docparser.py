@@ -11,8 +11,8 @@ import tiktoken
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
-from buster.parser import HuggingfaceParser, Parser, SphinxParser
 from buster.documents import DocumentsManager
+from buster.parser import HuggingfaceParser, Parser, SphinxParser
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -148,7 +148,10 @@ def generate_embeddings_parser(root_dir: str, output_filepath: str, source: str)
     return generate_embeddings(documents, output_filepath)
 
 
-def documents_to_db(documents: pd.DataFrame, documents_manager: DocumentsManager,):
+def documents_to_db(
+    documents: pd.DataFrame,
+    documents_manager: DocumentsManager,
+):
     logger.info("Preparing database...")
     sources = documents["source"].unique()
     for source in sources:
