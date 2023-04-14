@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from buster.docparser import generate_embeddings
-from buster.utils import get_retriever_from_extension
+from buster.utils import get_retriever_from_extension, get_documents_manager_from_extension
 
 
 @pytest.mark.parametrize("extension", ["db", "tar.gz"])
@@ -19,7 +19,8 @@ def test_generate_embeddings(tmp_path, monkeypatch, extension):
 
     # Generate embeddings, store in a file
     output_file = tmp_path / f"test_document_embeddings.{extension}"
-    df = generate_embeddings(data, output_file)
+    manager = get_documents_manager_from_extension(output_file)(output_file)
+    df = generate_embeddings(data, manager)
 
     # Read the embeddings from the file
     read_df = get_retriever_from_extension(output_file)(output_file).get_documents("my_source")
