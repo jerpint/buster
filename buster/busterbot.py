@@ -19,6 +19,7 @@ logging.basicConfig(level=logging.INFO)
 class Response:
     completion: Completion
     is_relevant: bool
+    user_input: str
     matched_documents: pd.DataFrame | None = None
 
 
@@ -172,7 +173,9 @@ class Buster:
             logger.warning("No documents found...")
             completion = Completion(text="No documents found.")
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
-            response = Response(completion=completion, matched_documents=matched_documents, is_relevant=False)
+            response = Response(
+                completion=completion, matched_documents=matched_documents, is_relevant=False, user_input=user_input
+            )
             return response
 
         # prepare the prompt
@@ -193,5 +196,7 @@ class Buster:
         # uncomment override completion with unknown prompt
         # completion = Completion(text=self.unknown_prompt)
 
-        response = Response(completion=completion, matched_documents=matched_documents, is_relevant=is_relevant)
+        response = Response(
+            completion=completion, matched_documents=matched_documents, is_relevant=is_relevant, user_input=user_input
+        )
         return response
