@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
 from buster.parser import HuggingfaceParser, Parser, SphinxParser
-from buster.utils import get_documents_manager_from_extension
+from buster.documents import DocumentsManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -148,23 +148,21 @@ def generate_embeddings_parser(root_dir: str, output_filepath: str, source: str)
     return generate_embeddings(documents, output_filepath)
 
 
-def documents_to_db(documents: pd.DataFrame, output_filepath: str):
+def documents_to_db(documents: pd.DataFrame, documents_manager: DocumentsManager,):
     logger.info("Preparing database...")
-    documents_manager = get_documents_manager_from_extension(output_filepath)(output_filepath)
     sources = documents["source"].unique()
     for source in sources:
         documents_manager.add(source, documents)
-    logger.info(f"Documents saved to: {output_filepath}")
+    logger.info(f"Documents saved to documents manager")
 
 
-def update_source(source: str, output_filepath: str, display_name: str = None, note: str = None):
-    documents_manager = get_documents_manager_from_extension(output_filepath)(output_filepath)
+def update_source(source: str, documents_manager: DocumentsManager, display_name: str = None, note: str = None):
     documents_manager.update_source(source, display_name, note)
 
 
 def generate_embeddings(
     documents: pd.DataFrame,
-    output_filepath: str = "documents.db",
+    documents_manager: DocumentsManager,
     max_words=500,
     embedding_engine: str = EMBEDDING_MODEL,
 ) -> pd.DataFrame:
@@ -180,7 +178,7 @@ def generate_embeddings(
     documents = compute_embeddings(documents, engine=embedding_engine)
 
     # save the documents to a db for later use
-    documents_to_db(documents, output_filepath)
+    documents_to_db(documents, documents_manager)
 
     return documents
 

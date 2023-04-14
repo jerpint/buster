@@ -3,32 +3,22 @@ import os
 
 import gradio as gr
 import pandas as pd
-from huggingface_hub import hf_hub_download
 
 from buster.apps.bot_configs import available_configs
 from buster.busterbot import Buster, BusterConfig
-from buster.retriever import Retriever
-from buster.utils import get_retriever_from_extension
+from buster.retriever import ServiceRetriever
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 DEFAULT_CONFIG = "huggingface"
 
-# DOWNLOAD FROM HF HUB
-HUB_TOKEN = os.getenv("HUB_TOKEN")
-REPO_ID = "jerpint/buster-data"
-HUB_DB_FILE = "documents.db"
-logger.info(f"Downloading {HUB_DB_FILE} from hub...")
-hf_hub_download(
-    repo_id=REPO_ID,
-    repo_type="dataset",
-    filename=HUB_DB_FILE,
-    token=HUB_TOKEN,
-    local_dir=".",
-)
-logger.info(f"Downloaded.")
-retriever: Retriever = get_retriever_from_extension(HUB_DB_FILE)(HUB_DB_FILE)
+PINECONE_API_KEY=os.getenv("PINECONE_API_KEY")
+PINECONE_ENV=os.getenv("PINECONE_ENV")
+PINECONE_INDEX=os.getenv("PINECONE_INDEX")
+MONGO_URI=os.getenv("MONGO_URI")
+MONGO_DB=os.getenv("MONGO_DB")
+retriever = ServiceRetriever(PINECONE_API_KEY, PINECONE_ENV, PINECONE_INDEX, MONGO_URI, MONGO_DB)
 
 # initialize buster with the default config...
 default_cfg: BusterConfig = available_configs.get(DEFAULT_CONFIG)
