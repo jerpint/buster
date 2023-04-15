@@ -29,6 +29,9 @@ class DocumentsService(DocumentsManager):
         self.client = MongoClient(mongo_uri, server_api=ServerApi("1"))
         self.db = self.client[mongo_db_name]
 
+    def __repr__(self):
+        return "DocumentsService"
+
     def add(self, source: str, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version."""
         source_exists = self.db.sources.find_one({"name": source})

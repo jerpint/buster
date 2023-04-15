@@ -14,6 +14,9 @@ class DocumentsPickle(DocumentsManager):
         else:
             self.documents = None
 
+    def __repr__(self):
+        return "DocumentsPickle"
+
     def add(self, source: str, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version."""
         if source is not None:

@@ -156,7 +156,7 @@ def documents_to_db(
     sources = documents["source"].unique()
     for source in sources:
         documents_manager.add(source, documents)
-    logger.info(f"Documents saved to documents manager")
+    logger.info(f"Documents saved to documents manager: {documents_manager}")
 
 
 def update_source(source: str, documents_manager: DocumentsManager, display_name: str = None, note: str = None):

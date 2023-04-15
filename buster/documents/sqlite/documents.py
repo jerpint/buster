@@ -49,6 +49,9 @@ class DocumentsDB(DocumentsManager):
         if self.db_path is not None:
             self.conn.close()
 
+    def __repr__(self):
+        return f"DocumentsDB({self.db_path})"
+
     def get_current_version(self, source: str) -> tuple[int, int]:
         """Get the current version of a source."""
         cur = self.conn.execute("SELECT source, version FROM latest_version WHERE name = ?", (source,))
