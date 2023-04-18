@@ -60,7 +60,7 @@ class DocumentsService(DocumentsManager):
         self.db.sources.update_one(
             {"name": source}, {"$set": {"display_name": display_name, "note": note}}, upsert=True
         )
-    
+
     def delete_source(self, source: str) -> tuple[int, int]:
         """Delete a source and all its documents. Return if the source was deleted and the number of deleted documents."""
         source_id = self.get_source_id(source)
