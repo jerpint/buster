@@ -32,13 +32,17 @@ class DocumentsService(DocumentsManager):
     def __repr__(self):
         return "DocumentsService"
 
+    def get_source_id(self, source: str) -> str:
+        """Get the id of a source."""
+        return str(self.db.sources.find_one({"name": source})["_id"])
+
     def add(self, source: str, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version."""
         source_exists = self.db.sources.find_one({"name": source})
         if source_exists is None:
             self.db.sources.insert_one({"name": source})
 
-        source_id = str(self.db.sources.find_one({"name": source})["_id"])
+        source_id = self.get_source_id(source)
 
         for _, row in df.iterrows():
             document = {
@@ -56,3 +60,16 @@ class DocumentsService(DocumentsManager):
         self.db.sources.update_one(
             {"name": source}, {"$set": {"display_name": display_name, "note": note}}, upsert=True
         )
+    
+    def delete_source(self, source: str) -> tuple[int, int]:
+        """Delete a source and all its documents. Return if the source was deleted and the number of deleted documents."""
+        source_id = self.get_source_id(source)
+
+        # MongoDB
+        source_deleted = self.db.sources.delete_one({"name": source}).deleted_count
+        documents_deleted = self.db.documents.delete_many({"source_id": source_id}).deleted_count
+
+        # Pinecone
+        self.index.delete(filter={"source": source})
+
+        return source_deleted, documents_deleted
