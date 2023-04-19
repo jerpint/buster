@@ -38,7 +38,7 @@ class DocumentsDB(DocumentsManager):
     def __init__(self, db_path: sqlite3.Connection | str):
         if isinstance(db_path, (str, Path)):
             self.db_path = db_path
-            self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+            self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES)
         else:
             self.db_path = None
             self.conn = db_path
@@ -48,6 +48,9 @@ class DocumentsDB(DocumentsManager):
     def __del__(self):
         if self.db_path is not None:
             self.conn.close()
+
+    def __repr__(self):
+        return f"DocumentsDB({self.db_path})"
 
     def get_current_version(self, source: str) -> tuple[int, int]:
         """Get the current version of a source."""
