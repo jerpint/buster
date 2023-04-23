@@ -42,5 +42,5 @@ buster_cfg = BusterConfig(
             "Now answer the following question:\n"
         ),
     },
-    document_source="stackoverflow",
+    document_source="pdf",
 )
