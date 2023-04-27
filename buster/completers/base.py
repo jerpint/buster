@@ -46,7 +46,7 @@ class Completer(ABC):
         except Exception as e:
             # log the error and return a generic response instead.
             logger.exception("Error connecting to OpenAI API. See traceback:")
-            return Completion("", True, "We're having trouble connecting to OpenAI right now... Try again soon!")
+            return Completion("Something went wrong, try again soon!", True, "Error detected at the generate_response level")
 
         return Completion(completion)
 
