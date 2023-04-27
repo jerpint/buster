@@ -145,6 +145,9 @@ class Buster:
             # consider not relevant if an error occured
             return False
 
+        if completion.text == "":
+            raise ValueError("Cannot compute embedding of an empty string.")
+
         response_embedding = self.get_embedding(
             completion.text,
             engine=engine,
