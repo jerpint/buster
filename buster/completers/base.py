@@ -43,10 +43,13 @@ class Completer(ABC):
         logger.info(f"{user_input=}")
         try:
             completion = self.complete(prompt=prompt, **self.completion_kwargs)
+        except openai.error.InvalidRequestError:
+            logger.exception("Error connecting to OpenAI API. See traceback:")
+            return Completion("Something went wrong, try again soon!", True, "Invalid request made to openai.")
         except Exception as e:
             # log the error and return a generic response instead.
             logger.exception("Error connecting to OpenAI API. See traceback:")
-            return Completion("Something went wrong, try again soon!", True, "Error detected at the generate_response level")
+            return Completion("Something went wrong, try again soon!", True, "Unexpected error at the generate_response level")
 
         return Completion(completion)
 
