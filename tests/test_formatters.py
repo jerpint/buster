@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
-from buster.formatters.prompts import SystemPromptFormatter
-from buster.formatters.documents import DocumentsFormatter
 
+from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.prompts import SystemPromptFormatter
 from buster.tokenizers import GPTTokenizer
 
 
