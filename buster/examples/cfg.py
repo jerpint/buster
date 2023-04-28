@@ -7,6 +7,7 @@ buster_cfg = BusterConfig(
     retriever_cfg={
         "top_k": 3,
         "thresh": 0.7,
+        "max_tokens": 2000,
     },
     completion_cfg={
         "name": "ChatGPT",
@@ -18,7 +19,6 @@ buster_cfg = BusterConfig(
         "model_name": "gpt-3.5-turbo",
     },
     prompt_cfg={
-        "max_tokens": 2000,
         "text_before_documents": (
             "You are a chatbot assistant answering technical questions about artificial intelligence (AI)."
             "You can only respond to a question if the content necessary to answer the question is contained in the following provided documentation. "
