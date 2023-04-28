@@ -10,6 +10,7 @@ from buster.completers import completer_factory
 from buster.completers.base import Completion
 from buster.formatters.prompts import SystemPromptFormatter, prompt_formatter_factory
 from buster.retriever import Retriever
+from buster.tokenizers import tokenizer_factory
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -31,6 +32,11 @@ class BusterConfig:
     unknown_threshold: float = 0.85
     unknown_prompt: str = "I Don't know how to answer your question."
     document_source: str = ""
+    tokenizer_cfg: dict = field(
+        default_factory=lambda: {
+            "model_name": "gpt-3.5-turbo",
+        }
+    )
     retriever_cfg: dict = field(
         default_factory=lambda: {
             "top_k": 3,
@@ -39,7 +45,7 @@ class BusterConfig:
     )
     prompt_cfg: dict = field(
         default_factory=lambda: {
-            "max_words": 3000,
+            "max_tokens": 2000,
             "text_before_documents": "You are a chatbot answering questions.\n",
             "text_before_prompt": "Answer the following question:\n",
         }
@@ -88,13 +94,15 @@ class Buster:
         self.retriever_cfg = cfg.retriever_cfg
         self.completion_cfg = cfg.completion_cfg
         self.prompt_cfg = cfg.prompt_cfg
+        self.tokenizer_cfg = cfg.tokenizer_cfg
 
         # set the unk. embedding
         self.unk_embedding = self.get_embedding(self.unknown_prompt, engine=self.embedding_model)
 
         # update completer and formatter cfg
+        self.tokenizer = tokenizer_factory(self.tokenizer_cfg)
         self.completer = completer_factory(self.completion_cfg)
-        self.prompt_formatter = prompt_formatter_factory(self.prompt_cfg)
+        self.prompt_formatter = prompt_formatter_factory(self.prompt_cfg, tokenizer=self.tokenizer)
 
         logger.info(f"Config Updated.")
 
