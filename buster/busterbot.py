@@ -8,6 +8,7 @@ from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import completer_factory
 from buster.completers.base import Completion
+from buster.formatters.documents import document_formatter_factory
 from buster.formatters.prompts import SystemPromptFormatter, prompt_formatter_factory
 from buster.retriever import Retriever
 from buster.tokenizers import tokenizer_factory
@@ -102,7 +103,10 @@ class Buster:
         # update completer and formatter cfg
         self.tokenizer = tokenizer_factory(self.tokenizer_cfg)
         self.completer = completer_factory(self.completion_cfg)
-        self.prompt_formatter = prompt_formatter_factory(self.prompt_cfg, tokenizer=self.tokenizer)
+        self.documents_formatter = document_formatter_factory(
+            tokenizer=self.tokenizer, max_tokens=self.retriever_cfg["max_tokens"]
+        )
+        self.prompt_formatter = prompt_formatter_factory(self.prompt_cfg)
 
         logger.info(f"Config Updated.")
 
@@ -194,8 +198,11 @@ class Buster:
             )
             return response
 
+        # format the matched documents, (will truncate them if too long)
+        documents_str, matched_documents = self.documents_formatter.format(matched_documents)
+
         # prepare the prompt
-        system_prompt = self.prompt_formatter.format(matched_documents)
+        system_prompt = self.prompt_formatter.format(documents_str)
         completion: Completion = self.completer.generate_response(user_input=user_input, system_prompt=system_prompt)
         logger.info(f"GPT Response:\n{completion.text}")
 
