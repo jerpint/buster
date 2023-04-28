@@ -9,7 +9,7 @@ from openai.embeddings_utils import cosine_similarity, get_embedding
 from buster.completers import completer_factory
 from buster.completers.base import Completion
 from buster.formatters.documents import document_formatter_factory
-from buster.formatters.prompts import SystemPromptFormatter, prompt_formatter_factory
+from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 from buster.tokenizers import tokenizer_factory
 
