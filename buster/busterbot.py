@@ -8,7 +8,7 @@ from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import completer_factory
 from buster.completers.base import Completion
-from buster.formatters.prompts import SystemPromptFormatter, prompt_formatter_factory
+from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 
 logger = logging.getLogger(__name__)
@@ -140,9 +140,8 @@ class Buster:
 
         set the unk_threshold to 0 to essentially turn off this feature.
         """
-
         if completion.error:
-            # consider not relevant if an error occured
+            # considered not relevant if an error occured
             return False
 
         if completion.text == "":
@@ -198,11 +197,10 @@ class Buster:
             unk_embedding=self.unk_embedding,
             unk_threshold=self.unknown_threshold,
         )
+
         if not is_relevant:
-            # answer generated was the chatbot saying it doesn't know how to answer or an error
-            matched_documents = pd.DataFrame(columns=matched_documents.columns)  # empty dataframe
-            # uncomment to override completion with unknown prompt
-            # completion = Completion(text=self.unknown_prompt)
+            empty_documents = pd.DataFrame(columns=matched_documents.columns)
+            matched_documents = empty_documents
 
         response = Response(
             completion=completion, matched_documents=matched_documents, is_relevant=is_relevant, user_input=user_input
