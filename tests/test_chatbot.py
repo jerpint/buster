@@ -70,6 +70,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
         retriever_cfg={
             "top_k": 3,
             "thresh": 0.7,
+            "max_tokens": 2000,
         },
         document_source="fake source",
         completion_cfg={
@@ -84,7 +85,6 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
             },
         },
         prompt_cfg={
-            "max_tokens": 2000,
             "text_before_documents": "",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
@@ -113,8 +113,12 @@ def test_chatbot_real_data__chatGPT():
                 "temperature": 0,
             },
         },
-        prompt_cfg={
+        retriever_cfg={
+            "top_k": 3,
+            "thresh": 0.7,
             "max_tokens": 2000,
+        },
+        prompt_cfg={
             "text_before_documents": "",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
@@ -144,9 +148,9 @@ def test_chatbot_real_data__chatGPT_OOD():
         retriever_cfg={
             "top_k": 3,
             "thresh": 0.7,
+            "max_tokens": 2000,
         },
         prompt_cfg={
-            "max_tokens": 2000,
             "text_before_prompt": (
                 """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
                 """Make sure to format your answers in Markdown format, including code block and snippets. """
@@ -183,9 +187,9 @@ def test_chatbot_real_data__GPT():
         retriever_cfg={
             "top_k": 3,
             "thresh": 0.7,
+            "max_tokens": 3000,
         },
         prompt_cfg={
-            "max_tokens": 3000,
             "text_before_prompt": (
                 """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
                 """Make sure to format your answers in Markdown format, including code block and snippets. """
