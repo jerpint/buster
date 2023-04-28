@@ -84,7 +84,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
             },
         },
         prompt_cfg={
-            "max_words": 2000,
+            "max_tokens": 2000,
             "text_before_documents": "",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
@@ -114,7 +114,7 @@ def test_chatbot_real_data__chatGPT():
             },
         },
         prompt_cfg={
-            "max_words": 2000,
+            "max_tokens": 2000,
             "text_before_documents": "",
             "text_before_prompt": (
                 """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
@@ -146,7 +146,7 @@ def test_chatbot_real_data__chatGPT_OOD():
             "thresh": 0.7,
         },
         prompt_cfg={
-            "max_words": 3000,
+            "max_tokens": 2000,
             "text_before_prompt": (
                 """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
                 """Make sure to format your answers in Markdown format, including code block and snippets. """
@@ -185,7 +185,7 @@ def test_chatbot_real_data__GPT():
             "thresh": 0.7,
         },
         prompt_cfg={
-            "max_words": 3000,
+            "max_tokens": 3000,
             "text_before_prompt": (
                 """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
                 """Make sure to format your answers in Markdown format, including code block and snippets. """
