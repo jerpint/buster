@@ -104,9 +104,11 @@ class Buster:
         self.tokenizer = tokenizer_factory(self.tokenizer_cfg)
         self.completer = completer_factory(self.completion_cfg)
         self.documents_formatter = document_formatter_factory(
-            tokenizer=self.tokenizer, max_tokens=self.retriever_cfg["max_tokens"]
+            tokenizer=self.tokenizer,
+            max_tokens=self.retriever_cfg["max_tokens"]
+            # TODO: move max_tokens from retriever_cfg to somewhere more logical
         )
-        self.prompt_formatter = prompt_formatter_factory(self.prompt_cfg)
+        self.prompt_formatter = prompt_formatter_factory(tokenizer=self.tokenizer, prompt_cfg=self.prompt_cfg)
 
         logger.info(f"Config Updated.")
 

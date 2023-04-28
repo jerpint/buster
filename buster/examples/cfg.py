@@ -19,6 +19,7 @@ buster_cfg = BusterConfig(
         "model_name": "gpt-3.5-turbo",
     },
     prompt_cfg={
+        "max_tokens": 3500,
         "text_before_documents": (
             "You are a chatbot assistant answering technical questions about artificial intelligence (AI)."
             "You can only respond to a question if the content necessary to answer the question is contained in the following provided documentation. "
