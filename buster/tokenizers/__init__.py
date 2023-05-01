@@ -3,7 +3,6 @@ from .gpt import GPTTokenizer
 
 
 def tokenizer_factory(tokenizer_cfg):
-    print(tokenizer_cfg)
     model_name = tokenizer_cfg["model_name"]
     if model_name in ["text-davinci-003", "gpt-3.5-turbo", "gpt-4"]:
         return GPTTokenizer(model_name)
