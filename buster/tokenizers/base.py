@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Union
 
 
 class Tokenizer(ABC):
@@ -15,7 +16,7 @@ class Tokenizer(ABC):
     def decode(self, encoded: list[int]) -> str:
         ...
 
-    def num_tokens(self, string: str, return_encoded: bool = False) -> int:
+    def num_tokens(self, string: str, return_encoded: bool = False) -> Union[int, tuple[int, list[int]]]:
         encoded = self.encode(string)
         if return_encoded:
             return len(encoded), encoded
