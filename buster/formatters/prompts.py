@@ -3,48 +3,42 @@ from dataclasses import dataclass
 
 import pandas as pd
 
+from buster.tokenizers import Tokenizer
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
 class SystemPromptFormatter:
-    text_before_docs: str = ""
-    text_after_docs: str = ""
-    max_words: int = 4000
-
-    def format_documents(self, matched_documents: pd.DataFrame, max_words: int) -> str:
-        # gather the documents in one large plaintext variable
-        documents_list = matched_documents.content.to_list()
-        documents_str = ""
-        for idx, doc in enumerate(documents_list):
-            documents_str += f"<DOCUMENT> {doc} <\\DOCUMENT>"
-
-        # truncate the documents to fit
-        # TODO: increase to actual token count
-        word_count = len(documents_str.split(" "))
-        if word_count > max_words:
-            logger.warning("truncating documents to fit...")
-            documents_str = " ".join(documents_str.split(" ")[0:max_words])
-            logger.warning(f"Documents after truncation: {documents_str}")
-
-        return documents_str
+    tokenizer: Tokenizer
+    max_tokens: 3500
+    text_before_docs: str
+    text_after_docs: str
+    formatter: str = "{text_before_docs}\n{documents}\n{text_after_docs}"
 
     def format(
         self,
-        matched_documents: str,
+        documents: str,
     ) -> str:
         """
         Prepare the system prompt with prompt engineering.
+
+        Joins the text before and after documents with
         """
-        documents = self.format_documents(matched_documents, max_words=self.max_words)
-        system_prompt = self.text_before_docs + documents + self.text_after_docs
+        system_prompt = self.formatter.format(
+            text_before_docs=self.text_before_docs, documents=documents, text_after_docs=self.text_after_docs
+        )
+
+        if self.tokenizer.num_tokens(system_prompt) > self.max_tokens:
+            raise ValueError(f"System prompt tokens > {self.max_tokens=}")
         return system_prompt
 
 
-def prompt_formatter_factory(prompt_cfg):
+def prompt_formatter_factory(tokenizer: Tokenizer, prompt_cfg):
     return SystemPromptFormatter(
+        tokenizer=tokenizer,
+        max_tokens=prompt_cfg["max_tokens"],
         text_before_docs=prompt_cfg["text_before_documents"],
         text_after_docs=prompt_cfg["text_before_prompt"],
-        max_words=prompt_cfg["max_words"],
     )

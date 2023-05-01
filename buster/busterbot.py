@@ -8,8 +8,10 @@ from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import completer_factory
 from buster.completers.base import Completion
+from buster.formatters.documents import document_formatter_factory
 from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
+from buster.tokenizers import tokenizer_factory
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -31,15 +33,21 @@ class BusterConfig:
     unknown_threshold: float = 0.85
     unknown_prompt: str = "I Don't know how to answer your question."
     document_source: str = ""
+    tokenizer_cfg: dict = field(
+        default_factory=lambda: {
+            "model_name": "gpt-3.5-turbo",
+        }
+    )
     retriever_cfg: dict = field(
         default_factory=lambda: {
+            "max_tokens": 3000,
             "top_k": 3,
             "thresh": 0.7,
         }
     )
     prompt_cfg: dict = field(
         default_factory=lambda: {
-            "max_words": 3000,
+            "max_tokens": 3500,
             "text_before_documents": "You are a chatbot answering questions.\n",
             "text_before_prompt": "Answer the following question:\n",
         }
@@ -88,13 +96,20 @@ class Buster:
         self.retriever_cfg = cfg.retriever_cfg
         self.completion_cfg = cfg.completion_cfg
         self.prompt_cfg = cfg.prompt_cfg
+        self.tokenizer_cfg = cfg.tokenizer_cfg
 
         # set the unk. embedding
         self.unk_embedding = self.get_embedding(self.unknown_prompt, engine=self.embedding_model)
 
         # update completer and formatter cfg
+        self.tokenizer = tokenizer_factory(self.tokenizer_cfg)
         self.completer = completer_factory(self.completion_cfg)
-        self.prompt_formatter = prompt_formatter_factory(self.prompt_cfg)
+        self.documents_formatter = document_formatter_factory(
+            tokenizer=self.tokenizer,
+            max_tokens=self.retriever_cfg["max_tokens"]
+            # TODO: move max_tokens from retriever_cfg to somewhere more logical
+        )
+        self.prompt_formatter = prompt_formatter_factory(tokenizer=self.tokenizer, prompt_cfg=self.prompt_cfg)
 
         logger.info(f"Config Updated.")
 
@@ -185,8 +200,11 @@ class Buster:
             )
             return response
 
+        # format the matched documents, (will truncate them if too long)
+        documents_str, matched_documents = self.documents_formatter.format(matched_documents)
+
         # prepare the prompt
-        system_prompt = self.prompt_formatter.format(matched_documents)
+        system_prompt = self.prompt_formatter.format(documents_str)
         completion: Completion = self.completer.generate_response(user_input=user_input, system_prompt=system_prompt)
         logger.info(f"GPT Response:\n{completion.text}")
 
