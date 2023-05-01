@@ -118,4 +118,4 @@ def test_system_prompt_formatter__to_long():
     documents = "Here are some documents that are WAY too long." * 100
 
     with pytest.raises(ValueError):
-        prompt = prompt_formatter.format(documents)
+        prompt_formatter.format(documents)
