@@ -12,10 +12,10 @@ class Tokenizer(ABC):
         ...
 
     @abstractmethod
-    def decode(self, encoded: list[int]):
+    def decode(self, encoded: list[int]) -> str:
         ...
 
-    def num_tokens(self, string: str, return_encoded: bool = False):
+    def num_tokens(self, string: str, return_encoded: bool = False) -> int:
         encoded = self.encode(string)
         if return_encoded:
             return len(encoded), encoded
