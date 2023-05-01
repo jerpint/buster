@@ -25,7 +25,7 @@ def test_documents_formatter__normal():
     docs_str, matched_documents_new = documents_formatter.format(matched_documents)
 
     # less documents and the new document is shorter than the original
-    matched_documents.content == matched_documents_new.content
+    assert all(matched_documents.content == matched_documents_new.content)
 
     assert document_1 in docs_str
     assert document_2 in docs_str
