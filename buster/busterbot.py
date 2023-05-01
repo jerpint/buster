@@ -144,8 +144,8 @@ class Buster:
 
         return matched_documents
 
-    def check_response_relevance(
-        self, completion_text: str, engine: str, unk_embedding: np.array, unk_threshold: float
+    def check_completion_relevance(
+        self, completion: Completion, engine: str, unk_embedding: np.array, unk_threshold: float
     ) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
@@ -154,8 +154,15 @@ class Buster:
 
         set the unk_threshold to 0 to essentially turn off this feature.
         """
+        if completion.error:
+            # considered not relevant if an error occured
+            return False
+
+        if completion.text == "":
+            raise ValueError("Cannot compute embedding of an empty string.")
+
         response_embedding = self.get_embedding(
-            completion_text,
+            completion.text,
             engine=engine,
         )
         score = cosine_similarity(response_embedding, unk_embedding)
@@ -201,17 +208,16 @@ class Buster:
         logger.info(f"GPT Response:\n{completion.text}")
 
         # check for relevance
-        is_relevant = self.check_response_relevance(
-            completion_text=completion.text,
+        is_relevant = self.check_completion_relevance(
+            completion=completion,
             engine=self.embedding_model,
             unk_embedding=self.unk_embedding,
             unk_threshold=self.unknown_threshold,
         )
+
         if not is_relevant:
-            matched_documents = pd.DataFrame(columns=matched_documents.columns)
-            # answer generated was the chatbot saying it doesn't know how to answer
-        # uncomment override completion with unknown prompt
-        # completion = Completion(text=self.unknown_prompt)
+            empty_documents = pd.DataFrame(columns=matched_documents.columns)
+            matched_documents = empty_documents
 
         response = Response(
             completion=completion, matched_documents=matched_documents, is_relevant=is_relevant, user_input=user_input
