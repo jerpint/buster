@@ -40,13 +40,14 @@ class BusterConfig:
     )
     retriever_cfg: dict = field(
         default_factory=lambda: {
+            "max_tokens": 3000,
             "top_k": 3,
             "thresh": 0.7,
         }
     )
     prompt_cfg: dict = field(
         default_factory=lambda: {
-            "max_tokens": 2000,
+            "max_tokens": 3500,
             "text_before_documents": "You are a chatbot answering questions.\n",
             "text_before_prompt": "Answer the following question:\n",
         }
