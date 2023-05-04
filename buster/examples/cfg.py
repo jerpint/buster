@@ -2,8 +2,6 @@ from buster.busterbot import BusterConfig
 
 documents_filepath = "./documents.db"
 buster_cfg = BusterConfig(
-    embedding_model="text-embedding-ada-002",
-    unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
     validator_cfg={
         "unknown_prompt": "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         "unknown_threshold": 0.85,

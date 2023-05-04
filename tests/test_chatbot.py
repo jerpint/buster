@@ -12,6 +12,8 @@ from buster.utils import get_retriever_from_extension
 TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
 DOCUMENTS_FILE = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingface_subset.tar.gz")
 
+UNKNOWN_PROMPT = "I'm sorry but I don't know how to answer."
+
 
 def get_fake_embedding(length=1536):
     rng = np.random.default_rng()
@@ -26,7 +28,7 @@ class MockCompleter(Completer):
         return
 
     def generate_response(self, user_input, system_prompt) -> Completion:
-        return Completion(self.expected_answer)
+        return Completion(self.expected_answer, error=False)
 
 
 class MockRetriever(Retriever):
@@ -65,14 +67,18 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     )
 
     hf_transformers_cfg = BusterConfig(
-        unknown_prompt="This doesn't seem to be related to the huggingface library. I am not sure how to answer.",
-        embedding_model="text-embedding-ada-002",
         retriever_cfg={
             "top_k": 3,
             "thresh": 0.7,
-            "max_tokens": 2000,
+            "max_tokens": 3000,
+            "embedding_model": "text-embedding-ada-002",
         },
         document_source="fake source",
+        validator_cfg={
+            "unknown_prompt": UNKNOWN_PROMPT,
+            "unknown_threshold": 0.85,
+            "embedding_model": "text-embedding-ada-002",
+        },
         completion_cfg={
             "name": "ChatGPT",
             "completion_kwargs": {
@@ -105,8 +111,6 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
 
 def test_chatbot_real_data__chatGPT():
     hf_transformers_cfg = BusterConfig(
-        unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
-        embedding_model="text-embedding-ada-002",
         completion_cfg={
             "name": "ChatGPT",
             "completion_kwargs": {
@@ -114,10 +118,16 @@ def test_chatbot_real_data__chatGPT():
                 "temperature": 0,
             },
         },
+        validator_cfg={
+            "unknown_prompt": "I Don't know how to answer your question.",
+            "unknown_threshold": 0.85,
+            "embedding_model": "text-embedding-ada-002",
+        },
         retriever_cfg={
             "top_k": 3,
             "thresh": 0.7,
             "max_tokens": 2000,
+            "embedding_model": "text-embedding-ada-002",
         },
         prompt_cfg={
             "max_tokens": 3500,
@@ -138,8 +148,6 @@ def test_chatbot_real_data__chatGPT():
 
 def test_chatbot_real_data__chatGPT_OOD():
     buster_cfg = BusterConfig(
-        unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
-        embedding_model="text-embedding-ada-002",
         completion_cfg={
             "name": "ChatGPT",
             "completion_kwargs": {
@@ -147,10 +155,16 @@ def test_chatbot_real_data__chatGPT_OOD():
                 "temperature": 0,
             },
         },
+        validator_cfg={
+            "unknown_prompt": UNKNOWN_PROMPT,
+            "unknown_threshold": 0.85,
+            "embedding_model": "text-embedding-ada-002",
+        },
         retriever_cfg={
             "top_k": 3,
             "thresh": 0.7,
             "max_tokens": 2000,
+            "embedding_model": "text-embedding-ada-002",
         },
         prompt_cfg={
             "max_tokens": 3500,
@@ -160,10 +174,10 @@ def test_chatbot_real_data__chatGPT_OOD():
                 """Do not include any links to urls or hyperlinks in your answers. """
                 """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
                 """Use this response: """
-                """'I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?'\n"""
+                f"""'{UNKNOWN_PROMPT}'\n"""
                 """For example:\n"""
                 """What is the meaning of life for huggingface?\n"""
-                """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
+                f"""'{UNKNOWN_PROMPT}'\n"""
                 """Now answer the following question:\n"""
             ),
             "text_before_documents": "Only use these documents as reference:\n",
@@ -173,13 +187,14 @@ def test_chatbot_real_data__chatGPT_OOD():
     buster = Buster(cfg=buster_cfg, retriever=retriever)
     response = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(response.completion.text, str)
-    assert response.is_relevant == False
+
+    # check if we detected that sources are necessary
+    sources_used = buster.validator.check_sources_used(response)
+    assert sources_used == False
 
 
 def test_chatbot_real_data__GPT():
     buster_cfg = BusterConfig(
-        unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
-        embedding_model="text-embedding-ada-002",
         completion_cfg={
             "name": "ChatGPT",
             "completion_kwargs": {
@@ -187,7 +202,13 @@ def test_chatbot_real_data__GPT():
                 "temperature": 0,
             },
         },
+        validator_cfg={
+            "unknown_prompt": UNKNOWN_PROMPT,
+            "unknown_threshold": 0.85,
+            "embedding_model": "text-embedding-ada-002",
+        },
         retriever_cfg={
+            "embedding_model": "text-embedding-ada-002",
             "top_k": 3,
             "thresh": 0.7,
             "max_tokens": 3000,
@@ -200,10 +221,10 @@ def test_chatbot_real_data__GPT():
                 """Do not include any links to urls or hyperlinks in your answers. """
                 """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
                 """Use this response: """
-                """'I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?'\n"""
+                f"""'{UNKNOWN_PROMPT}'\n"""
                 """For example:\n"""
                 """What is the meaning of life for huggingface?\n"""
-                """I'm sorry, but I am an AI language model trained to assist with questions related to the huggingface transformers library. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?"""
+                f"""'{UNKNOWN_PROMPT}'\n"""
                 """Now answer the following question:\n"""
             ),
             "text_before_documents": "Only use these documents as reference:\n",
@@ -213,4 +234,7 @@ def test_chatbot_real_data__GPT():
     buster = Buster(cfg=buster_cfg, retriever=retriever)
     response = buster.process_input("What is a transformer?")
     assert isinstance(response.completion.text, str)
-    assert response.is_relevant == True
+
+    # check if we detected that sources are necessary
+    sources_used = buster.validator.check_sources_used(response)
+    assert sources_used == True

@@ -25,7 +25,6 @@ if promptlayer_api_key:
 class Completion:
     completor: Iterator  # e.g. a response from openai.ChatCompletion
     error: bool
-    error_msg: str | None = None
     _text: str | None = None
 
     @property

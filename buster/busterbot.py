@@ -24,7 +24,6 @@ class Response:
     user_input: str
     completion: Completion
     error: bool | None = None
-    is_relevant: bool | None = None
     matched_documents: pd.DataFrame | None = None
 
 
@@ -32,10 +31,8 @@ class Response:
 class BusterConfig:
     """Configuration object for a chatbot."""
 
-    embedding_model: str = "text-embedding-ada-002"
-    unknown_threshold: float = 0.85
-    unknown_prompt: str = "I Don't know how to answer your question."
     document_source: str = ""
+
     validator_cfg: dict = field(
         default_factory=lambda: {
             "unknown_prompt": "I Don't know how to answer your question.",
