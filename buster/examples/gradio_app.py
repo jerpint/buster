@@ -28,7 +28,6 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
 
 
 def add_sources(history, response):
-
     sources_used = buster.validator.check_sources_used(response)
 
     if sources_used:
@@ -45,7 +44,6 @@ def user(user_input, history):
 
 
 def chat(history):
-
     user_input = history[-1][0]
 
     response = buster.process_input(user_input)
@@ -55,7 +53,6 @@ def chat(history):
     history[-1][1] = ""
 
     for token in response.completion.completor:
-
         history[-1][1] += token
 
         yield history, response

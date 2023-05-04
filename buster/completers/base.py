@@ -25,8 +25,19 @@ if promptlayer_api_key:
 class Completion:
     completor: Iterator  # e.g. a response from openai.ChatCompletion
     error: bool
-    text: str = ""
     error_msg: str | None = None
+    _text: str | None = None
+
+    @property
+    def text(self):
+        if self._text is None:
+            # generates the text if it wasn't already generated
+            self._text = "".join([i for i in self.completor])
+        return self._text
+
+    @text.setter
+    def text(self, value: str) -> None:
+        self._text = value
 
 
 class Completer(ABC):
@@ -46,7 +57,7 @@ class Completer(ABC):
 
         completor = self.complete(prompt=prompt, **self.completion_kwargs)
 
-        self.completion = Completion(completor, self.error, text="")
+        self.completion = Completion(completor, self.error)
 
         return self.completion
 
@@ -94,6 +105,7 @@ class ChatGPTCompleter(Completer):
             if completion_kwargs.get("stream") is True:
 
                 def completor():
+                    self.completion.text = ""
                     for chunk in response:
                         token: str = chunk["choices"][0]["delta"].get("content", "")
                         self.completion.text += token
@@ -103,6 +115,7 @@ class ChatGPTCompleter(Completer):
 
                 def completor():
                     full_response: str = response["choices"][0]["message"]["content"]
+                    self.completion.text = full_response
                     yield full_response
 
             return completor()
