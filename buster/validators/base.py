@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
+from buster.completers.base import Completion
+
 # from buster.busterbot import Response
 
-from buster.completers.base import Completion
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

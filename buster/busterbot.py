@@ -3,8 +3,8 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 import numpy as np
-import pandas as pd
 import openai
+import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import completer_factory
