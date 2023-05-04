@@ -21,17 +21,12 @@ if promptlayer_api_key:
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
-class Validator:
-    pass
-
-
 @dataclass(slots=True)
 class Completion:
     completor: Iterator  # e.g. a response from openai.ChatCompletion
     error: bool
     text: str = ""
     error_msg: str | None = None
-    validator: Validator | None = None
 
 
 class Completer(ABC):

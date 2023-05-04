@@ -13,6 +13,7 @@ from buster.formatters.documents import document_formatter_factory
 from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 from buster.tokenizers import tokenizer_factory
+from buster.validators.base import validator_factory
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -52,6 +53,7 @@ class BusterConfig:
             "max_tokens": 3000,
             "top_k": 3,
             "thresh": 0.7,
+            "embedding_model": "text-embedding-ada-002",
         }
     )
     prompt_cfg: dict = field(
@@ -83,34 +85,25 @@ class Buster:
 
         self.retriever = retriever
 
-    @property
-    def unk_embedding(self):
-        return self._unk_embedding
-
-    @unk_embedding.setter
-    def unk_embedding(self, embedding):
-        logger.info("Setting new UNK embedding...")
-        self._unk_embedding = embedding
-        return self._unk_embedding
+    @lru_cache
+    def get_embedding(self, query: str, engine: str):
+        logger.info("generating embedding")
+        return get_embedding(query, engine=engine)
 
     def update_cfg(self, cfg: BusterConfig):
         """Every time we set a new config, we update the things that need to be updated."""
         logger.info(f"Updating config to {cfg.document_source}:\n{cfg}")
         self._cfg = cfg
-        self.embedding_model = cfg.embedding_model
-        self.unknown_threshold = cfg.unknown_threshold
-        self.unknown_prompt = cfg.unknown_prompt
         self.document_source = cfg.document_source
 
         self.retriever_cfg = cfg.retriever_cfg
         self.completion_cfg = cfg.completion_cfg
         self.prompt_cfg = cfg.prompt_cfg
         self.tokenizer_cfg = cfg.tokenizer_cfg
+        self.validator_cfg = cfg.validator_cfg
 
-        # set the unk. embedding
-        self.unk_embedding = self.get_embedding(self.unknown_prompt, engine=self.embedding_model)
-
-        # update completer and formatter cfg
+        # update all objects used
+        self.validator = validator_factory(self.validator_cfg)
         self.tokenizer = tokenizer_factory(self.tokenizer_cfg)
         self.completer = completer_factory(self.completion_cfg)
         self.documents_formatter = document_formatter_factory(
@@ -121,11 +114,6 @@ class Buster:
         self.prompt_formatter = prompt_formatter_factory(tokenizer=self.tokenizer, prompt_cfg=self.prompt_cfg)
 
         logger.info(f"Config Updated.")
-
-    @lru_cache
-    def get_embedding(self, query: str, engine: str):
-        logger.info("generating embedding")
-        return get_embedding(query, engine=engine)
 
     def rank_documents(
         self,
@@ -154,33 +142,6 @@ class Buster:
 
         return matched_documents
 
-    def check_completion_relevance(
-        self, completion: Completion, engine: str, unk_embedding: np.array, unk_threshold: float
-    ) -> bool:
-        """Check to see if a response is relevant to the chatbot's knowledge or not.
-
-        We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
-        Here, we compare the embedding of the response to the embedding of the prompt-engineered "I don't know" embedding.
-
-        set the unk_threshold to 0 to essentially turn off this feature.
-        """
-        if completion.error:
-            # considered not relevant if an error occured
-            return False
-
-        if completion.text == "":
-            raise ValueError("Cannot compute embedding of an empty string.")
-
-        response_embedding = self.get_embedding(
-            completion.text,
-            engine=engine,
-        )
-        score = cosine_similarity(response_embedding, unk_embedding)
-        logger.info(f"UNK score: {score}")
-
-        # Likely that the answer is meaningful, add the top sources
-        return bool(score < unk_threshold)
-
     def process_input(self, user_input: str) -> Response:
         """
         Main function to process the input question and generate a formatted output.
@@ -196,7 +157,7 @@ class Buster:
             query=user_input,
             top_k=self.retriever_cfg["top_k"],
             thresh=self.retriever_cfg["thresh"],
-            engine=self.embedding_model,
+            engine=self.retriever_cfg["embedding_model"],
             source=self.document_source,
         )
 
@@ -226,20 +187,4 @@ class Buster:
         logger.info(f"GPT Response:\n{completion}")
 
         response = Response(completion=completion, matched_documents=matched_documents, user_input=user_input)
-        return response
-
-    def process_response(self, response: Response) -> Response:
-        # check for response relevance
-
-        is_relevant = self.check_completion_relevance(
-            completion=response.completion,
-            engine=self.embedding_model,
-            unk_embedding=self.unk_embedding,
-            unk_threshold=self.unknown_threshold,
-        )
-
-        if not is_relevant:
-            empty_documents = pd.DataFrame(columns=response.matched_documents.columns)
-            response.matched_documents = empty_documents
-
         return response
