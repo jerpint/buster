@@ -2,6 +2,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Iterator
 
 import openai
 import promptlayer
@@ -20,11 +21,17 @@ if promptlayer_api_key:
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
+class Validator:
+    pass
+
+
 @dataclass(slots=True)
 class Completion:
-    text: str
-    error: bool = False
+    completor: Iterator  # e.g. a response from openai.ChatCompletion
+    error: bool
+    text: str = ""
     error_msg: str | None = None
+    validator: Validator | None = None
 
 
 class Completer(ABC):
@@ -35,28 +42,22 @@ class Completer(ABC):
     def complete(self, prompt) -> str:
         ...
 
-    def generate_response(self, system_prompt, user_input) -> Completion:
+    def generate_response(self, system_prompt, user_input):
         # Call the API to generate a response
         prompt = self.prepare_prompt(system_prompt, user_input)
         logger.info(f"querying model with parameters: {self.completion_kwargs}...")
         logger.info(f"{system_prompt=}")
         logger.info(f"{user_input=}")
-        try:
-            completion = self.complete(prompt=prompt, **self.completion_kwargs)
-        except openai.error.InvalidRequestError:
-            logger.exception("Invalid request to OpenAI API. See traceback:")
-            return Completion("Something went wrong, try again soon!", True, "Invalid request made to openai.")
-        except Exception as e:
-            # log the error and return a generic response instead.
-            logger.exception("Error connecting to OpenAI API. See traceback:")
-            return Completion(
-                "Something went wrong, try again soon!", True, "Unexpected error at the generate_response level"
-            )
 
-        return Completion(completion)
+        completor = self.complete(prompt=prompt, **self.completion_kwargs)
+
+        self.completion = Completion(completor, self.error, text="")
+
+        return self.completion
 
 
 class GPT3Completer(Completer):
+    # TODO: Update
     def prepare_prompt(
         self,
         system_prompt: str,
@@ -88,12 +89,48 @@ class ChatGPTCompleter(Completer):
         return prompt
 
     def complete(self, prompt, **completion_kwargs) -> str:
-        response = openai.ChatCompletion.create(
-            messages=prompt,
-            **completion_kwargs,
-        )
+        try:
+            response = openai.ChatCompletion.create(
+                messages=prompt,
+                **completion_kwargs,
+            )
 
-        return response["choices"][0]["message"]["content"]
+            self.error = False
+            if completion_kwargs.get("stream") is True:
+
+                def completor():
+                    for chunk in response:
+                        token: str = chunk["choices"][0]["delta"].get("content", "")
+                        self.completion.text += token
+                        yield token
+
+            else:
+
+                def completor():
+                    full_response: str = response["choices"][0]["message"]["content"]
+                    yield full_response
+
+            return completor()
+
+        except openai.error.InvalidRequestError:
+            self.error = True
+            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
+            logger.exception("Invalid request to OpenAI API. See traceback:")
+
+            def completor():
+                yield error_msg
+
+            return completor()
+
+        except Exception as e:
+            self.error = True
+            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
+            logger.exception("Unknown error when attempting to connect to OpenAI API. See traceback:")
+
+            def completor():
+                yield error_msg
+
+            return completor()
 
 
 def completer_factory(completer_cfg):

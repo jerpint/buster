@@ -4,6 +4,7 @@ from functools import lru_cache
 
 import numpy as np
 import pandas as pd
+import openai
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers import completer_factory
@@ -19,9 +20,10 @@ logging.basicConfig(level=logging.INFO)
 
 @dataclass(slots=True)
 class Response:
-    completion: Completion
-    is_relevant: bool
     user_input: str
+    completion: Completion
+    error: bool | None = None
+    is_relevant: bool | None = None
     matched_documents: pd.DataFrame | None = None
 
 
@@ -33,6 +35,13 @@ class BusterConfig:
     unknown_threshold: float = 0.85
     unknown_prompt: str = "I Don't know how to answer your question."
     document_source: str = ""
+    validator_cfg: dict = field(
+        default_factory=lambda: {
+            "unknown_prompt": "I Don't know how to answer your question.",
+            "unknown_threshold": 0.85,
+            "embedding_model": "text-embedding-ada-002",
+        }
+    )
     tokenizer_cfg: dict = field(
         default_factory=lambda: {
             "model_name": "gpt-3.5-turbo",
@@ -193,7 +202,13 @@ class Buster:
 
         if len(matched_documents) == 0:
             logger.warning("No documents found...")
-            completion = Completion(text="No documents found.")
+
+            def completor():
+                no_docs_msg = "No documents found."
+                yield no_docs_msg
+
+            completion = Completion(completor=completor(), error=False)
+
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
             response = Response(
                 completion=completion, matched_documents=matched_documents, is_relevant=False, user_input=user_input
@@ -205,22 +220,26 @@ class Buster:
 
         # prepare the prompt
         system_prompt = self.prompt_formatter.format(documents_str)
-        completion: Completion = self.completer.generate_response(user_input=user_input, system_prompt=system_prompt)
-        logger.info(f"GPT Response:\n{completion.text}")
 
-        # check for relevance
+        completion = self.completer.generate_response(user_input=user_input, system_prompt=system_prompt)
+
+        logger.info(f"GPT Response:\n{completion}")
+
+        response = Response(completion=completion, matched_documents=matched_documents, user_input=user_input)
+        return response
+
+    def process_response(self, response: Response) -> Response:
+        # check for response relevance
+
         is_relevant = self.check_completion_relevance(
-            completion=completion,
+            completion=response.completion,
             engine=self.embedding_model,
             unk_embedding=self.unk_embedding,
             unk_threshold=self.unknown_threshold,
         )
 
         if not is_relevant:
-            empty_documents = pd.DataFrame(columns=matched_documents.columns)
-            matched_documents = empty_documents
+            empty_documents = pd.DataFrame(columns=response.matched_documents.columns)
+            response.matched_documents = empty_documents
 
-        response = Response(
-            completion=completion, matched_documents=matched_documents, is_relevant=is_relevant, user_input=user_input
-        )
         return response

@@ -4,6 +4,9 @@ documents_filepath = "./documents.db"
 buster_cfg = BusterConfig(
     embedding_model="text-embedding-ada-002",
     unknown_prompt="I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
+    validator_cfg={
+        "unknown_prompt": "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
+    },
     retriever_cfg={
         "top_k": 3,
         "thresh": 0.7,
@@ -13,6 +16,8 @@ buster_cfg = BusterConfig(
         "name": "ChatGPT",
         "completion_kwargs": {
             "model": "gpt-3.5-turbo",
+            "stream": True,
+            "temperature": 0,
         },
     },
     tokenizer_cfg={

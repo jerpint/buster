@@ -27,19 +27,36 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
     return sourced_answer_template.format(sources=sources, footnote=footnote)
 
 
-def chat(question, history):
-    history = history or []
-    response = buster.process_input(question)
+def add_sources(history, response):
 
-    # formatted_sources = source_formatter(sources)
-    matched_documents = response.matched_documents
+    response = buster.process_response(response)
+    formatted_sources = format_sources(response.matched_documents)
+    history[-1][1] += "<br>" * 2
+    history[-1][1] += formatted_sources
 
-    formatted_sources = format_sources(matched_documents)
-    formatted_response = f"{response.completion.text}<br><br>" + formatted_sources
+    return history
 
-    history.append((question, formatted_response))
 
-    return history, history
+def user(user_input, history):
+    """Adds user's question immediately to the chat."""
+    return "", history + [[user_input, None]]
+
+
+def chat(history):
+
+    user_input = history[-1][0]
+
+    response = buster.process_input(user_input)
+
+    print(history)
+
+    history[-1][1] = ""
+
+    for token in response.completion.completor:
+
+        history[-1][1] += token
+
+        yield history, response
 
 
 block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")
@@ -51,7 +68,7 @@ with block:
     chatbot = gr.Chatbot()
 
     with gr.Row():
-        message = gr.Textbox(
+        question = gr.Textbox(
             label="What's your question?",
             placeholder="Ask a question to AI stackoverflow here...",
             lines=1,
@@ -62,19 +79,24 @@ with block:
         examples=[
             "How can I perform backpropagation?",
             "How do I deal with noisy data?",
+            "How do I deal with noisy data in 2 words?",
         ],
-        inputs=message,
+        inputs=question,
     )
 
     gr.Markdown("This application uses GPT to search the docs for relevant info and answer questions.")
 
     gr.HTML("️<center> Created with ❤️ by @jerpint and @hadrienbertrand")
 
-    state = gr.State()
-    agent_state = gr.State()
+    response = gr.State()
 
-    submit.click(chat, inputs=[message, state], outputs=[chatbot, state])
-    message.submit(chat, inputs=[message, state], outputs=[chatbot, state])
+    submit.click(user, [question, chatbot], [question, chatbot], queue=False).then(
+        chat, inputs=[chatbot], outputs=[chatbot, response]
+    ).then(add_sources, inputs=[chatbot, response], outputs=[chatbot])
+    question.submit(user, [question, chatbot], [question, chatbot], queue=False).then(
+        chat, inputs=[chatbot], outputs=[chatbot, response]
+    ).then(add_sources, inputs=[chatbot, response], outputs=[chatbot])
 
 
+block.queue(concurrency_count=16)
 block.launch(debug=True, share=False)
