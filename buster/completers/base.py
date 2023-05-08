@@ -74,7 +74,6 @@ class Completer(ABC):
 
 
 class GPT3Completer(Completer):
-    # TODO: Update
     def prepare_prompt(
         self,
         system_prompt: str,
@@ -86,8 +85,22 @@ class GPT3Completer(Completer):
         return system_prompt + user_input
 
     def complete(self, prompt, **completion_kwargs):
-        response = openai.Completion.create(prompt=prompt, **completion_kwargs)
-        return response["choices"][0]["text"]
+        try:
+            response = openai.Completion.create(prompt=prompt, **completion_kwargs)
+            self.error = False
+            if completion_kwargs.get("stream") is True:
+                def completor():
+                    for chunk in response:
+                        token: str = chunk["choices"][0].get("text")
+                        yield token
+                return completor()
+            else:
+                return response["choices"][0]["text"]
+        except Exception as e:
+            logger.exception(e)
+            self.error = True
+            error_msg = "Something went wrong..."
+            return error_msg
 
 
 class ChatGPTCompleter(Completer):
