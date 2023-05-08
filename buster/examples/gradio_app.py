@@ -48,8 +48,6 @@ def chat(history):
 
     response = buster.process_input(user_input)
 
-    print(history)
-
     history[-1][1] = ""
 
     for token in response.completion.completor:
