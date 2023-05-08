@@ -23,7 +23,7 @@ if promptlayer_api_key:
 
 @dataclass(slots=True)
 class Completion:
-    completor: Iterator  # e.g. a response from openai.ChatCompletion
+    _completor: Iterator | str  # e.g. a streamed response from openai.ChatCompletion
     error: bool
     _text: str | None = None
 
@@ -37,6 +37,19 @@ class Completion:
     @text.setter
     def text(self, value: str) -> None:
         self._text = value
+
+    @property
+    def completor(self):
+
+        if isinstance(self._completor, str):
+            # convert str to iterator
+            self._completor = (msg for msg in self._completor)
+
+        # keeps track of the yielded text
+        self._text = ""
+        for token in self._completor:
+            self._text += token
+            yield token
 
 
 class Completer(ABC):
@@ -93,7 +106,7 @@ class ChatGPTCompleter(Completer):
         ]
         return prompt
 
-    def complete(self, prompt, **completion_kwargs) -> str:
+    def complete(self, prompt, **completion_kwargs) -> str | Iterator:
         try:
             response = openai.ChatCompletion.create(
                 messages=prompt,
@@ -103,51 +116,36 @@ class ChatGPTCompleter(Completer):
             self.error = False
             if completion_kwargs.get("stream") is True:
 
+                # We are entering streaming mode, so here were just wrapping the streamed
+                # openai response to be easier to handle later
                 def completor():
-                    self.completion.text = ""
                     for chunk in response:
                         token: str = chunk["choices"][0]["delta"].get("content", "")
-                        self.completion.text += token
                         yield token
 
+                return completor()
+
             else:
-
-                def completor():
-                    full_response: str = response["choices"][0]["message"]["content"]
-                    self.completion.text = full_response
-                    yield full_response
-
-            return completor()
+                full_response: str = response["choices"][0]["message"]["content"]
+                return full_response
 
         except openai.error.InvalidRequestError:
             self.error = True
-            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
             logger.exception("Invalid request to OpenAI API. See traceback:")
-
-            def completor():
-                yield error_msg
-
-            return completor()
+            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
+            return error_msg
 
         except openai.error.RateLimitError:
             self.error = True
-            error_msg = "OpenAI servers seem to be overloaded, try again later!"
             logger.exception("RateLimit error from OpenAI. See traceback:")
-
-            def completor():
-                yield error_msg
-
-            return completor()
+            error_msg = "OpenAI servers seem to be overloaded, try again later!"
+            return error_msg
 
         except Exception as e:
             self.error = True
             error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
             logger.exception("Unknown error when attempting to connect to OpenAI API. See traceback:")
-
-            def completor():
-                yield error_msg
-
-            return completor()
+            return error_msg
 
 
 def completer_factory(completer_cfg):
