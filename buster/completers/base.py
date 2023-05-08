@@ -95,7 +95,6 @@ class ChatGPTCompleter(Completer):
 
     def complete(self, prompt, **completion_kwargs) -> str:
         try:
-            raise openai.error.RateLimitError()
             response = openai.ChatCompletion.create(
                 messages=prompt,
                 **completion_kwargs,

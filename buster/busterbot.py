@@ -35,7 +35,6 @@ class BusterAnswer:
             self._documents_relevant = self.validator.check_sources_used(self.completion)
         return self._documents_relevant
 
-
     def to_json():
         pass
 
@@ -185,7 +184,7 @@ class Buster:
                 completion=completion,
                 matched_documents=matched_documents,
                 validator=self.validator,
-                user_input=user_input
+                user_input=user_input,
             )
             return answer
 
@@ -200,9 +199,6 @@ class Buster:
         logger.info(f"GPT Response:\n{completion}")
 
         answer = BusterAnswer(
-            completion=completion,
-            matched_documents=matched_documents,
-            validator=self.validator,
-            user_input=user_input
+            completion=completion, matched_documents=matched_documents, validator=self.validator, user_input=user_input
         )
         return answer
