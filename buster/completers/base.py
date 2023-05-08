@@ -1,7 +1,6 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import Iterator
 
 import openai
@@ -21,11 +20,11 @@ if promptlayer_api_key:
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
-@dataclass(slots=True)
 class Completion:
-    _completor: Iterator | str  # e.g. a streamed response from openai.ChatCompletion
-    error: bool
-    _text: str | None = None
+    def __init__(self, completor: Iterator | str, error: bool):
+        self.error = error
+        self._completor = completor  # e.g. a streamed response from openai.ChatCompletion
+        self._text = None
 
     @property
     def text(self):

@@ -234,3 +234,49 @@ def test_chatbot_real_data__GPT():
     assert isinstance(response.completion.text, str)
 
     assert response.documents_relevant == True
+
+
+def test_chatbot_real_data__no_docs_found():
+    buster_cfg = BusterConfig(
+        completion_cfg={
+            "name": "ChatGPT",
+            "completion_kwargs": {
+                "model": "gpt-3.5-turbo",
+                "temperature": 0,
+            },
+        },
+        validator_cfg={
+            "unknown_prompt": UNKNOWN_PROMPT,
+            "unknown_threshold": 0.85,
+            "embedding_model": "text-embedding-ada-002",
+        },
+        retriever_cfg={
+            "embedding_model": "text-embedding-ada-002",
+            "top_k": 3,
+            "thresh": 1,  # Set threshold very high to be sure no docs are matched
+            "max_tokens": 3000,
+        },
+        prompt_cfg={
+            "max_tokens": 3500,
+            "text_before_prompt": (
+                """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
+                """Make sure to format your answers in Markdown format, including code block and snippets. """
+                """Do not include any links to urls or hyperlinks in your answers. """
+                """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
+                """Use this response: """
+                f"""'{UNKNOWN_PROMPT}'\n"""
+                """For example:\n"""
+                """What is the meaning of life for huggingface?\n"""
+                f"""'{UNKNOWN_PROMPT}'\n"""
+                """Now answer the following question:\n"""
+            ),
+            "text_before_documents": "Only use these documents as reference:\n",
+        },
+    )
+    retriever = get_retriever_from_extension(DOCUMENTS_FILE)(DOCUMENTS_FILE)
+    buster = Buster(cfg=buster_cfg, retriever=retriever)
+    response = buster.process_input("What is a transformer?")
+    assert isinstance(response.completion.text, str)
+
+    assert response.documents_relevant == False
+    assert response.completion.text == buster_cfg.validator_cfg["unknown_prompt"]

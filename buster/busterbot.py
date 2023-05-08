@@ -24,6 +24,8 @@ class BusterAnswer:
     completion: Completion
     validator: Validator = None
     matched_documents: pd.DataFrame | None = None
+
+    # private property, should not be set at init
     _documents_relevant: bool | None = None
 
     @property
@@ -171,12 +173,9 @@ class Buster:
 
         if len(matched_documents) == 0:
             logger.warning("No documents found...")
-
-            def no_docs_completor():
-                no_docs_msg = "No documents found."
-                yield no_docs_msg
-
-            completion = Completion(completor=no_docs_completor(), error=False)
+            # no document was found, pass the unknown prompt instead
+            message = self.validator.unknown_prompt
+            completion = Completion(completor=message, error=False)
 
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
             answer = BusterAnswer(
