@@ -7,8 +7,6 @@ from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers.base import Completion
 
-# from buster.busterbot import Response
-
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +38,7 @@ class Validator:
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
-    def check_sources_used(self, completion) -> bool:
+    def check_sources_used(self, completion: Completion) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
         We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
@@ -49,7 +47,6 @@ class Validator:
         set the unk_threshold to 0 to essentially turn off this feature.
         """
 
-        completion: Completion = completion
         engine: str = self.embedding_model
         unk_embedding: np.array = self.unk_embedding
         unk_threshold: float = self.unknown_threshold
