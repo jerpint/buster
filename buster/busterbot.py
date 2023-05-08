@@ -36,7 +36,7 @@ class BusterAnswer:
         return self._documents_relevant
 
     def to_json():
-        pass
+        raise NotImplementedError()
 
 
 @dataclass
