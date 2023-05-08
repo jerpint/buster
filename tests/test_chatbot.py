@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from buster.busterbot import Buster, BusterConfig, Response
+from buster.busterbot import Buster, BusterConfig, BusterAnswer
 from buster.completers.base import Completer, Completion
 from buster.retriever import Retriever
 from buster.utils import get_retriever_from_extension
@@ -188,9 +188,7 @@ def test_chatbot_real_data__chatGPT_OOD():
     response = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(response.completion.text, str)
 
-    # check if we detected that sources are necessary
-    sources_used = buster.validator.check_sources_used(response)
-    assert sources_used == False
+    assert response.documents_relevant == False
 
 
 def test_chatbot_real_data__GPT():
@@ -235,6 +233,4 @@ def test_chatbot_real_data__GPT():
     response = buster.process_input("What is a transformer?")
     assert isinstance(response.completion.text, str)
 
-    # check if we detected that sources are necessary
-    sources_used = buster.validator.check_sources_used(response)
-    assert sources_used == True
+    assert response.documents_relevant == True

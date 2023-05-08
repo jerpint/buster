@@ -40,7 +40,6 @@ class Completion:
 
     @property
     def completor(self):
-
         if isinstance(self._completor, str):
             # convert str to iterator
             self._completor = (msg for msg in self._completor)
@@ -115,7 +114,6 @@ class ChatGPTCompleter(Completer):
 
             self.error = False
             if completion_kwargs.get("stream") is True:
-
                 # We are entering streaming mode, so here were just wrapping the streamed
                 # openai response to be easier to handle later
                 def completor():
