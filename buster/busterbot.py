@@ -3,9 +3,8 @@ from dataclasses import dataclass, field
 from functools import lru_cache
 
 import numpy as np
-import openai
 import pandas as pd
-from openai.embeddings_utils import cosine_similarity, get_embedding
+from openai.embeddings_utils import get_embedding
 
 from buster.completers import completer_factory
 from buster.completers.base import Completion
@@ -13,18 +12,32 @@ from buster.formatters.documents import document_formatter_factory
 from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 from buster.tokenizers import tokenizer_factory
-from buster.validators.base import validator_factory
+from buster.validators.base import Validator, validator_factory
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
 @dataclass(slots=True)
-class Response:
+class BusterAnswer:
     user_input: str
     completion: Completion
+    validator: Validator = None
     error: bool | None = None
+    _documents_relevant: bool | None = None
     matched_documents: pd.DataFrame | None = None
+
+    @property
+    def documents_relevant(self):
+        """Calls the validator to check if sources were used or not."""
+        if self._documents_relevant is None:
+            logger.info("checking for document relevance")
+            self._documents_relevant = self.validator.check_sources_used(self.completion)
+        return self._documents_relevant
+
+
+    def to_json():
+        pass
 
 
 @dataclass
@@ -139,7 +152,7 @@ class Buster:
 
         return matched_documents
 
-    def process_input(self, user_input: str) -> Response:
+    def process_input(self, user_input: str) -> BusterAnswer:
         """
         Main function to process the input question and generate a formatted output.
         """
@@ -161,17 +174,20 @@ class Buster:
         if len(matched_documents) == 0:
             logger.warning("No documents found...")
 
-            def completor():
+            def no_docs_completor():
                 no_docs_msg = "No documents found."
                 yield no_docs_msg
 
-            completion = Completion(completor=completor(), error=False)
+            completion = Completion(completor=no_docs_completor(), error=False)
 
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
-            response = Response(
-                completion=completion, matched_documents=matched_documents, is_relevant=False, user_input=user_input
+            answer = BusterAnswer(
+                completion=completion,
+                matched_documents=matched_documents,
+                validator=self.validator,
+                user_input=user_input
             )
-            return response
+            return answer
 
         # format the matched documents, (will truncate them if too long)
         documents_str, matched_documents = self.documents_formatter.format(matched_documents)
@@ -183,5 +199,10 @@ class Buster:
 
         logger.info(f"GPT Response:\n{completion}")
 
-        response = Response(completion=completion, matched_documents=matched_documents, user_input=user_input)
-        return response
+        answer = BusterAnswer(
+            completion=completion,
+            matched_documents=matched_documents,
+            validator=self.validator,
+            user_input=user_input
+        )
+        return answer

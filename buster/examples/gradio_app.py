@@ -28,9 +28,9 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
 
 
 def add_sources(history, response):
-    sources_used = buster.validator.check_sources_used(response)
+    documents_relevant = response.documents_relevant
 
-    if sources_used:
+    if documents_relevant:
         # add sources
         formatted_sources = format_sources(response.matched_documents)
         history.append([None, formatted_sources])

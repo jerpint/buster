@@ -95,6 +95,7 @@ class ChatGPTCompleter(Completer):
 
     def complete(self, prompt, **completion_kwargs) -> str:
         try:
+            raise openai.error.RateLimitError()
             response = openai.ChatCompletion.create(
                 messages=prompt,
                 **completion_kwargs,
@@ -123,6 +124,16 @@ class ChatGPTCompleter(Completer):
             self.error = True
             error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
             logger.exception("Invalid request to OpenAI API. See traceback:")
+
+            def completor():
+                yield error_msg
+
+            return completor()
+
+        except openai.error.RateLimitError:
+            self.error = True
+            error_msg = "OpenAI servers seem to be overloaded, try again later!"
+            logger.exception("RateLimit error from OpenAI. See traceback:")
 
             def completor():
                 yield error_msg
