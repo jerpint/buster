@@ -23,7 +23,6 @@ class BusterAnswer:
     user_input: str
     completion: Completion
     validator: Validator = None
-    error: bool | None = None
     _documents_relevant: bool | None = None
     matched_documents: pd.DataFrame | None = None
 
