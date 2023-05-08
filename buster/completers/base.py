@@ -89,10 +89,12 @@ class GPT3Completer(Completer):
             response = openai.Completion.create(prompt=prompt, **completion_kwargs)
             self.error = False
             if completion_kwargs.get("stream") is True:
+
                 def completor():
                     for chunk in response:
                         token: str = chunk["choices"][0].get("text")
                         yield token
+
                 return completor()
             else:
                 return response["choices"][0]["text"]
