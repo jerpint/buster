@@ -7,7 +7,6 @@ from openai.embeddings_utils import cosine_similarity, get_embedding
 
 from buster.completers.base import Completion
 
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
