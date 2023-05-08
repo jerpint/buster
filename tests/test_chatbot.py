@@ -4,7 +4,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from buster.busterbot import Buster, BusterConfig, BusterAnswer
+from buster.busterbot import Buster, BusterAnswer, BusterConfig
 from buster.completers.base import Completer, Completion
 from buster.retriever import Retriever
 from buster.utils import get_retriever_from_extension
