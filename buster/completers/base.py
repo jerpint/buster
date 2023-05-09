@@ -1,10 +1,12 @@
 import logging
 import os
 from abc import ABC, abstractmethod
-from typing import Iterator
+from dataclasses import dataclass, field
+from typing import Any, Iterator
 
 import openai
 import promptlayer
+from fastapi.encoders import jsonable_encoder
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -20,11 +22,15 @@ if promptlayer_api_key:
     openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
+@dataclass
 class Completion:
-    def __init__(self, completor: Iterator | str, error: bool):
-        self.error = error
-        self._completor = completor  # e.g. a streamed response from openai.ChatCompletion
-        self._text = None
+    error: bool
+    completor: Iterator | str
+    version: int = 1
+
+    # private property, should not be set at init
+    _completor: Iterator | str = field(init=False, repr=False)  # e.g. a streamed response from openai.ChatCompletion
+    _text: str = None
 
     @property
     def text(self):
@@ -48,6 +54,26 @@ class Completion:
         for token in self._completor:
             self._text += token
             yield token
+
+    @completor.setter
+    def completor(self, value: str) -> None:
+        self._completor = value
+
+    def to_json(self) -> Any:
+        to_encode = {"error": self.error, "completor": self.text, "version": self.version}
+        return jsonable_encoder(to_encode)
+
+    @classmethod
+    def from_dict(cls, completion_dict: dict):
+        # Backwards compatibility
+        if "version" not in completion_dict:
+            completion_dict["version"] = 1
+
+            completion_dict["completor"] = completion_dict["text"]
+            del completion_dict["text"]
+            del completion_dict["error_msg"]
+
+        return cls(**completion_dict)
 
 
 class Completer(ABC):
