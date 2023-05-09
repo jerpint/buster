@@ -70,7 +70,7 @@ class BusterAnswer:
         if isinstance(answer_dict["matched_documents"], str):
             answer_dict["matched_documents"] = pd.read_json(answer_dict["matched_documents"], orient="index")
         elif isinstance(answer_dict["matched_documents"], dict):
-            answer_dict["matched_documents"] = pd.DataFrame(answer_dict["matched_documents"])
+            answer_dict["matched_documents"] = pd.DataFrame(answer_dict["matched_documents"]).T
         else:
             raise ValueError(f"Unknown type for matched_documents: {type(answer_dict['matched_documents'])}")
         answer_dict["completion"] = Completion.from_dict(answer_dict["completion"])
