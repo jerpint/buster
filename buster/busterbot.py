@@ -1,9 +1,10 @@
 import logging
 from dataclasses import dataclass, field
 from functools import lru_cache
+from typing import Any
 
-import numpy as np
 import pandas as pd
+from fastapi.encoders import jsonable_encoder
 from openai.embeddings_utils import get_embedding
 
 from buster.completers import completer_factory
@@ -24,6 +25,7 @@ class BusterAnswer:
     completion: Completion
     validator: Validator = None
     matched_documents: pd.DataFrame | None = None
+    version: int = 1
 
     # private property, should not be set at init
     _documents_relevant: bool | None = None
@@ -36,8 +38,43 @@ class BusterAnswer:
             self._documents_relevant = self.validator.check_sources_used(self.completion)
         return self._documents_relevant
 
-    def to_json():
-        raise NotImplementedError()
+    def to_json(self) -> Any:
+        def encode_df(df: pd.DataFrame) -> dict:
+            if "embedding" in df.columns:
+                df = df.drop(columns=["embedding"])
+            return df.to_json(orient="index")
+
+        custom_encoder = {
+            # Converts the matched_documents in the user_responses to json
+            pd.DataFrame: encode_df,
+        }
+
+        to_encode = {
+            "user_input": self.user_input,
+            "completion": self.completion.to_json(),
+            "matched_documents": self.matched_documents,
+            "_documents_relevant": self.documents_relevant,
+            "version": self.version,
+        }
+        return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
+
+    @classmethod
+    def from_dict(cls, answer_dict: dict):
+        # Backwards compatibility
+        if "version" not in answer_dict:
+            answer_dict["version"] = 1
+
+            answer_dict["_documents_relevant"] = answer_dict["is_relevant"]
+            del answer_dict["is_relevant"]
+
+        if isinstance(answer_dict["matched_documents"], str):
+            answer_dict["matched_documents"] = pd.read_json(answer_dict["matched_documents"], orient="index")
+        elif isinstance(answer_dict["matched_documents"], dict):
+            answer_dict["matched_documents"] = pd.DataFrame(answer_dict["matched_documents"])
+        else:
+            raise ValueError(f"Unknown type for matched_documents: {type(answer_dict['matched_documents'])}")
+        answer_dict["completion"] = Completion.from_dict(answer_dict["completion"])
+        return cls(**answer_dict)
 
 
 @dataclass
