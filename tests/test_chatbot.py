@@ -28,7 +28,7 @@ class MockCompleter(Completer):
         return
 
     def generate_response(self, user_input, system_prompt) -> Completion:
-        return Completion(self.expected_answer, error=False)
+        return Completion(completor=self.expected_answer, error=False)
 
 
 class MockRetriever(Retriever):
