@@ -93,7 +93,7 @@ class Completer(ABC):
 
         completor = self.complete(prompt=prompt, **self.completion_kwargs)
 
-        self.completion = Completion(completor, self.error)
+        self.completion = Completion(completor=completor, error=self.error)
 
         return self.completion
 
