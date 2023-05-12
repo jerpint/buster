@@ -8,6 +8,8 @@ class MockValidator:
     def check_documents_used(self, completion: Completion) -> bool:
         return True
 
+    def rerank_docs(self, completion: Completion, matched_documents: pd.DataFrame) -> bool:
+        return matched_documents
 
 def test_read_write_completion():
     c = Completion(error=False, completor="This is my completed answer")
