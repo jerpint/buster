@@ -5,7 +5,7 @@ from buster.completers.base import Completion
 
 
 class MockValidator:
-    def check_sources_used(self, completion: Completion) -> bool:
+    def check_documents_used(self, completion: Completion) -> bool:
         return True
 
 

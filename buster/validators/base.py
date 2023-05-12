@@ -37,7 +37,7 @@ class Validator:
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
-    def check_sources_used(self, completion: Completion) -> bool:
+    def check_documents_used(self, completion: Completion) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
         We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
@@ -57,15 +57,31 @@ class Validator:
         if completion.text == "":
             raise ValueError("Cannot compute embedding of an empty string.")
 
-        response_embedding = get_embedding(
+        answer_embedding = self.get_embedding(
             completion.text,
             engine=engine,
         )
-        score = cosine_similarity(response_embedding, unk_embedding)
+        score = cosine_similarity(answer_embedding, unk_embedding)
         logger.info(f"UNK score: {score}")
 
         # Likely that the answer is meaningful, add the top sources
         return bool(score < unk_threshold)
+
+    def compare_docs_to_answer(self, completion: Completion, matched_documents: pd.DataFrame):
+        """Here we check compare the answer to each document provided.
+
+        This score could be used to determine wether a document was actually relevant to generation.
+        An extra column is added in-place for the similarity score.
+        """
+        engine: str = self.embedding_model
+        answer_embedding = self.get_embedding(
+            completion.text,
+            engine=engine,
+        )
+        col = "similarity_to_answer"
+        matched_documents[col] = matched_documents.embedding.apply(
+            lambda x: cosine_similarity(x, answer_embedding) * 100
+        )
 
 
 def validator_factory(validator_cfg: dict) -> Validator:
