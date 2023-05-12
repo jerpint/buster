@@ -82,7 +82,8 @@ class Validator:
         matched_documents[col] = matched_documents.embedding.apply(
             lambda x: cosine_similarity(x, answer_embedding) * 100
         )
-        return matched_documents.sort_values(by=col)
+
+        return matched_documents.sort_values(by=col, ascending=False)
 
 
 def validator_factory(validator_cfg: dict) -> Validator:
