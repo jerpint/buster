@@ -39,7 +39,7 @@ class BusterAnswer:
             # checks generally if documents were used to respond to user
             self._documents_relevant = self.validator.check_documents_used(self.completion)
 
-            # checks for each doc if it is similar to the answer
+            # reranks each doc based on similarity to the answer
             self.matched_documents = self.validator.rerank_docs(self.completion, self.matched_documents)
         return self._documents_relevant
 
