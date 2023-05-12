@@ -67,8 +67,8 @@ class Validator:
         # Likely that the answer is meaningful, add the top sources
         return bool(score < unk_threshold)
 
-    def compare_docs_to_answer(self, completion: Completion, matched_documents: pd.DataFrame):
-        """Here we check compare the answer to each document provided.
+    def rerank_docs(self, completion: Completion, matched_documents: pd.DataFrame):
+        """Here we re-rank matched documents according to the answer provided by the llm.
 
         This score could be used to determine wether a document was actually relevant to generation.
         An extra column is added in-place for the similarity score.
@@ -82,6 +82,7 @@ class Validator:
         matched_documents[col] = matched_documents.embedding.apply(
             lambda x: cosine_similarity(x, answer_embedding) * 100
         )
+        return matched_documents.sort_values(by=col)
 
 
 def validator_factory(validator_cfg: dict) -> Validator:

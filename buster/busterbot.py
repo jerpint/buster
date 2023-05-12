@@ -35,7 +35,12 @@ class BusterAnswer:
         """Calls the validator to check if sources were used or not."""
         if self._documents_relevant is None:
             logger.info("checking for document relevance")
+
+            # checks generally if documents were used to respond to user
             self._documents_relevant = self.validator.check_documents_used(self.completion)
+
+            # checks for each doc if it is similar to the answer
+            self.matched_documents = self.validator.rerank_docs(self.completion, self.matched_documents)
         return self._documents_relevant
 
     def to_json(self) -> Any:
