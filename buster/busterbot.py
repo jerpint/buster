@@ -19,16 +19,30 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-@dataclass(slots=True)
 class BusterAnswer:
-    user_input: str
-    completion: Completion
-    validator: Validator = None
-    matched_documents: pd.DataFrame | None = None
-    version: int = 1
+    def __init__(
+        self,
+        user_input: str,
+        completion: Completion,
+        matched_documents: pd.DataFrame,
+        validator: Validator = None,
+        version: int = 1,
+        documents_relevant=None,
+    ):
+        self.user_input = user_input
+        self.completion = completion
+        self.validator = validator
+        self.version = version
 
-    # private property, should not be set at init
-    _documents_relevant: bool | None = None
+        # properties
+        self._matched_documents = matched_documents
+        self._documents_relevant: bool | None = documents_relevant
+
+    @property
+    def matched_documents(self):
+        if self.validator.use_reranking:
+            self._matched_documents = self.validator.rerank_docs(self.completion, self._matched_documents)
+        return self._matched_documents
 
     @property
     def documents_relevant(self):
@@ -39,8 +53,6 @@ class BusterAnswer:
             # checks generally if documents were used to respond to user
             self._documents_relevant = self.validator.check_documents_used(self.completion)
 
-            # reranks each doc based on similarity to the answer
-            self.matched_documents = self.validator.rerank_docs(self.completion, self.matched_documents)
         return self._documents_relevant
 
     def to_json(self) -> Any:
@@ -58,18 +70,18 @@ class BusterAnswer:
             "user_input": self.user_input,
             "completion": self.completion.to_json(),
             "matched_documents": self.matched_documents,
-            "_documents_relevant": self.documents_relevant,
+            "documents_relevant": self.documents_relevant,
             "version": self.version,
         }
         return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
 
     @classmethod
-    def from_dict(cls, answer_dict: dict):
+    def from_dict(cls, answer_dict: dict, validator: Validator):
         # Backwards compatibility
         if "version" not in answer_dict:
             answer_dict["version"] = 1
 
-            answer_dict["_documents_relevant"] = answer_dict["is_relevant"]
+            answer_dict["documents_relevant"] = answer_dict["is_relevant"]
             del answer_dict["is_relevant"]
 
         if isinstance(answer_dict["matched_documents"], str):
@@ -79,6 +91,7 @@ class BusterAnswer:
         else:
             raise ValueError(f"Unknown type for matched_documents: {type(answer_dict['matched_documents'])}")
         answer_dict["completion"] = Completion.from_dict(answer_dict["completion"])
+        answer_dict["validator"] = validator
         return cls(**answer_dict)
 
 
@@ -93,6 +106,7 @@ class BusterConfig:
             "unknown_prompt": "I Don't know how to answer your question.",
             "unknown_threshold": 0.85,
             "embedding_model": "text-embedding-ada-002",
+            "use_reranking": True,
         }
     )
     tokenizer_cfg: dict = field(

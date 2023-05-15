@@ -18,6 +18,7 @@ class Validator:
         self.embedding_model = self.cfg["embedding_model"]
         self.unknown_threshold = self.cfg["unknown_threshold"]
         self.unknown_prompt = self.cfg["unknown_prompt"]
+        self.use_reranking = self.cfg["use_reranking"]
 
         # set the unk. embedding
         self.unk_embedding = self.get_embedding(self.unknown_prompt, engine=self.embedding_model)

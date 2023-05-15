@@ -5,6 +5,9 @@ from buster.completers.base import Completion
 
 
 class MockValidator:
+    def __init__(self):
+        self.use_reranking = True
+
     def check_documents_used(self, completion: Completion) -> bool:
         return True
 
@@ -42,7 +45,7 @@ def test_read_write_busteranswer():
     )
 
     b_json = b.to_json()
-    b_back = BusterAnswer.from_dict(b_json)
+    b_back = BusterAnswer.from_dict(b_json, validator=b.validator)
 
     assert b.version == b_back.version
     assert b.user_input == b_back.user_input

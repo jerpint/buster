@@ -78,6 +78,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
             "unknown_prompt": UNKNOWN_PROMPT,
             "unknown_threshold": 0.85,
             "embedding_model": "text-embedding-ada-002",
+            "use_reranking": True,
         },
         completion_cfg={
             "name": "ChatGPT",
@@ -122,6 +123,7 @@ def test_chatbot_real_data__chatGPT():
             "unknown_prompt": "I Don't know how to answer your question.",
             "unknown_threshold": 0.85,
             "embedding_model": "text-embedding-ada-002",
+            "use_reranking": True,
         },
         retriever_cfg={
             "top_k": 3,
@@ -159,6 +161,7 @@ def test_chatbot_real_data__chatGPT_OOD():
             "unknown_prompt": UNKNOWN_PROMPT,
             "unknown_threshold": 0.85,
             "embedding_model": "text-embedding-ada-002",
+            "use_reranking": True,
         },
         retriever_cfg={
             "top_k": 3,
@@ -204,6 +207,7 @@ def test_chatbot_real_data__GPT():
             "unknown_prompt": UNKNOWN_PROMPT,
             "unknown_threshold": 0.85,
             "embedding_model": "text-embedding-ada-002",
+            "use_reranking": True,
         },
         retriever_cfg={
             "embedding_model": "text-embedding-ada-002",
@@ -249,6 +253,7 @@ def test_chatbot_real_data__no_docs_found():
             "unknown_prompt": UNKNOWN_PROMPT,
             "unknown_threshold": 0.85,
             "embedding_model": "text-embedding-ada-002",
+            "use_reranking": True,
         },
         retriever_cfg={
             "embedding_model": "text-embedding-ada-002",
