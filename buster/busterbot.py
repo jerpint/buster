@@ -27,7 +27,7 @@ class BusterAnswer:
         matched_documents: pd.DataFrame,
         validator: Validator = None,
         version: int = 1,
-        documents_relevant=None,
+        response_relevant=None,
     ):
         self.user_input = user_input
         self.completion = completion
@@ -36,7 +36,7 @@ class BusterAnswer:
 
         # properties
         self._matched_documents = matched_documents
-        self._documents_relevant: bool | None = documents_relevant
+        self._response_relevant: bool | None = response_relevant
 
     @property
     def matched_documents(self):
@@ -45,15 +45,15 @@ class BusterAnswer:
         return self._matched_documents
 
     @property
-    def documents_relevant(self):
+    def response_relevant(self):
         """Calls the validator to check if sources were used or not."""
-        if self._documents_relevant is None:
+        if self._response_relevant is None:
             logger.info("checking for document relevance")
 
             # checks generally if documents were used to respond to user
-            self._documents_relevant = self.validator.check_documents_relevant(self.completion)
+            self._response_relevant = self.validator.check_documents_relevant(self.completion)
 
-        return self._documents_relevant
+        return self._response_relevant
 
     def to_json(self) -> Any:
         def encode_df(df: pd.DataFrame) -> dict:
@@ -70,7 +70,7 @@ class BusterAnswer:
             "user_input": self.user_input,
             "completion": self.completion.to_json(),
             "matched_documents": self.matched_documents,
-            "documents_relevant": self.documents_relevant,
+            "response_relevant": self.response_relevant,
             "version": self.version,
         }
         return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
@@ -81,7 +81,7 @@ class BusterAnswer:
         if "version" not in answer_dict:
             answer_dict["version"] = 1
 
-            answer_dict["documents_relevant"] = answer_dict["is_relevant"]
+            answer_dict["response_relevant"] = answer_dict["is_relevant"]
             del answer_dict["is_relevant"]
 
         if isinstance(answer_dict["matched_documents"], str):

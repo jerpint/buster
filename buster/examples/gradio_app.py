@@ -28,9 +28,9 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
 
 
 def add_sources(history, response):
-    documents_relevant = response.documents_relevant
+    response_relevant = response.response_relevant
 
-    if documents_relevant:
+    if response_relevant:
         # add sources
         formatted_sources = format_sources(response.matched_documents)
         history.append([None, formatted_sources])

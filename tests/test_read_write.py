@@ -52,7 +52,7 @@ def test_read_write_busteranswer():
     assert b.completion.error == b_back.completion.error
     assert b.completion.text == b_back.completion.text
     assert b.completion.version == b_back.completion.version
-    assert b.documents_relevant == b_back.documents_relevant
+    assert b.response_relevant == b_back.response_relevant
     for col in b_back.matched_documents.columns.tolist():
         assert col in b.matched_documents.columns.tolist()
         assert b_back.matched_documents[col].tolist() == b.matched_documents[col].tolist()

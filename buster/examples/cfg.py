@@ -6,6 +6,7 @@ buster_cfg = BusterConfig(
         "unknown_prompt": "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
         "unknown_threshold": 0.85,
         "embedding_model": "text-embedding-ada-002",
+        "use_reranking": True,
     },
     retriever_cfg={
         "top_k": 3,
