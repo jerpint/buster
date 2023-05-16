@@ -2,6 +2,7 @@ import pandas as pd
 from buster.completers.base import Completion
 from buster.validators.base import Validator
 
+
 def test_validator_check_response_relevant():
     validator_cfg = {
         "unknown_prompt": "I Don't know how to answer your question.",
@@ -31,7 +32,6 @@ def test_validator_check_response_relevant__error():
     assert validator.check_response_relevant(completion) == False
 
 
-
 def test_validator_rerank_docs():
     validator_cfg = {
         "unknown_prompt": "I Don't know how to answer your question.",
@@ -43,14 +43,18 @@ def test_validator_rerank_docs():
     from openai.embeddings_utils import get_embedding
 
     completion = Completion(completor="An apple is a delicious fruit.", error=False)
-    matched_documents = pd.DataFrame({
-        "documents": [
-            "A basketball player practicing",
-            "A cat eating an orange",
-            "A green apple on the counter",
-        ]
-    })
-    matched_documents["embedding"] = matched_documents.documents.apply(lambda x: get_embedding(x, engine=validator.embedding_model))
+    matched_documents = pd.DataFrame(
+        {
+            "documents": [
+                "A basketball player practicing",
+                "A cat eating an orange",
+                "A green apple on the counter",
+            ]
+        }
+    )
+    matched_documents["embedding"] = matched_documents.documents.apply(
+        lambda x: get_embedding(x, engine=validator.embedding_model)
+    )
 
     reranked_documents = validator.rerank_docs(completion, matched_documents)
 
@@ -59,4 +63,3 @@ def test_validator_rerank_docs():
         "A cat eating an orange",
         "A basketball player practicing",
     ]
-

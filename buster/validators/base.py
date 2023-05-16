@@ -20,7 +20,6 @@ class Validator:
         self.unknown_prompt = self.cfg["unknown_prompt"]
         self.use_reranking = self.cfg["use_reranking"]
 
-
     @lru_cache
     def get_embedding(self, query: str, engine: str):
         logger.info("generating embedding")
