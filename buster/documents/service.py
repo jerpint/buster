@@ -44,11 +44,11 @@ class DocumentsService(DocumentsManager):
 
         source_id = self.get_source_id(source)
 
-        for _, row in df.iterrows():
+        for row in df.to_dict(orient="records"):
             embedding = row["embedding"].tolist()
             document = row.copy()
             document.pop("embedding")
-            document["source"] = source_id
+            document["source_id"] = source_id
 
             document_id = str(self.db.documents.insert_one(document).inserted_id)
             self.index.upsert([(document_id, embedding, {"source": source})])

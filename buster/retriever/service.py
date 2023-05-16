@@ -26,9 +26,14 @@ class ServiceRetriever(Retriever):
         self.client = MongoClient(mongo_uri, server_api=ServerApi("1"))
         self.db = self.client[mongo_db_name]
 
+    def get_source_id(self, source: str) -> str:
+        """Get the id of a source."""
+        return str(self.db.sources.find_one({"name": source})["_id"])
+
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
-        return self.db.documents.find({"source": source})
+        source_id = self.get_source_id(source)
+        return self.db.documents.find({"source_id": source_id})
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
