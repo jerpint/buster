@@ -1,4 +1,5 @@
 import pandas as pd
+
 from buster.completers.base import Completion
 from buster.validators.base import Validator
 
