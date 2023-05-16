@@ -28,7 +28,7 @@ class ServiceRetriever(Retriever):
 
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
-        return self.db.documents.find({"source_id": source})
+        return self.db.documents.find({"source": source})
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
