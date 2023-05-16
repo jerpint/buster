@@ -25,14 +25,12 @@ class BusterAnswer:
         user_input: str,
         completion: Completion,
         matched_documents: pd.DataFrame,
-        validator: Validator = None,
-        version: int = 1,
+        validator: Validator,
         response_relevant=None,
     ):
         self.user_input = user_input
         self.completion = completion
         self.validator = validator
-        self.version = version
 
         # properties
         self._matched_documents = matched_documents
@@ -71,19 +69,19 @@ class BusterAnswer:
             "completion": self.completion.to_json(),
             "matched_documents": self.matched_documents,
             "response_relevant": self.response_relevant,
-            "version": self.version,
         }
         return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
 
+
+@dataclass
+class BusterAnswerData:
+    user_input: str
+    completion: Completion
+    matched_documents: pd.DataFrame
+    response_relevant: bool
+
     @classmethod
-    def from_dict(cls, answer_dict: dict, validator: Validator):
-        # Backwards compatibility
-        if "version" not in answer_dict:
-            answer_dict["version"] = 1
-
-            answer_dict["response_relevant"] = answer_dict["is_relevant"]
-            del answer_dict["is_relevant"]
-
+    def from_dict(cls, answer_dict: dict):
         if isinstance(answer_dict["matched_documents"], str):
             answer_dict["matched_documents"] = pd.read_json(answer_dict["matched_documents"], orient="index")
         elif isinstance(answer_dict["matched_documents"], dict):
@@ -91,7 +89,6 @@ class BusterAnswer:
         else:
             raise ValueError(f"Unknown type for matched_documents: {type(answer_dict['matched_documents'])}")
         answer_dict["completion"] = Completion.from_dict(answer_dict["completion"])
-        answer_dict["validator"] = validator
         return cls(**answer_dict)
 
 

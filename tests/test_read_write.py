@@ -1,6 +1,6 @@
 import pandas as pd
 
-from buster.busterbot import BusterAnswer
+from buster.busterbot import BusterAnswer, BusterAnswerData
 from buster.completers.base import Completion
 
 
@@ -45,9 +45,8 @@ def test_read_write_busteranswer():
     )
 
     b_json = b.to_json()
-    b_back = BusterAnswer.from_dict(b_json, validator=b.validator)
+    b_back = BusterAnswerData.from_dict(b_json)
 
-    assert b.version == b_back.version
     assert b.user_input == b_back.user_input
     assert b.completion.error == b_back.completion.error
     assert b.completion.text == b_back.completion.text
