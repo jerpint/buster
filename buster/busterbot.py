@@ -51,7 +51,7 @@ class BusterAnswer:
             logger.info("checking for document relevance")
 
             # checks generally if documents were used to respond to user
-            self._response_relevant = self.validator.check_documents_relevant(self.completion)
+            self._response_relevant = self.validator.check_response_relevant(self.completion)
 
         return self._response_relevant
 

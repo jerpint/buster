@@ -8,7 +8,7 @@ class MockValidator:
     def __init__(self):
         self.use_reranking = True
 
-    def check_documents_relevant(self, completion: Completion) -> bool:
+    def check_response_relevant(self, completion: Completion) -> bool:
         return True
 
     def rerank_docs(self, completion: Completion, matched_documents: pd.DataFrame) -> bool:

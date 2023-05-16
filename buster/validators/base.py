@@ -38,7 +38,7 @@ class Validator:
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
-    def check_documents_relevant(self, completion: Completion) -> bool:
+    def check_response_relevant(self, completion: Completion) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
         We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
