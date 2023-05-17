@@ -87,6 +87,51 @@ def test_documents_formatter__doc_to_long_2():
     assert document_3 not in docs_str
 
 
+def test_documents_formatter__complex_format():
+    """In this test, we expect all 3 documents to be matched and returned normally."""
+    tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
+    documents_formatter = DocumentsFormatter(
+        tokenizer=tokenizer,
+        max_tokens=100,
+        format_str="Title: {title}\n{content}",
+    )
+
+    document_1 = "This is a very short document."
+    document_2 = "This is another very short document."
+    document_3 = "This is also a short document."
+
+    title_1 = "doc1"
+    title_2 = "doc2"
+    title_3 = "doc3"
+
+    country_1 = "Canada"
+    country_2 = "France"
+    country_3 = "Germany"
+
+    matched_documents = pd.DataFrame(
+        {
+            "content": [document_1, document_2, document_3],
+            "title": [title_1, title_2, title_3],
+            "country": [country_1, country_2, country_3],
+        }
+    )
+
+    docs_str, matched_documents_new = documents_formatter.format(matched_documents)
+
+    # less documents and the new document is shorter than the original
+    assert all(matched_documents.content == matched_documents_new.content)
+
+    assert document_1 in docs_str
+    assert document_2 in docs_str
+    assert document_3 in docs_str
+    assert title_1 in docs_str
+    assert title_2 in docs_str
+    assert title_3 in docs_str
+    assert country_1 not in docs_str
+    assert country_2 not in docs_str
+    assert country_3 not in docs_str
+
+
 def test_system_prompt_formatter():
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
     prompt_formatter = SystemPromptFormatter(
