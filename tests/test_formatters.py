@@ -88,7 +88,7 @@ def test_documents_formatter__doc_to_long_2():
 
 
 def test_documents_formatter__complex_format():
-    """In this test, we expect all 3 documents to be matched and returned normally."""
+    """In this test, we expect all 3 documents to be matched and returned in a particular format."""
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
     documents_formatter = DocumentsFormatter(
         tokenizer=tokenizer,
