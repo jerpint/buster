@@ -9,7 +9,7 @@ from openai.embeddings_utils import get_embedding
 
 from buster.completers import completer_factory
 from buster.completers.base import Completion
-from buster.formatters.documents import document_formatter_factory
+from buster.formatters.documents import documents_formatter_factory
 from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 from buster.tokenizers import tokenizer_factory
@@ -110,6 +110,12 @@ class BusterConfig:
             "text_before_prompt": "Answer the following question:\n",
         }
     )
+    documents_formatter_cfg: dict = field(
+        default_factory=lambda: {
+            "max_tokens": 3500,
+            "format_str": "{content}",
+        }
+    )
     completion_cfg: dict = field(
         default_factory=lambda: {
             "name": "ChatGPT",
@@ -148,16 +154,13 @@ class Buster:
         self.prompt_cfg = cfg.prompt_cfg
         self.tokenizer_cfg = cfg.tokenizer_cfg
         self.validator_cfg = cfg.validator_cfg
+        self.documents_formatter_cfg = cfg.documents_formatter_cfg
 
         # update all objects used
         self.validator = validator_factory(self.validator_cfg)
         self.tokenizer = tokenizer_factory(self.tokenizer_cfg)
         self.completer = completer_factory(self.completion_cfg)
-        self.documents_formatter = document_formatter_factory(
-            tokenizer=self.tokenizer,
-            max_tokens=self.retriever_cfg["max_tokens"]
-            # TODO: move max_tokens from retriever_cfg to somewhere more logical
-        )
+        self.documents_formatter = documents_formatter_factory(tokenizer=self.tokenizer, **self.documents_formatter_cfg)
         self.prompt_formatter = prompt_formatter_factory(tokenizer=self.tokenizer, prompt_cfg=self.prompt_cfg)
 
         logger.info(f"Config Updated.")
