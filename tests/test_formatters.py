@@ -18,6 +18,12 @@ def test_documents_formatter__normal():
     document_2 = "This is another very short document."
     document_3 = "This is also a short document."
 
+    expected_docs_str = (
+        f"<DOCUMENT>{document_1}<\\DOCUMENT>"
+        f"<DOCUMENT>{document_2}<\\DOCUMENT>"
+        f"<DOCUMENT>{document_3}<\\DOCUMENT>"
+    )
+
     matched_documents = pd.DataFrame({"content": [document_1, document_2, document_3]})
 
     docs_str, matched_documents_new = documents_formatter.format(matched_documents)
@@ -25,9 +31,7 @@ def test_documents_formatter__normal():
     # less documents and the new document is shorter than the original
     assert all(matched_documents.content == matched_documents_new.content)
 
-    assert document_1 in docs_str
-    assert document_2 in docs_str
-    assert document_3 in docs_str
+    assert docs_str == expected_docs_str
 
 
 def test_documents_formatter__doc_to_long():
@@ -93,7 +97,7 @@ def test_documents_formatter__complex_format():
     documents_formatter = DocumentsFormatter(
         tokenizer=tokenizer,
         max_tokens=100,
-        format_str="Title: {title}\n{content}",
+        format_str="Title: {title}\n{content}\n",
     )
 
     document_1 = "This is a very short document."
@@ -108,6 +112,12 @@ def test_documents_formatter__complex_format():
     country_2 = "France"
     country_3 = "Germany"
 
+    expected_docs_str = (
+        f"<DOCUMENT>Title: {title_1}\n{document_1}\n<\\DOCUMENT>"
+        f"<DOCUMENT>Title: {title_2}\n{document_2}\n<\\DOCUMENT>"
+        f"<DOCUMENT>Title: {title_3}\n{document_3}\n<\\DOCUMENT>"
+    )
+
     matched_documents = pd.DataFrame(
         {
             "content": [document_1, document_2, document_3],
@@ -121,15 +131,7 @@ def test_documents_formatter__complex_format():
     # less documents and the new document is shorter than the original
     assert all(matched_documents.content == matched_documents_new.content)
 
-    assert document_1 in docs_str
-    assert document_2 in docs_str
-    assert document_3 in docs_str
-    assert title_1 in docs_str
-    assert title_2 in docs_str
-    assert title_3 in docs_str
-    assert country_1 not in docs_str
-    assert country_2 not in docs_str
-    assert country_3 not in docs_str
+    assert docs_str == expected_docs_str
 
 
 def test_system_prompt_formatter():

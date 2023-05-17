@@ -34,13 +34,13 @@ class DocumentsFormatter:
             num_preserved_docs += 1
             token_count, encoded = self.tokenizer.num_tokens(doc, return_encoded=True)
             if total_tokens + token_count <= max_tokens:
-                documents_str += f"<DOCUMENT> {doc} <\\DOCUMENT>"
+                documents_str += f"<DOCUMENT>{doc}<\\DOCUMENT>"
                 total_tokens += token_count
             else:
                 logger.warning("truncating document to fit...")
                 remaining_tokens = max_tokens - total_tokens
                 truncated_doc = self.tokenizer.decode(encoded[:remaining_tokens])
-                documents_str += f"<DOCUMENT> {truncated_doc} <\\DOCUMENT>"
+                documents_str += f"<DOCUMENT>{truncated_doc}<\\DOCUMENT>"
                 logger.warning(f"Documents after truncation: {documents_str}")
                 break
 
