@@ -33,6 +33,7 @@ class Completion:
     matched_documents: pd.DataFrame
     completor: Iterator | str
     version: int = 1
+    answer_relevant: bool = None
 
     # private property, should not be set at init
     _completor: Iterator | str = field(init=False, repr=False)  # e.g. a streamed response from openai.ChatCompletion
@@ -66,18 +67,42 @@ class Completion:
         self._completor = value
 
     def to_json(self) -> Any:
-        to_encode = {"error": self.error, "completor": self.text, "version": self.version}
-        return jsonable_encoder(to_encode)
+        # to_encode = {"error": self.error, "completor": self.text, "version": self.version}
+        # return jsonable_encoder(to_encode)
+        def encode_df(df: pd.DataFrame) -> dict:
+            if "embedding" in df.columns:
+                df = df.drop(columns=["embedding"])
+            return df.to_json(orient="index")
+
+        custom_encoder = {
+            # Converts the matched_documents in the user_responses to json
+            pd.DataFrame: encode_df,
+        }
+
+        to_encode = {
+            "user_input": self.user_input,
+            "text": self.text,
+            "matched_documents": self.matched_documents,
+            "answer_relevant": self.answer_relevant,
+            "error": self.error,
+        }
+        return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
 
     @classmethod
     def from_dict(cls, completion_dict: dict):
+        if isinstance(completion_dict["matched_documents"], str):
+            completion_dict["matched_documents"] = pd.read_json(completion_dict["matched_documents"], orient="index")
+        elif isinstance(completion_dict["matched_documents"], dict):
+            completion_dict["matched_documents"] = pd.DataFrame(completion_dict["matched_documents"]).T
+        else:
+            raise ValueError(f"Unknown type for matched_documents: {type(completion_dict['matched_documents'])}")
+
         # Backwards compatibility
         if "version" not in completion_dict:
             completion_dict["version"] = 1
 
             completion_dict["completor"] = completion_dict["text"]
             del completion_dict["text"]
-            del completion_dict["error_msg"]
 
         return cls(**completion_dict)
 
