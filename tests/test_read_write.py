@@ -29,18 +29,20 @@ def test_read_write_completion():
 def test_read_write_busteranswer():
     n_samples = 3
     b = BusterAnswer(
-        user_input="This is my input",
-        completion=Completion(error=False, completor="This is my completed answer"),
-        validator=MockValidator(),
-        matched_documents=pd.DataFrame.from_dict(
-            {
-                "title": ["test"] * n_samples,
-                "url": ["http://url.com"] * n_samples,
-                "content": ["cool text"] * n_samples,
-                "embedding": [[0.0] * 1000] * n_samples,
-                "n_tokens": [10] * n_samples,
-                "source": ["fake source"] * n_samples,
-            }
+        BusterAnswerData(
+            user_input="This is my input",
+            completion=Completion(error=False, completor="This is my completed answer"),
+            matched_documents=pd.DataFrame.from_dict(
+                {
+                    "title": ["test"] * n_samples,
+                    "url": ["http://url.com"] * n_samples,
+                    "content": ["cool text"] * n_samples,
+                    "embedding": [[0.0] * 1000] * n_samples,
+                    "n_tokens": [10] * n_samples,
+                    "source": ["fake source"] * n_samples,
+                }
+            ),
+            validator=MockValidator(),
         ),
     )
 

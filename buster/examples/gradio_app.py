@@ -28,7 +28,7 @@ completer: Completer = ChatGPTCompleter(
     prompt_formatter=prompt_formatter,
 )
 validator: Validator = Validator(**cfg.buster_cfg.validator_cfg)
-buster: Buster = Buster(cfg=cfg.buster_cfg, retriever=retriever, completer=completer, validator=validator)
+buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
 
 def format_sources(matched_documents: pd.DataFrame) -> str:
@@ -65,7 +65,7 @@ def user(user_input, history):
 def chat(history):
     user_input = history[-1][0]
 
-    completion = buster.process_input(user_input)
+    completion = buster.process_input(user_input, source="stackoverflow")
 
     history[-1][1] = ""
 

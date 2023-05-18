@@ -4,14 +4,15 @@ from buster.retriever.base import ALL_SOURCES, Retriever
 
 
 class PickleRetriever(Retriever):
-    def __init__(self, filepath: str):
-        self.filepath = filepath
-        self.documents = pd.read_pickle(filepath)
+    def __init__(self, db_path: str, **kwargs):
+        super().__init__(**kwargs)
+        self.db_path = db_path
+        self.documents = pd.read_pickle(db_path)
 
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
         if self.documents is None:
-            raise FileNotFoundError(f"No documents found at {self.filepath}. Are you sure this is the correct path?")
+            raise FileNotFoundError(f"No documents found at {self.db_path}. Are you sure this is the correct path?")
 
         documents = self.documents.copy()
         # The `current` column exists when multiple versions of a document exist

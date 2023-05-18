@@ -11,9 +11,12 @@ from buster.retriever import Retriever
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
+
 @dataclass
 class BusterAnswer:
     pass
+
+
 @dataclass
 class BusterAnswerData:
     user_input: str
@@ -102,15 +105,15 @@ class BusterConfig:
 
 
 class Buster:
-    def __init__(self, cfg: BusterConfig, retriever: Retriever, completer: Completer, validator):
+    def __init__(self, retriever: Retriever, completer: Completer, validator):
         # self.update_cfg(cfg)
         self.completer = completer
         self.retriever = retriever
         self.validator = validator
 
-        self.document_source = cfg.document_source
+        # self.document_source = cfg.document_source
 
-    def process_input(self, user_input: str) -> BusterAnswer:
+    def process_input(self, user_input: str, source: str) -> BusterAnswer:
         """
         Main function to process the input question and generate a formatted output.
         """
@@ -121,7 +124,7 @@ class Buster:
         if not user_input.endswith("\n"):
             user_input += "\n"
 
-        matched_documents = self.retriever.retrieve(user_input, source=self.document_source)
+        matched_documents = self.retriever.retrieve(user_input, source=source)
 
         completion = self.completer.generate_response(user_input=user_input, matched_documents=matched_documents)
 

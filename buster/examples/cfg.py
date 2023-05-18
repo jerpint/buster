@@ -8,7 +8,7 @@ buster_cfg = BusterConfig(
         "use_reranking": True,
     },
     retriever_cfg={
-        "db_path": "./documents.db",
+        "db_path": "documents.db",
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,
@@ -53,5 +53,4 @@ buster_cfg = BusterConfig(
             "Now answer the following question:\n"
         ),
     },
-    document_source="stackoverflow",
 )

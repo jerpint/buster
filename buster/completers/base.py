@@ -104,7 +104,7 @@ class Completer(ABC):
         if len(matched_documents) == 0:
             logger.warning("no documents found...")
             # no document was found, pass the unknown prompt instead
-            message = self.validator.unknown_prompt
+            message = "No documents were found that match your question."
 
             matched_documents = pd.dataframe(columns=matched_documents.columns)
 

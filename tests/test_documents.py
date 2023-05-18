@@ -11,8 +11,9 @@ from buster.retriever import PickleRetriever, SQLiteRetriever
     [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")],
 )
 def test_write_read(tmp_path, documents_manager, retriever, extension):
-    db = documents_manager(tmp_path / f"test.{extension}")
+    db_path = tmp_path / f"test.{extension}"
 
+    db = documents_manager(db_path)
     data = pd.DataFrame.from_dict(
         {
             "title": ["test"],
@@ -24,7 +25,14 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
     )
     db.add(source="test", df=data)
 
-    db_data = retriever(tmp_path / f"test.{extension}").get_documents("test")
+    retriever_cfg = {
+        "db_path": db_path,
+        "top_k": 3,
+        "thresh": 0.7,
+        "max_tokens": 2000,
+        "embedding_model": "text-embedding-ada-002",
+    }
+    db_data = retriever(**retriever_cfg).get_documents("test")
 
     assert db_data["title"].iloc[0] == data["title"].iloc[0]
     assert db_data["url"].iloc[0] == data["url"].iloc[0]
@@ -38,7 +46,8 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
     [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")],
 )
 def test_write_write_read(tmp_path, documents_manager, retriever, extension):
-    db = documents_manager(tmp_path / f"test.{extension}")
+    db_path = tmp_path / f"test.{extension}"
+    db = documents_manager(db_path)
 
     data_1 = pd.DataFrame.from_dict(
         {
@@ -62,7 +71,14 @@ def test_write_write_read(tmp_path, documents_manager, retriever, extension):
     )
     db.add(source="test", df=data_2)
 
-    db_data = retriever(tmp_path / f"test.{extension}").get_documents("test")
+    retriever_cfg = {
+        "db_path": db_path,
+        "top_k": 3,
+        "thresh": 0.7,
+        "max_tokens": 2000,
+        "embedding_model": "text-embedding-ada-002",
+    }
+    db_data = retriever(**retriever_cfg).get_documents("test")
 
     assert len(db_data) == len(data_2)
     assert db_data["title"].iloc[0] == data_2["title"].iloc[0]
@@ -74,10 +90,19 @@ def test_write_write_read(tmp_path, documents_manager, retriever, extension):
 
 def test_update_source(tmp_path):
     display_name = "Super Test"
-    db = DocumentsDB(tmp_path / "test.db")
+    db_path = tmp_path / "test.db"
+    db = DocumentsDB(db_path)
 
     db.update_source(source="test", display_name=display_name)
 
-    returned_display_name = SQLiteRetriever(tmp_path / "test.db").get_source_display_name("test")
+    retriever_cfg = {
+        "db_path": db_path,
+        "top_k": 3,
+        "thresh": 0.7,
+        "max_tokens": 2000,
+        "embedding_model": "text-embedding-ada-002",
+    }
+
+    returned_display_name = SQLiteRetriever(**retriever_cfg).get_source_display_name("test")
 
     assert display_name == returned_display_name

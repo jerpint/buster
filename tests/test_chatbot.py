@@ -191,7 +191,7 @@ def test_chatbot_real_data__chatGPT_OOD():
     response = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(response.completion.text, str)
 
-    assert response.response_relevant == False
+    assert response.answer_data.response_relevant == False
 
 
 def test_chatbot_real_data__GPT():
@@ -237,7 +237,7 @@ def test_chatbot_real_data__GPT():
     response = buster.process_input("What is a transformer?")
     assert isinstance(response.completion.text, str)
 
-    assert response.response_relevant == True
+    assert response.answer_data.response_relevant == True
 
 
 def test_chatbot_real_data__no_docs_found():
@@ -283,5 +283,5 @@ def test_chatbot_real_data__no_docs_found():
     response = buster.process_input("What is a transformer?")
     assert isinstance(response.completion.text, str)
 
-    assert response.response_relevant == False
+    assert response.answer_data.response_relevant == False
     assert response.completion.text == buster_cfg.validator_cfg["unknown_prompt"]
