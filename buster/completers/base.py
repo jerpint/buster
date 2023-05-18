@@ -5,8 +5,12 @@ from dataclasses import dataclass, field
 from typing import Any, Iterator
 
 import openai
+import pandas as pd
 import promptlayer
 from fastapi.encoders import jsonable_encoder
+
+from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.prompts import SystemPromptFormatter, prompt_formatter_factory
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -25,6 +29,8 @@ if promptlayer_api_key:
 @dataclass
 class Completion:
     error: bool
+    user_input: str
+    matched_documents: pd.DataFrame
     completor: Iterator | str
     version: int = 1
 
@@ -77,28 +83,50 @@ class Completion:
 
 
 class Completer(ABC):
-    def __init__(self, completion_kwargs: dict):
+    def __init__(
+        self, completion_kwargs: dict, documents_formatter: DocumentsFormatter, prompt_formatter: SystemPromptFormatter
+    ):
         self.completion_kwargs = completion_kwargs
+        self.documents_formatter = documents_formatter
+        self.prompt_formatter = prompt_formatter
 
     @abstractmethod
     def complete(self, prompt) -> str:
         ...
 
-    def generate_response(self, system_prompt, user_input):
+    @abstractmethod
+    def prepare_prompt(self, user_input, matched_documents):
+        ...
+
+    def generate_response(self, user_input: str, matched_documents: pd.DataFrame):
         # Call the API to generate a response
-        prompt = self.prepare_prompt(system_prompt, user_input)
-        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
-        logger.info(f"{system_prompt=}")
+
+        if len(matched_documents) == 0:
+            logger.warning("no documents found...")
+            # no document was found, pass the unknown prompt instead
+            message = self.validator.unknown_prompt
+
+            matched_documents = pd.dataframe(columns=matched_documents.columns)
+
+            completion = completion(completor=message, error=False, matched_documents=matched_documents)
+            return completion
+
+        # prepare the prompt
         logger.info(f"{user_input=}")
+        prompt = self.prepare_prompt(user_input, matched_documents)
+        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
 
         completor = self.complete(prompt=prompt, **self.completion_kwargs)
 
-        self.completion = Completion(completor=completor, error=self.error)
+        self.completion = Completion(
+            completor=completor, error=self.error, matched_documents=matched_documents, user_input=user_input
+        )
 
         return self.completion
 
 
 class GPT3Completer(Completer):
+    # TODO: Adapt...
     def prepare_prompt(
         self,
         system_prompt: str,
@@ -131,14 +159,14 @@ class GPT3Completer(Completer):
 
 
 class ChatGPTCompleter(Completer):
-    def prepare_prompt(
-        self,
-        system_prompt: str,
-        user_input: str,
-    ) -> list:
+    def prepare_prompt(self, user_input, matched_documents):
         """
         Prepare the prompt with prompt engineering.
         """
+
+        # format the matched documents, (will truncate them if too long)
+        documents_str, _ = self.documents_formatter.format(matched_documents)
+        system_prompt = self.prompt_formatter.format(documents_str)
         prompt = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": user_input},

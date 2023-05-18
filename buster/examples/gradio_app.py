@@ -1,14 +1,34 @@
+from buster.completers.base import ChatGPTCompleter, Completer
+from buster.formatters.documents import document_formatter_factory
+from buster.formatters.prompts import prompt_formatter_factory
+from buster.tokenizers import tokenizer_factory
 import cfg
 import gradio as gr
 import pandas as pd
 
 from buster.busterbot import Buster
 from buster.retriever import Retriever
+from buster.validators.base import Validator, validator_factory
 from buster.utils import get_retriever_from_extension
+from buster.retriever import SQLiteRetriever
 
 # initialize buster with the config in config.py (adapt to your needs) ...
-retriever: Retriever = get_retriever_from_extension(cfg.documents_filepath)(cfg.documents_filepath)
-buster: Buster = Buster(cfg=cfg.buster_cfg, retriever=retriever)
+retriever: Retriever = SQLiteRetriever(**cfg.buster_cfg.retriever_cfg)
+
+tokenizer = tokenizer_factory(cfg.buster_cfg.tokenizer_cfg)
+prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=cfg.buster_cfg.prompt_cfg)
+documents_formatter = document_formatter_factory(
+    tokenizer=tokenizer,
+    max_tokens=3000,
+    # TODO: put max tokens somewhere useful
+)
+completer: Completer = ChatGPTCompleter(
+    completion_kwargs=cfg.buster_cfg.completion_cfg["completion_kwargs"],
+    documents_formatter=documents_formatter,
+    prompt_formatter=prompt_formatter,
+)
+validator: Validator = Validator(**cfg.buster_cfg.validator_cfg)
+buster: Buster = Buster(cfg=cfg.buster_cfg, retriever=retriever, completer=completer, validator=validator)
 
 
 def format_sources(matched_documents: pd.DataFrame) -> str:
@@ -27,12 +47,11 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
     return sourced_answer_template.format(sources=sources, footnote=footnote)
 
 
-def add_sources(history, response):
-    response_relevant = response.response_relevant
+def add_sources(history, completion):
+    completion = buster.postprocess_completion(completion)
 
-    if response_relevant:
-        # add sources
-        formatted_sources = format_sources(response.matched_documents)
+    if completion.response_is_relevant:
+        formatted_sources = format_sources(completion.matched_documents)
         history.append([None, formatted_sources])
 
     return history
@@ -46,14 +65,14 @@ def user(user_input, history):
 def chat(history):
     user_input = history[-1][0]
 
-    response = buster.process_input(user_input)
+    completion = buster.process_input(user_input)
 
     history[-1][1] = ""
 
-    for token in response.completion.completor:
+    for token in completion.completor:
         history[-1][1] += token
 
-        yield history, response
+        yield history, completion
 
 
 block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")

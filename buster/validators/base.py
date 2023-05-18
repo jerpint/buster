@@ -1,9 +1,9 @@
 import logging
 from functools import lru_cache
 
-import numpy as np
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
+from buster.busterbot import BusterAnswer
 
 from buster.completers.base import Completion
 
@@ -12,20 +12,19 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Validator:
-    def __init__(self, validator_cfg):
-        self.cfg = validator_cfg
+    def __init__(self, embedding_model: str, unknown_threshold: float, unknown_prompt: str, use_reranking: bool):
+        self.embedding_model = embedding_model
+        self.unknown_threshold = unknown_threshold
+        self.unknown_prompt = unknown_prompt
+        self.use_reranking = use_reranking
 
-        self.embedding_model = self.cfg["embedding_model"]
-        self.unknown_threshold = self.cfg["unknown_threshold"]
-        self.unknown_prompt = self.cfg["unknown_prompt"]
-        self.use_reranking = self.cfg["use_reranking"]
-
+    @staticmethod
     @lru_cache
-    def get_embedding(self, query: str, engine: str):
+    def get_embedding(query: str, engine: str):
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
-    def check_response_relevant(self, completion: Completion) -> bool:
+    def check_response_relevance(self, completion: Completion) -> bool:
         """Check to see if a response is relevant to the chatbot's knowledge or not.
 
         We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
@@ -73,6 +72,12 @@ class Validator:
         )
 
         return matched_documents.sort_values(by=col, ascending=False)
+
+    def validate(self, completion: Completion):
+        completion.response_is_relevant = self.check_response_relevance(completion)
+        completion.matched_documents = self.rerank_docs(completion, completion.matched_documents)
+
+        return completion
 
 
 def validator_factory(validator_cfg: dict) -> Validator:

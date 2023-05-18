@@ -1,6 +1,5 @@
 from buster.busterbot import BusterConfig
 
-documents_filepath = "./documents.db"
 buster_cfg = BusterConfig(
     validator_cfg={
         "unknown_prompt": "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
@@ -9,6 +8,7 @@ buster_cfg = BusterConfig(
         "use_reranking": True,
     },
     retriever_cfg={
+        "db_path": "./documents.db",
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,

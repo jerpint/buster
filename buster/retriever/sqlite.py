@@ -18,8 +18,11 @@ class SQLiteRetriever(Retriever):
         >>> df = db.get_documents("source")
     """
 
-    def __init__(self, db_path: sqlite3.Connection | str):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        db_path = kwargs["db_path"]
         if isinstance(db_path, (str, Path)):
+            print("Here")
             self.db_path = db_path
             self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
         else:
