@@ -45,7 +45,11 @@ class ServiceRetriever(Retriever):
 
     def retrieve(self, query_embedding: list[float], top_k: int, source: str = None) -> pd.DataFrame:
         # Pinecone retrieval
-        matches = self.index.query(query_embedding, top_k=top_k, filter={"source": {"$eq": source}})["matches"]
+        if source is "" or source is None:
+            filter = None
+        else:
+            filter = {"source": {"$eq": source}}
+        matches = self.index.query(query_embedding, top_k=top_k, filter=filter)["matches"]
         matching_ids = [ObjectId(match.id) for match in matches]
         matching_scores = {match.id: match.score for match in matches}
 
