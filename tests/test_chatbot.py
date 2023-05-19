@@ -8,7 +8,7 @@ import pandas as pd
 
 from buster.busterbot import Buster, BusterAnswer, BusterConfig
 from buster.completers.base import ChatGPTCompleter, Completer, Completion
-from buster.formatters.documents import document_formatter_factory
+from buster.formatters.documents import documents_formatter_factory
 from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 from buster.tokenizers import tokenizer_factory
@@ -141,7 +141,7 @@ def test_chatbot_real_data__chatGPT():
     retriever = get_retriever_from_extension(DB_PATH)(**buster_cfg.retriever_cfg)
     tokenizer = tokenizer_factory(buster_cfg.tokenizer_cfg)
     prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=buster_cfg.prompt_cfg)
-    documents_formatter = document_formatter_factory(
+    documents_formatter = documents_formatter_factory(
         tokenizer=tokenizer,
         max_tokens=3000,
         # TODO: put max tokens somewhere useful
@@ -182,7 +182,7 @@ def test_chatbot_real_data__chatGPT_OOD():
     retriever = get_retriever_from_extension(DB_PATH)(**buster_cfg.retriever_cfg)
     tokenizer = tokenizer_factory(buster_cfg.tokenizer_cfg)
     prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=buster_cfg.prompt_cfg)
-    documents_formatter = document_formatter_factory(
+    documents_formatter = documents_formatter_factory(
         tokenizer=tokenizer,
         max_tokens=3000,
         # TODO: put max tokens somewhere useful
@@ -214,7 +214,7 @@ def test_chatbot_real_data__no_docs_found():
     retriever = get_retriever_from_extension(DB_PATH)(**buster_cfg.retriever_cfg)
     tokenizer = tokenizer_factory(buster_cfg.tokenizer_cfg)
     prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=buster_cfg.prompt_cfg)
-    documents_formatter = document_formatter_factory(
+    documents_formatter = documents_formatter_factory(
         tokenizer=tokenizer,
         max_tokens=3000,
         # TODO: put max tokens somewhere useful

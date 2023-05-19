@@ -4,7 +4,7 @@ import pandas as pd
 
 from buster.busterbot import Buster
 from buster.completers.base import ChatGPTCompleter, Completer
-from buster.formatters.documents import document_formatter_factory
+from buster.formatters.documents import documents_formatter_factory
 from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever, SQLiteRetriever
 from buster.tokenizers import tokenizer_factory
@@ -16,9 +16,10 @@ retriever: Retriever = SQLiteRetriever(**cfg.buster_cfg.retriever_cfg)
 
 tokenizer = tokenizer_factory(cfg.buster_cfg.tokenizer_cfg)
 prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=cfg.buster_cfg.prompt_cfg)
-documents_formatter = document_formatter_factory(
+documents_formatter = documents_formatter_factory(
     tokenizer=tokenizer,
     max_tokens=3000,
+    format_str="{content}"
     # TODO: put max tokens somewhere useful
 )
 completer: Completer = ChatGPTCompleter(
