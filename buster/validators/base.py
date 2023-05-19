@@ -3,8 +3,8 @@ from functools import lru_cache
 
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
-from buster.busterbot import BusterAnswer
 
+from buster.busterbot import BusterAnswer
 from buster.completers.base import Completion
 
 logger = logging.getLogger(__name__)

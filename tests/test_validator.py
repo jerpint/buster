@@ -1,9 +1,8 @@
 import pandas as pd
+from openai.embeddings_utils import get_embedding
 
 from buster.completers.base import Completion
 from buster.validators.base import Validator
-
-from openai.embeddings_utils import get_embedding
 
 
 def test_validator_check_answer_relevance():

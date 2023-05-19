@@ -1,7 +1,7 @@
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
-import logging
 
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding

@@ -1,16 +1,15 @@
-from buster.completers.base import ChatGPTCompleter, Completer
-from buster.formatters.documents import document_formatter_factory
-from buster.formatters.prompts import prompt_formatter_factory
-from buster.tokenizers import tokenizer_factory
 import cfg
 import gradio as gr
 import pandas as pd
 
 from buster.busterbot import Buster
-from buster.retriever import Retriever
-from buster.validators.base import Validator, validator_factory
+from buster.completers.base import ChatGPTCompleter, Completer
+from buster.formatters.documents import document_formatter_factory
+from buster.formatters.prompts import prompt_formatter_factory
+from buster.retriever import Retriever, SQLiteRetriever
+from buster.tokenizers import tokenizer_factory
 from buster.utils import get_retriever_from_extension
-from buster.retriever import SQLiteRetriever
+from buster.validators.base import Validator, validator_factory
 
 # initialize buster with the config in config.py (adapt to your needs) ...
 retriever: Retriever = SQLiteRetriever(**cfg.buster_cfg.retriever_cfg)
