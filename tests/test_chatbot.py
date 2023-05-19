@@ -7,9 +7,9 @@ import numpy as np
 import pandas as pd
 
 from buster.busterbot import Buster, BusterConfig
+from buster.completers.base import ChatGPTCompleter, Completer, Completion
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
-from buster.completers.base import ChatGPTCompleter, Completer, Completion
 from buster.retriever import Retriever
 from buster.retriever.pickle import PickleRetriever
 from buster.tokenizers.gpt import GPTTokenizer
