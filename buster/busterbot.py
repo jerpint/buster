@@ -119,7 +119,6 @@ class Buster:
         self.retriever = retriever
         self.validator = validator
 
-
     def process_input(self, user_input: str, source: str) -> BusterAnswer:
         """
         Main function to process the input question and generate a formatted output.
