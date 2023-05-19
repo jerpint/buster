@@ -62,8 +62,6 @@ class BusterAnswerData:
 class BusterConfig:
     """Configuration object for a chatbot."""
 
-    document_source: str = ""
-
     validator_cfg: dict = field(
         default_factory=lambda: {
             "unknown_prompt": "I Don't know how to answer your question.",
@@ -85,17 +83,18 @@ class BusterConfig:
             "embedding_model": "text-embedding-ada-002",
         }
     )
-    prompt_cfg: dict = field(
+    prompt_formatter_cfg: dict = field(
         default_factory=lambda: {
             "max_tokens": 3500,
-            "text_before_documents": "You are a chatbot answering questions.\n",
-            "text_before_prompt": "Answer the following question:\n",
+            "text_before_docs": "You are a chatbot answering questions.\n",
+            "text_after_docs": "Answer the following question:\n",
+            "formatter": "{text_before_docs}\n{documents}\n{text_after_docs}",
         }
     )
     documents_formatter_cfg: dict = field(
         default_factory=lambda: {
             "max_tokens": 3500,
-            "format_str": "{content}",
+            "formatter": "{content}",
         }
     )
     completion_cfg: dict = field(

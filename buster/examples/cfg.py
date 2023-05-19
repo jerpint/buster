@@ -27,11 +27,11 @@ buster_cfg = BusterConfig(
     },
     documents_formatter_cfg={
         "max_tokens": 3500,
-        "format_str": "{content}",
+        "formatter": "{content}",
     },
-    prompt_cfg={
+    prompt_formatter_cfg={
         "max_tokens": 3500,
-        "text_before_documents": (
+        "text_before_docs": (
             "You are a chatbot assistant answering technical questions about artificial intelligence (AI)."
             "You can only respond to a question if the content necessary to answer the question is contained in the following provided documentation. "
             "If the answer is in the documentation, summarize it in a helpful way to the user. "
@@ -40,7 +40,7 @@ buster_cfg = BusterConfig(
             "Here is the documentation: "
             "<DOCUMENTS> "
         ),
-        "text_before_prompt": (
+        "text_after_docs": (
             "<\DOCUMENTS>\n"
             "REMEMBER:\n"
             "You are a chatbot assistant answering technical questions about artificial intelligence (AI)."

@@ -4,28 +4,19 @@ import pandas as pd
 
 from buster.busterbot import Buster
 from buster.completers.base import ChatGPTCompleter, Completer
-from buster.formatters.documents import documents_formatter_factory
-from buster.formatters.prompts import prompt_formatter_factory
+from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.prompts import PromptFormatter
 from buster.retriever import Retriever, SQLiteRetriever
-from buster.tokenizers import tokenizer_factory
-from buster.utils import get_retriever_from_extension
-from buster.validators.base import Validator, validator_factory
+from buster.tokenizers import GPTTokenizer
+from buster.validators.base import Validator
 
 # initialize buster with the config in config.py (adapt to your needs) ...
 retriever: Retriever = SQLiteRetriever(**cfg.buster_cfg.retriever_cfg)
-
-tokenizer = tokenizer_factory(cfg.buster_cfg.tokenizer_cfg)
-prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=cfg.buster_cfg.prompt_cfg)
-documents_formatter = documents_formatter_factory(
-    tokenizer=tokenizer,
-    max_tokens=3000,
-    format_str="{content}"
-    # TODO: put max tokens somewhere useful
-)
+tokenizer = GPTTokenizer(**cfg.buster_cfg.tokenizer_cfg)
 completer: Completer = ChatGPTCompleter(
     completion_kwargs=cfg.buster_cfg.completion_cfg["completion_kwargs"],
-    documents_formatter=documents_formatter,
-    prompt_formatter=prompt_formatter,
+    documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **cfg.buster_cfg.documents_formatter_cfg),
+    prompt_formatter=PromptFormatter(tokenizer=tokenizer, **cfg.buster_cfg.prompt_formatter_cfg),
 )
 validator: Validator = Validator(**cfg.buster_cfg.validator_cfg)
 buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
