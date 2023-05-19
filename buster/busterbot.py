@@ -5,8 +5,8 @@ from typing import Any
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
 
-from buster.completers.base import Completer, Completion
 from buster.completers import completer_factory
+from buster.completers.base import Completer, Completion
 from buster.formatters.documents import documents_formatter_factory
 from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever

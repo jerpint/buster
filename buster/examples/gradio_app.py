@@ -10,7 +10,7 @@ from buster.retriever import Retriever, SQLiteRetriever
 from buster.tokenizers import GPTTokenizer
 from buster.validators.base import Validator
 
-# initialize buster with the config in config.py (adapt to your needs) ...
+# initialize buster with the config in cfg.py (adapt to your needs) ...
 buster_cfg = cfg.buster_cfg
 retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
 tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
