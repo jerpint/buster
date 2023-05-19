@@ -97,7 +97,7 @@ def test_documents_formatter__complex_format():
     documents_formatter = DocumentsFormatter(
         tokenizer=tokenizer,
         max_tokens=100,
-        format_str="Title: {title}\n{content}\n",
+        formatter="Title: {title}\n{content}\n",
     )
 
     document_1 = "This is a very short document."

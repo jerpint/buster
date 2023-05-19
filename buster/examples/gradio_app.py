@@ -11,14 +11,15 @@ from buster.tokenizers import GPTTokenizer
 from buster.validators.base import Validator
 
 # initialize buster with the config in config.py (adapt to your needs) ...
-retriever: Retriever = SQLiteRetriever(**cfg.buster_cfg.retriever_cfg)
-tokenizer = GPTTokenizer(**cfg.buster_cfg.tokenizer_cfg)
+buster_cfg = cfg.buster_cfg
+retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
+tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
 completer: Completer = ChatGPTCompleter(
-    completion_kwargs=cfg.buster_cfg.completion_cfg["completion_kwargs"],
-    documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **cfg.buster_cfg.documents_formatter_cfg),
-    prompt_formatter=PromptFormatter(tokenizer=tokenizer, **cfg.buster_cfg.prompt_formatter_cfg),
+    documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+    prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
+    **buster_cfg.completion_cfg
 )
-validator: Validator = Validator(**cfg.buster_cfg.validator_cfg)
+validator: Validator = Validator(**buster_cfg.validator_cfg)
 buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
 

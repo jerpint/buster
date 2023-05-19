@@ -110,17 +110,14 @@ class Completion:
 class Completer(ABC):
     def __init__(
         self,
-        completion_kwargs: dict,
         documents_formatter: DocumentsFormatter,
         prompt_formatter: PromptFormatter,
-        no_documents_message: str = None,
+        completion_kwargs: dict,
+        no_documents_message: str = "No documents were found that match your question.",
     ):
         self.completion_kwargs = completion_kwargs
         self.documents_formatter = documents_formatter
         self.prompt_formatter = prompt_formatter
-
-        if no_documents_message is None:
-            no_documents_message = "No documents were found that match your question."
         self.no_documents_message = no_documents_message
 
     @abstractmethod
@@ -136,9 +133,9 @@ class Completer(ABC):
 
         if len(matched_documents) == 0:
             logger.warning("no documents found...")
-            # no document was found, pass the unknown prompt instead
-            # message = "No documents were found that match your question."
+            # no document was found, pass the appropriate message instead...
 
+            # empty dataframe
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
             completion = Completion(

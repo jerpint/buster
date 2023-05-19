@@ -15,12 +15,12 @@ buster_cfg = BusterConfig(
         "embedding_model": "text-embedding-ada-002",
     },
     completion_cfg={
-        "name": "ChatGPT",
         "completion_kwargs": {
             "model": "gpt-3.5-turbo",
             "stream": True,
             "temperature": 0,
         },
+        "no_documents_message": "No documents are available for this question."
     },
     tokenizer_cfg={
         "model_name": "gpt-3.5-turbo",

@@ -8,10 +8,13 @@ import pandas as pd
 
 from buster.busterbot import Buster, BusterAnswer, BusterConfig
 from buster.completers.base import ChatGPTCompleter, Completer, Completion
-from buster.formatters.documents import documents_formatter_factory
-from buster.formatters.prompts import prompt_formatter_factory
+from buster.formatters.documents import DocumentsFormatter, documents_formatter_factory
+from buster.formatters.prompts import PromptFormatter, prompt_formatter_factory
 from buster.retriever import Retriever
+from buster.retriever.pickle import PickleRetriever
+from buster.retriever.sqlite import SQLiteRetriever
 from buster.tokenizers import tokenizer_factory
+from buster.tokenizers.gpt import GPTTokenizer
 from buster.utils import get_retriever_from_extension
 from buster.validators.base import Validator
 
@@ -26,7 +29,6 @@ UNKNOWN_PROMPT = "I'm sorry but I don't know how to answer."
 # default class used by our tests
 buster_cfg_template = BusterConfig(
     completion_cfg={
-        "name": "ChatGPT",
         "completion_kwargs": {
             "model": "gpt-3.5-turbo",
             "temperature": 0,
@@ -45,15 +47,19 @@ buster_cfg_template = BusterConfig(
         "max_tokens": 2000,
         "embedding_model": "text-embedding-ada-002",
     },
-    prompt_cfg={
+    prompt_formatter_cfg={
         "max_tokens": 3500,
-        "text_before_documents": "",
-        "text_before_prompt": (
+        "text_before_docs": "",
+        "text_after_docs": (
             """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
             """Make sure to format your answers in Markdown format, including code block and snippets.\n"""
             """Do not include any links to urls or hyperlinks in your answers.\n\n"""
             """Now answer the following question:\n"""
         ),
+    },
+    documents_formatter_cfg={
+        "max_tokens": 3000,
+        "formatter": "{content}",
     },
 )
 
@@ -137,22 +143,16 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
 def test_chatbot_real_data__chatGPT():
     buster_cfg = copy.deepcopy(buster_cfg_template)
 
-    validator = Validator(**buster_cfg.validator_cfg)
-    retriever = get_retriever_from_extension(DB_PATH)(**buster_cfg.retriever_cfg)
-    tokenizer = tokenizer_factory(buster_cfg.tokenizer_cfg)
-    prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=buster_cfg.prompt_cfg)
-    documents_formatter = documents_formatter_factory(
-        tokenizer=tokenizer,
-        max_tokens=3000,
-        format_str="{content}",
-        # TODO: put max tokens somewhere useful
-    )
+    retriever: Retriever = PickleRetriever(**buster_cfg.retriever_cfg)
+    tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     completer: Completer = ChatGPTCompleter(
-        completion_kwargs=buster_cfg.completion_cfg["completion_kwargs"],
-        documents_formatter=documents_formatter,
-        prompt_formatter=prompt_formatter,
+        documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+        prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
+        **buster_cfg.completion_cfg,
     )
-    buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    validator: Validator = Validator(**buster_cfg.validator_cfg)
+    buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
+
     completion = buster.process_input("What is a transformer?", source=DB_SOURCE)
     completion = buster.postprocess_completion(completion)
     assert isinstance(completion.text, str)
@@ -162,9 +162,9 @@ def test_chatbot_real_data__chatGPT():
 
 def test_chatbot_real_data__chatGPT_OOD():
     buster_cfg = copy.deepcopy(buster_cfg_template)
-    buster_cfg.prompt_cfg = {
+    buster_cfg.prompt_formatter_cfg = {
         "max_tokens": 3500,
-        "text_before_prompt": (
+        "text_before_docs": (
             """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
             """Make sure to format your answers in Markdown format, including code block and snippets. """
             """Do not include any links to urls or hyperlinks in your answers. """
@@ -176,25 +176,18 @@ def test_chatbot_real_data__chatGPT_OOD():
             f"""'{UNKNOWN_PROMPT}'\n"""
             """Now answer the following question:\n"""
         ),
-        "text_before_documents": "Only use these documents as reference:\n",
+        "text_after_docs": "Only use these documents as reference:\n",
     }
 
-    validator = Validator(**buster_cfg.validator_cfg)
-    retriever = get_retriever_from_extension(DB_PATH)(**buster_cfg.retriever_cfg)
-    tokenizer = tokenizer_factory(buster_cfg.tokenizer_cfg)
-    prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=buster_cfg.prompt_cfg)
-    documents_formatter = documents_formatter_factory(
-        tokenizer=tokenizer,
-        max_tokens=3000,
-        format_str="{content}",
-        # TODO: put max tokens somewhere useful
-    )
+    retriever: Retriever = PickleRetriever(**buster_cfg.retriever_cfg)
+    tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     completer: Completer = ChatGPTCompleter(
-        completion_kwargs=buster_cfg.completion_cfg["completion_kwargs"],
-        documents_formatter=documents_formatter,
-        prompt_formatter=prompt_formatter,
+        documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+        prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
+        **buster_cfg.completion_cfg,
     )
-    buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    validator: Validator = Validator(**buster_cfg.validator_cfg)
+    buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
     completion = buster.process_input("What is a good recipe for brocolli soup?", source=DB_SOURCE)
     completion = buster.postprocess_completion(completion)
@@ -212,23 +205,16 @@ def test_chatbot_real_data__no_docs_found():
         "thresh": 1,  # Set threshold very high to be sure no docs are matched
         "max_tokens": 3000,
     }
-    validator = Validator(**buster_cfg.validator_cfg)
-    retriever = get_retriever_from_extension(DB_PATH)(**buster_cfg.retriever_cfg)
-    tokenizer = tokenizer_factory(buster_cfg.tokenizer_cfg)
-    prompt_formatter = prompt_formatter_factory(tokenizer=tokenizer, prompt_cfg=buster_cfg.prompt_cfg)
-    documents_formatter = documents_formatter_factory(
-        tokenizer=tokenizer,
-        max_tokens=3000,
-        format_str="{content}",
-        # TODO: put max tokens somewhere useful
-    )
+    buster_cfg.completion_cfg["no_documents_message"] = "No documents available."
+    retriever: Retriever = PickleRetriever(**buster_cfg.retriever_cfg)
+    tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     completer: Completer = ChatGPTCompleter(
-        completion_kwargs=buster_cfg.completion_cfg["completion_kwargs"],
-        documents_formatter=documents_formatter,
-        prompt_formatter=prompt_formatter,
-        no_documents_message="No documents available.",
+        documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+        prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
+        **buster_cfg.completion_cfg,
     )
-    buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    validator: Validator = Validator(**buster_cfg.validator_cfg)
+    buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
     completion = buster.process_input("What is a transformer?", source=DB_SOURCE)
     completion = buster.postprocess_completion(completion)
