@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 import pinecone
 from bson.objectid import ObjectId
@@ -5,6 +7,9 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 from buster.retriever.base import ALL_SOURCES, Retriever
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class ServiceRetriever(Retriever):
@@ -44,11 +49,16 @@ class ServiceRetriever(Retriever):
             return display_name
 
     def retrieve(self, query_embedding: list[float], top_k: int, source: str = None) -> pd.DataFrame:
-        # Pinecone retrieval
         if source is "" or source is None:
             filter = None
         else:
             filter = {"source": {"$eq": source}}
+            source_exists = self.db.sources.find_one({"name": source})
+            if source_exists is None:
+                logger.warning(f"Source {source} does not exist. Returning empty dataframe.")
+                return pd.DataFrame()
+
+        # Pinecone retrieval
         matches = self.index.query(query_embedding, top_k=top_k, filter=filter)["matches"]
         matching_ids = [ObjectId(match.id) for match in matches]
         matching_scores = {match.id: match.score for match in matches}
