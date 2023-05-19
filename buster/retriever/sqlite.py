@@ -36,7 +36,7 @@ class SQLiteRetriever(Retriever):
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
         # Execute the SQL statement and fetch the results.
-        if source is "":
+        if source == "":
             results = self.conn.execute("SELECT * FROM documents")
         else:
             results = self.conn.execute("SELECT * FROM documents WHERE source = ?", (source,))
@@ -48,7 +48,7 @@ class SQLiteRetriever(Retriever):
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
-        if source is "":
+        if source == "":
             return ALL_SOURCES
         else:
             cur = self.conn.execute("SELECT display_name FROM sources WHERE name = ?", (source,))
