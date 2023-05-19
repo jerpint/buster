@@ -17,7 +17,7 @@ tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
 completer: Completer = ChatGPTCompleter(
     documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
     prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
-    **buster_cfg.completion_cfg
+    **buster_cfg.completion_cfg,
 )
 validator: Validator = Validator(**buster_cfg.validator_cfg)
 buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
