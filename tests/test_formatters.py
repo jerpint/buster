@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from buster.formatters.documents import DocumentsFormatter
-from buster.formatters.prompts import SystemPromptFormatter
+from buster.formatters.prompts import PromptFormatter
 from buster.tokenizers import GPTTokenizer
 
 
@@ -87,9 +87,9 @@ def test_documents_formatter__doc_to_long_2():
     assert document_3 not in docs_str
 
 
-def test_system_prompt_formatter():
+def test_prompt_formatter():
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    prompt_formatter = SystemPromptFormatter(
+    prompt_formatter = PromptFormatter(
         tokenizer=tokenizer,
         max_tokens=200,
         text_after_docs="After docs.",
@@ -108,7 +108,7 @@ def test_system_prompt_formatter():
 
 def test_system_prompt_formatter__to_long():
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    prompt_formatter = SystemPromptFormatter(
+    prompt_formatter = PromptFormatter(
         tokenizer=tokenizer,
         max_tokens=200,
         text_after_docs="After docs.",

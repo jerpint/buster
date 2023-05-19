@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
-class SystemPromptFormatter:
+class PromptFormatter:
     tokenizer: Tokenizer
     max_tokens: 3500
     text_before_docs: str
@@ -36,7 +36,7 @@ class SystemPromptFormatter:
 
 
 def prompt_formatter_factory(tokenizer: Tokenizer, prompt_cfg):
-    return SystemPromptFormatter(
+    return PromptFormatter(
         tokenizer=tokenizer,
         max_tokens=prompt_cfg["max_tokens"],
         text_before_docs=prompt_cfg["text_before_documents"],

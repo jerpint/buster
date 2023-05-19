@@ -77,6 +77,8 @@ class Validator:
     def validate(self, completion: Completion):
         if completion.error:
             completion.answer_relevant = False
+        elif len(completion.matched_documents) == 0:
+            completion.answer_relevant = False
         else:
             completion.answer_relevant = self.check_answer_relevance(completion.text)
 

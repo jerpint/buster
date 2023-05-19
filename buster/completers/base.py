@@ -10,7 +10,7 @@ import promptlayer
 from fastapi.encoders import jsonable_encoder
 
 from buster.formatters.documents import DocumentsFormatter
-from buster.formatters.prompts import SystemPromptFormatter, prompt_formatter_factory
+from buster.formatters.prompts import PromptFormatter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -109,11 +109,19 @@ class Completion:
 
 class Completer(ABC):
     def __init__(
-        self, completion_kwargs: dict, documents_formatter: DocumentsFormatter, prompt_formatter: SystemPromptFormatter
+        self,
+        completion_kwargs: dict,
+        documents_formatter: DocumentsFormatter,
+        prompt_formatter: PromptFormatter,
+        no_documents_message: str = None,
     ):
         self.completion_kwargs = completion_kwargs
         self.documents_formatter = documents_formatter
         self.prompt_formatter = prompt_formatter
+
+        if no_documents_message is None:
+            no_documents_message = "No documents were found that match your question."
+        self.no_documents_message = no_documents_message
 
     @abstractmethod
     def complete(self, prompt) -> str:
@@ -129,11 +137,16 @@ class Completer(ABC):
         if len(matched_documents) == 0:
             logger.warning("no documents found...")
             # no document was found, pass the unknown prompt instead
-            message = "No documents were found that match your question."
+            # message = "No documents were found that match your question."
 
-            matched_documents = pd.dataframe(columns=matched_documents.columns)
+            matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
-            completion = completion(completor=message, error=False, matched_documents=matched_documents)
+            completion = Completion(
+                user_input=user_input,
+                completor=self.no_documents_message,
+                error=False,
+                matched_documents=matched_documents,
+            )
             return completion
 
         # prepare the prompt
@@ -143,11 +156,11 @@ class Completer(ABC):
 
         completor = self.complete(prompt=prompt, **self.completion_kwargs)
 
-        self.completion = Completion(
+        completion = Completion(
             completor=completor, error=self.error, matched_documents=matched_documents, user_input=user_input
         )
 
-        return self.completion
+        return completion
 
 
 class GPT3Completer(Completer):
