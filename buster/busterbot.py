@@ -5,57 +5,11 @@ from typing import Any
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
 
-from buster.completers import completer_factory
 from buster.completers.base import Completer, Completion
-from buster.formatters.documents import documents_formatter_factory
-from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-
-@dataclass
-class BusterAnswer:
-    pass
-
-
-@dataclass
-class BusterAnswerData:
-    user_input: str
-    completion: Completion
-    matched_documents: pd.DataFrame
-    response_relevant: bool | None = None
-
-    @classmethod
-    def from_dict(cls, answer_dict: dict):
-        if isinstance(answer_dict["matched_documents"], str):
-            answer_dict["matched_documents"] = pd.read_json(answer_dict["matched_documents"], orient="index")
-        elif isinstance(answer_dict["matched_documents"], dict):
-            answer_dict["matched_documents"] = pd.DataFrame(answer_dict["matched_documents"]).T
-        else:
-            raise ValueError(f"Unknown type for matched_documents: {type(answer_dict['matched_documents'])}")
-        answer_dict["completion"] = Completion.from_dict(answer_dict["completion"])
-        return cls(**answer_dict)
-
-    def to_json(self) -> Any:
-        def encode_df(df: pd.DataFrame) -> dict:
-            if "embedding" in df.columns:
-                df = df.drop(columns=["embedding"])
-            return df.to_json(orient="index")
-
-        custom_encoder = {
-            # Converts the matched_documents in the user_responses to json
-            pd.DataFrame: encode_df,
-        }
-
-        to_encode = {
-            "user_input": self.user_input,
-            "completion": self.completion.to_json(),
-            "matched_documents": self.matched_documents,
-            "response_relevant": self.response_relevant,
-        }
-        return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
 
 
 @dataclass
@@ -118,7 +72,7 @@ class Buster:
         self.retriever = retriever
         self.validator = validator
 
-    def process_input(self, user_input: str, source: str) -> BusterAnswer:
+    def process_input(self, user_input: str, source: str) -> Completion:
         """
         Main function to process the input question and generate a formatted output.
         """
@@ -137,5 +91,5 @@ class Buster:
 
         return completion
 
-    def postprocess_completion(self, completion):
+    def postprocess_completion(self, completion) -> Completion:
         return self.validator.validate(completion=completion)

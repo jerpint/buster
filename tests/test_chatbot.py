@@ -6,16 +6,13 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from buster.busterbot import Buster, BusterAnswer, BusterConfig
+from buster.busterbot import Buster, BusterConfig
+from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.prompts import PromptFormatter
 from buster.completers.base import ChatGPTCompleter, Completer, Completion
-from buster.formatters.documents import DocumentsFormatter, documents_formatter_factory
-from buster.formatters.prompts import PromptFormatter, prompt_formatter_factory
 from buster.retriever import Retriever
 from buster.retriever.pickle import PickleRetriever
-from buster.retriever.sqlite import SQLiteRetriever
-from buster.tokenizers import tokenizer_factory
 from buster.tokenizers.gpt import GPTTokenizer
-from buster.utils import get_retriever_from_extension
 from buster.validators.base import Validator
 
 logging.basicConfig(level=logging.INFO)

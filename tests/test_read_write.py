@@ -1,6 +1,5 @@
 import pandas as pd
 
-from buster.busterbot import BusterAnswer, BusterAnswerData
 from buster.completers.base import Completion
 
 
