@@ -144,6 +144,7 @@ def test_chatbot_real_data__chatGPT():
     documents_formatter = documents_formatter_factory(
         tokenizer=tokenizer,
         max_tokens=3000,
+        format_str="{content}",
         # TODO: put max tokens somewhere useful
     )
     completer: Completer = ChatGPTCompleter(
@@ -185,6 +186,7 @@ def test_chatbot_real_data__chatGPT_OOD():
     documents_formatter = documents_formatter_factory(
         tokenizer=tokenizer,
         max_tokens=3000,
+        format_str="{content}",
         # TODO: put max tokens somewhere useful
     )
     completer: Completer = ChatGPTCompleter(
@@ -217,6 +219,7 @@ def test_chatbot_real_data__no_docs_found():
     documents_formatter = documents_formatter_factory(
         tokenizer=tokenizer,
         max_tokens=3000,
+        format_str="{content}",
         # TODO: put max tokens somewhere useful
     )
     completer: Completer = ChatGPTCompleter(
