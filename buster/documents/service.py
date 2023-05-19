@@ -44,16 +44,14 @@ class DocumentsService(DocumentsManager):
 
         source_id = self.get_source_id(source)
 
-        for _, row in df.iterrows():
-            document = {
-                "title": row["title"],
-                "url": row["url"],
-                "content": row["content"],
-                "n_tokens": row["n_tokens"],
-                "source_id": source_id,
-            }
+        for row in df.to_dict(orient="records"):
+            embedding = row["embedding"].tolist()
+            document = row.copy()
+            document.pop("embedding")
+            document["source_id"] = source_id
+
             document_id = str(self.db.documents.insert_one(document).inserted_id)
-            self.index.upsert([(document_id, row["embedding"].tolist(), {"source": source})])
+            self.index.upsert([(document_id, embedding, {"source": source})])
 
     def update_source(self, source: str, display_name: str = None, note: str = None):
         """Update the display name and/or note of a source. Also create the source if it does not exist."""

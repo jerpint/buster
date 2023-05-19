@@ -25,6 +25,10 @@ buster_cfg = BusterConfig(
     tokenizer_cfg={
         "model_name": "gpt-3.5-turbo",
     },
+    documents_formatter_cfg={
+        "max_tokens": 3500,
+        "format_str": "{content}",
+    },
     prompt_cfg={
         "max_tokens": 3500,
         "text_before_documents": (

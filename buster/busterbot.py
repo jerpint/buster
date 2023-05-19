@@ -6,6 +6,9 @@ import pandas as pd
 from fastapi.encoders import jsonable_encoder
 
 from buster.completers.base import Completer, Completion
+from buster.completers import completer_factory
+from buster.formatters.documents import documents_formatter_factory
+from buster.formatters.prompts import prompt_formatter_factory
 from buster.retriever import Retriever
 
 logger = logging.getLogger(__name__)
@@ -89,6 +92,12 @@ class BusterConfig:
             "text_before_prompt": "Answer the following question:\n",
         }
     )
+    documents_formatter_cfg: dict = field(
+        default_factory=lambda: {
+            "max_tokens": 3500,
+            "format_str": "{content}",
+        }
+    )
     completion_cfg: dict = field(
         default_factory=lambda: {
             "name": "ChatGPT",
@@ -106,12 +115,10 @@ class BusterConfig:
 
 class Buster:
     def __init__(self, retriever: Retriever, completer: Completer, validator):
-        # self.update_cfg(cfg)
         self.completer = completer
         self.retriever = retriever
         self.validator = validator
 
-        # self.document_source = cfg.document_source
 
     def process_input(self, user_input: str, source: str) -> BusterAnswer:
         """
