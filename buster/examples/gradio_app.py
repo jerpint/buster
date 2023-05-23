@@ -27,16 +27,16 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
     if len(matched_documents) == 0:
         return ""
 
-    sourced_answer_template: str = (
-        """📝 Here are the sources I used to answer your question:<br>""" """{sources}<br><br>""" """{footnote}"""
+    documents_answer_template: str = (
+        """📝 Here are the sources I used to answer your question:<br>""" """{documents}<br><br>""" """{footnote}"""
     )
-    source_template: str = """[🔗 {source.title}]({source.url}), relevance: {source.similarity:2.1f} %"""
+    document_template: str = """[🔗 {document.title}]({document.url}), relevance: {document.similarity_to_answer:2.1f} %"""
 
     matched_documents.similarity = matched_documents.similarity * 100
-    sources = "<br>".join([source_template.format(source=source) for _, source in matched_documents.iterrows()])
+    documents = "<br>".join([document_template.format(document=document) for _, document in matched_documents.iterrows()])
     footnote: str = "I'm a bot 🤖 and not always perfect."
 
-    return sourced_answer_template.format(sources=sources, footnote=footnote)
+    return documents_answer_template.format(documents=documents, footnote=footnote)
 
 
 def add_sources(history, completion):
