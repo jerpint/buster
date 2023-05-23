@@ -83,7 +83,7 @@ class Buster:
 
         matched_documents = self.retriever.retrieve(user_input, source=source)
 
-        completion = self.completer.generate_response(user_input=user_input, matched_documents=matched_documents)
+        completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
 
         logger.info(f"Completion:\n{completion}")
 

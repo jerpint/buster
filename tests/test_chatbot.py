@@ -76,7 +76,7 @@ class MockCompleter(Completer):
     def complete(self):
         return
 
-    def generate_response(self, user_input, matched_documents) -> Completion:
+    def get_completion(self, user_input, matched_documents) -> Completion:
         return Completion(
             completor=self.expected_answer, error=False, user_input=user_input, matched_documents=matched_documents
         )

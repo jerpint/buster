@@ -130,7 +130,7 @@ class Completer(ABC):
         prompt = self.prompt_formatter.format(formatted_documents)
         return prompt
 
-    def generate_response(self, user_input: str, matched_documents: pd.DataFrame):
+    def get_completion(self, user_input: str, matched_documents: pd.DataFrame) -> Completion:
         # Call the API to generate a response
 
         logger.info(f"{user_input=}")
