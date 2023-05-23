@@ -54,7 +54,7 @@ class Validator:
         # Likely that the answer is meaningful, add the top sources
         return bool(unknown_similarity_score < self.unknown_threshold)
 
-    def rerank_docs(self, answer: str, matched_documents: pd.DataFrame):
+    def rerank_docs(self, answer: str, matched_documents: pd.DataFrame) -> pd.DataFrame:
         """Here we re-rank matched documents according to the answer provided by the llm.
 
         This score could be used to determine wether a document was actually relevant to generation.
@@ -73,7 +73,7 @@ class Validator:
 
         return matched_documents.sort_values(by=col, ascending=False)
 
-    def validate(self, completion: Completion):
+    def validate(self, completion: Completion) -> Completion:
         if completion.error:
             completion.answer_relevant = False
         elif len(completion.matched_documents) == 0:
