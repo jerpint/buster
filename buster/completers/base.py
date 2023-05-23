@@ -67,8 +67,6 @@ class Completion:
         self._completor = value
 
     def to_json(self) -> Any:
-        # to_encode = {"error": self.error, "completor": self.text, "version": self.version}
-        # return jsonable_encoder(to_encode)
         def encode_df(df: pd.DataFrame) -> dict:
             if "embedding" in df.columns:
                 df = df.drop(columns=["embedding"])
