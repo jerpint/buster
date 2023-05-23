@@ -94,6 +94,10 @@ class Completion:
         else:
             raise ValueError(f"Unknown type for matched_documents: {type(completion_dict['matched_documents'])}")
 
+        # avoids setting a property at init. the .text method will still be available.
+        completion_dict["completor"] = completion_dict["text"]
+        del completion_dict["text"]
+
         return cls(**completion_dict)
 
 

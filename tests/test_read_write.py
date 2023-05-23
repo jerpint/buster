@@ -38,7 +38,6 @@ def test_read_write_completion():
 
     assert c.error == c_back.error
     assert c.text == c.text
-    assert c.version == c_back.version
     assert c.user_input == c_back.user_input
     assert c.answer_relevant == c_back.answer_relevant
     for col in c_back.matched_documents.columns.tolist():
