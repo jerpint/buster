@@ -2,11 +2,9 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-import pandas as pd
-from fastapi.encoders import jsonable_encoder
-
 from buster.completers.base import Completer, Completion
 from buster.retriever import Retriever
+from buster.validators.base import Validator
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -67,7 +65,7 @@ class BusterConfig:
 
 
 class Buster:
-    def __init__(self, retriever: Retriever, completer: Completer, validator):
+    def __init__(self, retriever: Retriever, completer: Completer, validator: Validator):
         self.completer = completer
         self.retriever = retriever
         self.validator = validator
