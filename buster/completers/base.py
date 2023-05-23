@@ -111,15 +111,25 @@ class Completer(ABC):
         self.no_documents_message = no_documents_message
 
     @abstractmethod
-    def complete(self, prompt) -> str:
+    def complete(self, prompt: str, user_input: str) -> Completion:
         ...
 
-    @abstractmethod
-    def prepare_prompt(self, user_input, matched_documents):
-        ...
+    def prepare_prompt(self, matched_documents) -> str:
+        """Prepare the prompt with prompt engineering.
+
+        A user's question is not included here. We use the documents formatter and prompt formatter to
+        compose the prompt itself.
+        """
+
+        # format the matched documents, (will truncate them if too long)
+        formatted_documents, _ = self.documents_formatter.format(matched_documents)
+        prompt = self.prompt_formatter.format(formatted_documents)
+        return prompt
 
     def generate_response(self, user_input: str, matched_documents: pd.DataFrame):
         # Call the API to generate a response
+
+        logger.info(f"{user_input=}")
 
         if len(matched_documents) == 0:
             logger.warning("no documents found...")
@@ -137,11 +147,11 @@ class Completer(ABC):
             return completion
 
         # prepare the prompt
-        logger.info(f"{user_input=}")
-        prompt = self.prepare_prompt(user_input, matched_documents)
-        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
+        prompt = self.prepare_prompt(matched_documents)
+        logger.info(f"{prompt=}")
 
-        completor = self.complete(prompt=prompt, **self.completion_kwargs)
+        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
+        completor = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
 
         completion = Completion(
             completor=completor, error=self.error, matched_documents=matched_documents, user_input=user_input
@@ -162,7 +172,8 @@ class GPT3Completer(Completer):
         """
         return system_prompt + user_input
 
-    def complete(self, prompt, **completion_kwargs):
+    def complete(self, prompt, user_input, **completion_kwargs):
+        prompt = prompt + user_input
         try:
             response = openai.Completion.create(prompt=prompt, **completion_kwargs)
             self.error = False
@@ -184,24 +195,14 @@ class GPT3Completer(Completer):
 
 
 class ChatGPTCompleter(Completer):
-    def prepare_prompt(self, user_input, matched_documents):
-        """
-        Prepare the prompt with prompt engineering.
-        """
-
-        # format the matched documents, (will truncate them if too long)
-        documents_str, _ = self.documents_formatter.format(matched_documents)
-        system_prompt = self.prompt_formatter.format(documents_str)
-        prompt = [
-            {"role": "system", "content": system_prompt},
+    def complete(self, prompt: str, user_input, **completion_kwargs) -> str | Iterator:
+        messages = [
+            {"role": "system", "content": prompt},
             {"role": "user", "content": user_input},
         ]
-        return prompt
-
-    def complete(self, prompt, **completion_kwargs) -> str | Iterator:
         try:
             response = openai.ChatCompletion.create(
-                messages=prompt,
+                messages=messages,
                 **completion_kwargs,
             )
 
