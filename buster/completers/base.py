@@ -32,7 +32,6 @@ class Completion:
     user_input: str
     matched_documents: pd.DataFrame
     completor: Iterator | str
-    version: int = 1
     answer_relevant: bool = None
 
     # private property, should not be set at init
@@ -94,13 +93,6 @@ class Completion:
             completion_dict["matched_documents"] = pd.DataFrame(completion_dict["matched_documents"]).T
         else:
             raise ValueError(f"Unknown type for matched_documents: {type(completion_dict['matched_documents'])}")
-
-        # Backwards compatibility
-        if "version" not in completion_dict:
-            completion_dict["version"] = 1
-
-            completion_dict["completor"] = completion_dict["text"]
-            del completion_dict["text"]
 
         return cls(**completion_dict)
 
