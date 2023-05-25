@@ -28,12 +28,12 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
         return ""
 
     documents_answer_template: str = (
-        "📝 Here are the sources I used to answer your question:<br><br>{documents}<br><br>{footnote}"
+        "📝 Here are the sources I used to answer your question:\n\n{documents}\n\n{footnote}"
     )
     document_template: str = "[🔗 {document.title}]({document.url}), relevance: {document.similarity_to_answer:2.1f} %"
 
     matched_documents.similarity = matched_documents.similarity * 100
-    documents = "<br>".join(
+    documents = "\n".join(
         [document_template.format(document=document) for _, document in matched_documents.iterrows()]
     )
     footnote: str = "I'm a bot 🤖 and not always perfect."
