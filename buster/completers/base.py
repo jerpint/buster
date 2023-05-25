@@ -19,6 +19,7 @@ promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
 if promptlayer_api_key:
     try:
         import promptlayer
+
         logger.info("Enabling prompt layer...")
         promptlayer.api_key = promptlayer_api_key
 
@@ -29,6 +30,7 @@ if promptlayer_api_key:
 
 # Set openai credentials
 openai.api_key = os.environ.get("OPENAI_API_KEY")
+
 
 @dataclass
 class Completion:
