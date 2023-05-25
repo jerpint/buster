@@ -6,7 +6,6 @@ from typing import Any, Iterator
 
 import openai
 import pandas as pd
-import promptlayer
 from fastapi.encoders import jsonable_encoder
 
 from buster.formatters.documents import DocumentsFormatter
@@ -18,13 +17,18 @@ logging.basicConfig(level=logging.INFO)
 # Check if an API key exists for promptlayer, if it does, use it
 promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
 if promptlayer_api_key:
-    logger.info("Enabling prompt layer...")
-    promptlayer.api_key = promptlayer_api_key
+    try:
+        import promptlayer
+        logger.info("Enabling prompt layer...")
+        promptlayer.api_key = promptlayer_api_key
 
-    # replace openai with the promptlayer wrapper
-    openai = promptlayer.openai
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
+        # replace openai with the promptlayer wrapper
+        openai = promptlayer.openai
+    except Exception as e:
+        logger.exception("Something went wrong enabling promptlayer.")
 
+# Set openai credentials
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 @dataclass
 class Completion:
