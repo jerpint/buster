@@ -57,7 +57,7 @@ def user(user_input, history):
 def chat(history):
     user_input = history[-1][0]
 
-    completion = buster.process_input(user_input, source="stackoverflow")
+    completion = buster.process_input(user_input)
 
     history[-1][1] = ""
 
