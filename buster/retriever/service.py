@@ -75,6 +75,8 @@ class ServiceRetriever(Retriever):
         # MongoDB retrieval
         matched_documents = self.db.documents.find({"_id": {"$in": matching_ids}})
         matched_documents = pd.DataFrame(list(matched_documents))
+
+        # add additional information from matching
         matched_documents["similarity"] = matched_documents["_id"].apply(lambda x: matching_scores[str(x)])
         matched_documents["embedding"] = matched_documents["_id"].apply(lambda x: matching_embeddings[str(x)])
 
