@@ -48,7 +48,10 @@ class ServiceRetriever(Retriever):
             display_name = self.db.sources.find_one({"name": source})["display_name"]
             return display_name
 
-    def retrieve(self, query_embedding: list[float], top_k: int, source: str = None) -> pd.DataFrame:
+    def retrieve(self, query: str, top_k: int = None, source: str = None) -> pd.DataFrame:
+        if top_k is None:
+            # use default top_k value
+            top_k = self.top_k
         if source is "" or source is None:
             filter = None
         else:
@@ -58,10 +61,13 @@ class ServiceRetriever(Retriever):
                 logger.warning(f"Source {source} does not exist. Returning empty dataframe.")
                 return pd.DataFrame()
 
+        query_embedding = self.get_embedding(query, engine=self.embedding_model)
+
         # Pinecone retrieval
-        matches = self.index.query(query_embedding, top_k=top_k, filter=filter)["matches"]
+        matches = self.index.query(query_embedding, top_k=top_k, filter=filter, include_values=True)["matches"]
         matching_ids = [ObjectId(match.id) for match in matches]
         matching_scores = {match.id: match.score for match in matches}
+        matching_embeddings = {match.id: match.values for match in matches}
 
         if len(matching_ids) == 0:
             return pd.DataFrame()
@@ -70,5 +76,6 @@ class ServiceRetriever(Retriever):
         matched_documents = self.db.documents.find({"_id": {"$in": matching_ids}})
         matched_documents = pd.DataFrame(list(matched_documents))
         matched_documents["similarity"] = matched_documents["_id"].apply(lambda x: matching_scores[str(x)])
+        matched_documents["embedding"] = matched_documents["_id"].apply(lambda x: matching_embeddings[str(x)])
 
         return matched_documents
