@@ -26,7 +26,15 @@ def test_generate_embeddings(tmp_path, monkeypatch, extension):
     df = generate_embeddings(data, manager)
 
     # Read the embeddings from the file
-    read_df = get_retriever_from_extension(output_file)(output_file).get_documents("my_source")
+
+    retriever_cfg = {
+        "db_path": output_file,
+        "top_k": 3,
+        "thresh": 0.85,
+        "max_tokens": 3000,
+        "embedding_model": "text-embedding-ada-002",
+    }
+    read_df = get_retriever_from_extension(output_file)(**retriever_cfg).get_documents("my_source")
 
     # Check all the values are correct across the files
     assert df["title"].iloc[0] == data["title"].iloc[0] == read_df["title"].iloc[0]

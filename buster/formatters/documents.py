@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 class DocumentsFormatter:
     tokenizer: Tokenizer
     max_tokens: int
-    format_str: str = "{content}"
+    formatter: str = "{content}"
 
     def format(
         self,
@@ -30,7 +30,7 @@ class DocumentsFormatter:
         num_total_docs = len(matched_documents)
         num_preserved_docs = 0
         for _, row in matched_documents.iterrows():
-            doc = self.format_str.format_map(row.to_dict())
+            doc = self.formatter.format_map(row.to_dict())
             num_preserved_docs += 1
             token_count, encoded = self.tokenizer.num_tokens(doc, return_encoded=True)
             if total_tokens + token_count <= max_tokens:
@@ -53,9 +53,9 @@ class DocumentsFormatter:
         return documents_str, matched_documents
 
 
-def documents_formatter_factory(tokenizer: Tokenizer, max_tokens: int, format_str: str) -> DocumentsFormatter:
+def documents_formatter_factory(tokenizer: Tokenizer, max_tokens: int, formatter: str) -> DocumentsFormatter:
     return DocumentsFormatter(
         tokenizer=tokenizer,
         max_tokens=max_tokens,
-        format_str=format_str,
+        formatter=formatter,
     )

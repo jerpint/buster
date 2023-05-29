@@ -18,7 +18,9 @@ class SQLiteRetriever(Retriever):
         >>> df = db.get_documents("source")
     """
 
-    def __init__(self, db_path: sqlite3.Connection | str):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        db_path = kwargs["db_path"]
         if isinstance(db_path, (str, Path)):
             self.db_path = db_path
             self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
@@ -34,7 +36,7 @@ class SQLiteRetriever(Retriever):
     def get_documents(self, source: str) -> pd.DataFrame:
         """Get all current documents from a given source."""
         # Execute the SQL statement and fetch the results.
-        if source is "":
+        if source == "":
             results = self.conn.execute("SELECT * FROM documents")
         else:
             results = self.conn.execute("SELECT * FROM documents WHERE source = ?", (source,))
@@ -46,7 +48,7 @@ class SQLiteRetriever(Retriever):
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
-        if source is "":
+        if source == "":
             return ALL_SOURCES
         else:
             cur = self.conn.execute("SELECT display_name FROM sources WHERE name = ?", (source,))

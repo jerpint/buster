@@ -5,8 +5,11 @@ from dataclasses import dataclass, field
 from typing import Any, Iterator
 
 import openai
-import promptlayer
+import pandas as pd
 from fastapi.encoders import jsonable_encoder
+
+from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.prompts import PromptFormatter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -14,19 +17,28 @@ logging.basicConfig(level=logging.INFO)
 # Check if an API key exists for promptlayer, if it does, use it
 promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
 if promptlayer_api_key:
-    logger.info("Enabling prompt layer...")
-    promptlayer.api_key = promptlayer_api_key
+    try:
+        import promptlayer
 
-    # replace openai with the promptlayer wrapper
-    openai = promptlayer.openai
-    openai.api_key = os.environ.get("OPENAI_API_KEY")
+        logger.info("Enabling prompt layer...")
+        promptlayer.api_key = promptlayer_api_key
+
+        # replace openai with the promptlayer wrapper
+        openai = promptlayer.openai
+    except Exception as e:
+        logger.exception("Something went wrong enabling promptlayer.")
+
+# Set openai credentials
+openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 @dataclass
 class Completion:
     error: bool
+    user_input: str
+    matched_documents: pd.DataFrame
     completor: Iterator | str
-    version: int = 1
+    answer_relevant: bool = None
 
     # private property, should not be set at init
     _completor: Iterator | str = field(init=False, repr=False)  # e.g. a streamed response from openai.ChatCompletion
@@ -60,45 +72,106 @@ class Completion:
         self._completor = value
 
     def to_json(self) -> Any:
-        to_encode = {"error": self.error, "completor": self.text, "version": self.version}
-        return jsonable_encoder(to_encode)
+        def encode_df(df: pd.DataFrame) -> dict:
+            if "embedding" in df.columns:
+                df = df.drop(columns=["embedding"])
+            return df.to_json(orient="index")
+
+        custom_encoder = {
+            # Converts the matched_documents in the user_responses to json
+            pd.DataFrame: encode_df,
+        }
+
+        to_encode = {
+            "user_input": self.user_input,
+            "text": self.text,
+            "matched_documents": self.matched_documents,
+            "answer_relevant": self.answer_relevant,
+            "error": self.error,
+        }
+        return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
 
     @classmethod
     def from_dict(cls, completion_dict: dict):
-        # Backwards compatibility
-        if "version" not in completion_dict:
-            completion_dict["version"] = 1
+        if isinstance(completion_dict["matched_documents"], str):
+            completion_dict["matched_documents"] = pd.read_json(completion_dict["matched_documents"], orient="index")
+        elif isinstance(completion_dict["matched_documents"], dict):
+            completion_dict["matched_documents"] = pd.DataFrame(completion_dict["matched_documents"]).T
+        else:
+            raise ValueError(f"Unknown type for matched_documents: {type(completion_dict['matched_documents'])}")
 
-            completion_dict["completor"] = completion_dict["text"]
-            del completion_dict["text"]
-            del completion_dict["error_msg"]
+        # avoids setting a property at init. the .text method will still be available.
+        completion_dict["completor"] = completion_dict["text"]
+        del completion_dict["text"]
 
         return cls(**completion_dict)
 
 
 class Completer(ABC):
-    def __init__(self, completion_kwargs: dict):
+    def __init__(
+        self,
+        documents_formatter: DocumentsFormatter,
+        prompt_formatter: PromptFormatter,
+        completion_kwargs: dict,
+        no_documents_message: str = "No documents were found that match your question.",
+    ):
         self.completion_kwargs = completion_kwargs
+        self.documents_formatter = documents_formatter
+        self.prompt_formatter = prompt_formatter
+        self.no_documents_message = no_documents_message
 
     @abstractmethod
-    def complete(self, prompt) -> str:
+    def complete(self, prompt: str, user_input: str) -> Completion:
         ...
 
-    def generate_response(self, system_prompt, user_input):
+    def prepare_prompt(self, matched_documents) -> str:
+        """Prepare the prompt with prompt engineering.
+
+        A user's question is not included here. We use the documents formatter and prompt formatter to
+        compose the prompt itself.
+        """
+
+        # format the matched documents, (will truncate them if too long)
+        formatted_documents, _ = self.documents_formatter.format(matched_documents)
+        prompt = self.prompt_formatter.format(formatted_documents)
+        return prompt
+
+    def get_completion(self, user_input: str, matched_documents: pd.DataFrame) -> Completion:
         # Call the API to generate a response
-        prompt = self.prepare_prompt(system_prompt, user_input)
-        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
-        logger.info(f"{system_prompt=}")
+
         logger.info(f"{user_input=}")
 
-        completor = self.complete(prompt=prompt, **self.completion_kwargs)
+        if len(matched_documents) == 0:
+            logger.warning("no documents found...")
+            # no document was found, pass the appropriate message instead...
 
-        self.completion = Completion(completor=completor, error=self.error)
+            # empty dataframe
+            matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
-        return self.completion
+            completion = Completion(
+                user_input=user_input,
+                completor=self.no_documents_message,
+                error=False,
+                matched_documents=matched_documents,
+            )
+            return completion
+
+        # prepare the prompt
+        prompt = self.prepare_prompt(matched_documents)
+        logger.info(f"{prompt=}")
+
+        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
+        completor = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
+
+        completion = Completion(
+            completor=completor, error=self.error, matched_documents=matched_documents, user_input=user_input
+        )
+
+        return completion
 
 
 class GPT3Completer(Completer):
+    # TODO: Adapt...
     def prepare_prompt(
         self,
         system_prompt: str,
@@ -109,7 +182,8 @@ class GPT3Completer(Completer):
         """
         return system_prompt + user_input
 
-    def complete(self, prompt, **completion_kwargs):
+    def complete(self, prompt, user_input, **completion_kwargs):
+        prompt = prompt + user_input
         try:
             response = openai.Completion.create(prompt=prompt, **completion_kwargs)
             self.error = False
@@ -131,24 +205,14 @@ class GPT3Completer(Completer):
 
 
 class ChatGPTCompleter(Completer):
-    def prepare_prompt(
-        self,
-        system_prompt: str,
-        user_input: str,
-    ) -> list:
-        """
-        Prepare the prompt with prompt engineering.
-        """
-        prompt = [
-            {"role": "system", "content": system_prompt},
+    def complete(self, prompt: str, user_input, **completion_kwargs) -> str | Iterator:
+        messages = [
+            {"role": "system", "content": prompt},
             {"role": "user", "content": user_input},
         ]
-        return prompt
-
-    def complete(self, prompt, **completion_kwargs) -> str | Iterator:
         try:
             response = openai.ChatCompletion.create(
-                messages=prompt,
+                messages=messages,
                 **completion_kwargs,
             )
 

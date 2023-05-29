@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 from buster.formatters.documents import DocumentsFormatter
-from buster.formatters.prompts import SystemPromptFormatter
+from buster.formatters.prompts import PromptFormatter
 from buster.tokenizers import GPTTokenizer
 
 
@@ -97,7 +97,7 @@ def test_documents_formatter__complex_format():
     documents_formatter = DocumentsFormatter(
         tokenizer=tokenizer,
         max_tokens=100,
-        format_str="Title: {title}\n{content}\n",
+        formatter="Title: {title}\n{content}\n",
     )
 
     document_1 = "This is a very short document."
@@ -136,7 +136,7 @@ def test_documents_formatter__complex_format():
 
 def test_system_prompt_formatter():
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    prompt_formatter = SystemPromptFormatter(
+    prompt_formatter = PromptFormatter(
         tokenizer=tokenizer,
         max_tokens=200,
         text_after_docs="After docs.",
@@ -155,7 +155,7 @@ def test_system_prompt_formatter():
 
 def test_system_prompt_formatter__to_long():
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    prompt_formatter = SystemPromptFormatter(
+    prompt_formatter = PromptFormatter(
         tokenizer=tokenizer,
         max_tokens=200,
         text_after_docs="After docs.",

@@ -1,7 +1,6 @@
 import logging
 from functools import lru_cache
 
-import numpy as np
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
@@ -12,60 +11,79 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Validator:
-    def __init__(self, validator_cfg):
-        self.cfg = validator_cfg
+    def __init__(self, embedding_model: str, unknown_threshold: float, unknown_prompt: str, use_reranking: bool):
+        self.embedding_model = embedding_model
+        self.unknown_threshold = unknown_threshold
+        self.unknown_prompt = unknown_prompt
+        self.use_reranking = use_reranking
 
-        self.embedding_model = self.cfg["embedding_model"]
-        self.unknown_threshold = self.cfg["unknown_threshold"]
-        self.unknown_prompt = self.cfg["unknown_prompt"]
-
-        # set the unk. embedding
-        self.unk_embedding = self.get_embedding(self.unknown_prompt, engine=self.embedding_model)
-
-    @property
-    def unk_embedding(self):
-        return self._unk_embedding
-
-    @unk_embedding.setter
-    def unk_embedding(self, embedding):
-        logger.info("Setting new UNK embedding...")
-        self._unk_embedding = embedding
-        return self._unk_embedding
-
+    @staticmethod
     @lru_cache
-    def get_embedding(self, query: str, engine: str):
+    def get_embedding(query: str, engine: str):
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
-    def check_sources_used(self, completion: Completion) -> bool:
-        """Check to see if a response is relevant to the chatbot's knowledge or not.
+    def check_answer_relevance(self, answer: str, unknown_prompt: str = None) -> bool:
+        """Check to see if a generated answer is relevant to the chatbot's knowledge or not.
 
         We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
         Here, we compare the embedding of the response to the embedding of the prompt-engineered "I don't know" embedding.
 
-        set the unk_threshold to 0 to essentially turn off this feature.
+        unk_threshold can be a value between [-1,1]. Usually, 0.85 is a good value.
         """
+        logger.info("Checking for answer relevance...")
 
-        engine: str = self.embedding_model
-        unk_embedding: np.array = self.unk_embedding
-        unk_threshold: float = self.unknown_threshold
-
-        if completion.error:
-            # considered not relevant if an error occured
-            return False
-
-        if completion.text == "":
+        if answer == "" or unknown_prompt == "":
             raise ValueError("Cannot compute embedding of an empty string.")
 
-        response_embedding = get_embedding(
-            completion.text,
-            engine=engine,
+        if unknown_prompt is None:
+            unknown_prompt = self.unknown_prompt
+
+        unknown_embedding = self.get_embedding(
+            unknown_prompt,
+            engine=self.embedding_model,
         )
-        score = cosine_similarity(response_embedding, unk_embedding)
-        logger.info(f"UNK score: {score}")
+
+        answer_embedding = self.get_embedding(
+            answer,
+            engine=self.embedding_model,
+        )
+        unknown_similarity_score = cosine_similarity(answer_embedding, unknown_embedding)
+        logger.info(f"{unknown_similarity_score=}")
 
         # Likely that the answer is meaningful, add the top sources
-        return bool(score < unk_threshold)
+        return bool(unknown_similarity_score < self.unknown_threshold)
+
+    def rerank_docs(self, answer: str, matched_documents: pd.DataFrame) -> pd.DataFrame:
+        """Here we re-rank matched documents according to the answer provided by the llm.
+
+        This score could be used to determine wether a document was actually relevant to generation.
+        An extra column is added in-place for the similarity score.
+        """
+        logger.info("Reranking documents based on answer similarity...")
+
+        answer_embedding = self.get_embedding(
+            answer,
+            engine=self.embedding_model,
+        )
+        col = "similarity_to_answer"
+        matched_documents[col] = matched_documents.embedding.apply(
+            lambda x: cosine_similarity(x, answer_embedding) * 100
+        )
+
+        return matched_documents.sort_values(by=col, ascending=False)
+
+    def validate(self, completion: Completion) -> Completion:
+        if completion.error:
+            completion.answer_relevant = False
+        elif len(completion.matched_documents) == 0:
+            completion.answer_relevant = False
+        else:
+            completion.answer_relevant = self.check_answer_relevance(completion.text)
+
+        completion.matched_documents = self.rerank_docs(completion.text, completion.matched_documents)
+
+        return completion
 
 
 def validator_factory(validator_cfg: dict) -> Validator:
