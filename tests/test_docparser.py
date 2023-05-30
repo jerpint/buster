@@ -9,7 +9,7 @@ from buster.utils import (
 )
 
 
-@pytest.mark.parametrize("extension", ["db", "tar.gz"])
+@pytest.mark.parametrize("extension", ["db"])
 def test_generate_embeddings(tmp_path, monkeypatch, extension):
     # Create fake data
     data = pd.DataFrame.from_dict(

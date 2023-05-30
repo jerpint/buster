@@ -5,6 +5,7 @@ from typing import Type
 from buster.documents import DocumentsDB, DocumentsManager
 from buster.retriever import Retriever, SQLiteRetriever
 
+
 def get_file_extension(filepath: str) -> str:
     return os.path.splitext(filepath)[1]
 
