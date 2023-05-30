@@ -12,7 +12,7 @@ from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
 
 from buster.documents import DocumentsManager
-from buster.documents.pickle import DocumentsPickle
+from buster.documents.sqlite.documents import DocumentsDB
 from buster.parser import HuggingfaceParser, Parser, SphinxParser
 
 logger = logging.getLogger(__name__)
@@ -201,7 +201,7 @@ def generate_embeddings(
 def main(documents_csv: str, output_filepath: str, max_words: int, embeddings_engine: str):
 
     # prepare the documents manager
-    documents_manager = DocumentsPickle(output_filepath)
+    documents_manager = DocumentsDB(output_filepath)
 
     documents = pd.read_csv(documents_csv)
     documents = generate_embeddings(documents, documents_manager, max_words, embeddings_engine)
