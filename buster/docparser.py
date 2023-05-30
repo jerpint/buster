@@ -199,7 +199,6 @@ def generate_embeddings(
     "--embeddings-engine", default=EMBEDDING_MODEL, help=f"Embedding model to use. Default is {EMBEDDING_MODEL}"
 )
 def main(documents_csv: str, output_filepath: str, max_words: int, embeddings_engine: str):
-
     # prepare the documents manager
     documents_manager = DocumentsDB(output_filepath)
 
