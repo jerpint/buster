@@ -1,14 +1,3 @@
----
-title: Buster
-emoji: 🤖
-colorFrom: red
-colorTo: blue
-sdk: gradio
-app_file: buster/apps/gradio_app.py
-python_version: 3.10.8
-pinned: false
----
-
 # Buster, the QA documentation chatbot!
 
 Buster is a question-answering chatbot that can be tuned to any source of documentations.
