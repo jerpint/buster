@@ -1,3 +1,4 @@
+import os
 import sqlite3
 from pathlib import Path
 
@@ -18,15 +19,13 @@ class SQLiteRetriever(Retriever):
         >>> df = db.get_documents("source")
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, db_path: str | Path, **kwargs):
         super().__init__(**kwargs)
-        db_path = kwargs["db_path"]
-        if isinstance(db_path, (str, Path)):
-            self.db_path = db_path
-            self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
-        else:
-            self.db_path = None
-            self.conn = db_path
+        if not os.path.exists(db_path):
+            raise FileNotFoundError(f"{db_path=} specified, but file does not exist")
+        self.db_path = db_path
+        self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+
         schema.setup_db(self.conn)
 
     def __del__(self):
