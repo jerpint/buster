@@ -13,8 +13,7 @@ from buster.docparser import generate_embeddings
 from buster.documents.sqlite.documents import DocumentsDB
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
-from buster.retriever import Retriever
-from buster.retriever.sqlite import SQLiteRetriever
+from buster.retriever import Retriever, SQLiteRetriever
 from buster.tokenizers.gpt import GPTTokenizer
 from buster.validators import Validator
 
