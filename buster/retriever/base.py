@@ -21,7 +21,7 @@ class Retriever(ABC):
         self.embedding_model = embedding_model
 
     @abstractmethod
-    def get_documents(self, source: str) -> pd.DataFrame:
+    def get_documents(self, source: str = None) -> pd.DataFrame:
         """Get all current documents from a given source."""
         ...
 

@@ -32,13 +32,28 @@ class ServiceRetriever(Retriever):
         self.db = self.client[mongo_db_name]
 
     def get_source_id(self, source: str) -> str:
-        """Get the id of a source."""
-        return str(self.db.sources.find_one({"name": source})["_id"])
+        """Get the id of a source. Returns empty string if the source does not exist."""
+        source_pointer = self.db.sources.find_one({"name": source})
+        return "" if source_pointer is None else str(source_pointer["_id"])
 
-    def get_documents(self, source: str) -> pd.DataFrame:
-        """Get all current documents from a given source."""
-        source_id = self.get_source_id(source)
-        return self.db.documents.find({"source_id": source_id})
+    def get_documents(self, source: str = None) -> pd.DataFrame:
+        """Get all current documents from a given source.
+
+        If source is None, returns all documents. If source does not exist, returns empty dataframe."""
+
+        if source is None:
+            # No source specified, return all documents
+            documents = self.db.documents.find()
+        else:
+            assert isinstance(source, str), "source must be a valid string."
+            source_id = self.get_source_id(source)
+
+            if source_id == "":
+                logger.warning(f"{source=} not found.")
+
+            documents = self.db.documents.find({"source_id": source_id})
+
+        return pd.DataFrame(list(documents))
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
@@ -52,7 +67,7 @@ class ServiceRetriever(Retriever):
         if top_k is None:
             # use default top_k value
             top_k = self.top_k
-        if source is "" or source is None:
+        if source == "" or source is None:
             filter = None
         else:
             filter = {"source": {"$eq": source}}

@@ -44,10 +44,10 @@ class SQLiteRetriever(Retriever):
         if self.db_path is not None:
             self.conn.close()
 
-    def get_documents(self, source: str) -> pd.DataFrame:
+    def get_documents(self, source: str = None) -> pd.DataFrame:
         """Get all current documents from a given source."""
         # Execute the SQL statement and fetch the results.
-        if source == "":
+        if source is None:
             results = self.conn.execute("SELECT * FROM documents")
         else:
             results = self.conn.execute("SELECT * FROM documents WHERE source = ?", (source,))
