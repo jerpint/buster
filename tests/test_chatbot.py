@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 
 from buster.busterbot import Buster, BusterConfig
-from buster.completers.base import ChatGPTCompleter, Completer, Completion
+from buster.completers import ChatGPTCompleter, Completer, Completion
 from buster.docparser import generate_embeddings
 from buster.documents.sqlite.documents import DocumentsDB
 from buster.formatters.documents import DocumentsFormatter
@@ -16,7 +16,7 @@ from buster.formatters.prompts import PromptFormatter
 from buster.retriever import Retriever
 from buster.retriever.sqlite import SQLiteRetriever
 from buster.tokenizers.gpt import GPTTokenizer
-from buster.validators.base import Validator
+from buster.validators import Validator
 
 logging.basicConfig(level=logging.INFO)
 

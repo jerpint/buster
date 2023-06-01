@@ -2,9 +2,9 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from buster.completers.base import Completer, Completion
+from buster.completers import Completer, Completion
 from buster.retriever import Retriever
-from buster.validators.base import Validator
+from buster.validators import Validator
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
