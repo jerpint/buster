@@ -19,12 +19,24 @@ class SQLiteRetriever(Retriever):
         >>> df = db.get_documents("source")
     """
 
-    def __init__(self, db_path: str | Path, **kwargs):
+    def __init__(self, db_path: str | Path = None, connection: sqlite3.Connection = None, **kwargs):
         super().__init__(**kwargs)
-        if not os.path.exists(db_path):
-            raise FileNotFoundError(f"{db_path=} specified, but file does not exist")
-        self.db_path = db_path
-        self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
+
+        match sum([arg is not None for arg in [db_path, connection]]):
+            # Check that only db_path or connection get specified
+            case 0:
+                raise ValueError("At least one of db_path or connection should be specified")
+            case 2:
+                raise ValueError("Only one of db_path and connection should be specified.")
+
+        if connection is not None:
+            self.conn = connection
+
+        if db_path is not None:
+            if not os.path.exists(db_path):
+                raise FileNotFoundError(f"{db_path=} specified, but file does not exist")
+            self.db_path = db_path
+            self.conn = sqlite3.connect(db_path, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)
 
         schema.setup_db(self.conn)
 
