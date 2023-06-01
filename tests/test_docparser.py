@@ -3,13 +3,11 @@ import pandas as pd
 import pytest
 
 from buster.docparser import generate_embeddings
-from buster.utils import (
-    get_documents_manager_from_extension,
-    get_retriever_from_extension,
-)
+from buster.documents import DocumentsDB
+from buster.retriever.sqlite import SQLiteRetriever
 
 
-@pytest.mark.parametrize("extension", ["db", "tar.gz"])
+@pytest.mark.parametrize("extension", ["db"])
 def test_generate_embeddings(tmp_path, monkeypatch, extension):
     # Create fake data
     data = pd.DataFrame.from_dict(
@@ -22,7 +20,7 @@ def test_generate_embeddings(tmp_path, monkeypatch, extension):
 
     # Generate embeddings, store in a file
     output_file = tmp_path / f"test_document_embeddings.{extension}"
-    manager = get_documents_manager_from_extension(output_file)(output_file)
+    manager = DocumentsDB(output_file)
     df = generate_embeddings(data, manager)
 
     # Read the embeddings from the file
@@ -34,7 +32,7 @@ def test_generate_embeddings(tmp_path, monkeypatch, extension):
         "max_tokens": 3000,
         "embedding_model": "text-embedding-ada-002",
     }
-    read_df = get_retriever_from_extension(output_file)(**retriever_cfg).get_documents("my_source")
+    read_df = SQLiteRetriever(**retriever_cfg).get_documents("my_source")
 
     # Check all the values are correct across the files
     assert df["title"].iloc[0] == data["title"].iloc[0] == read_df["title"].iloc[0]

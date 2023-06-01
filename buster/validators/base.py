@@ -4,7 +4,7 @@ from functools import lru_cache
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
-from buster.completers.base import Completion
+from buster.completers import Completion
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

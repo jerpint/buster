@@ -2,13 +2,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from buster.documents import DocumentsDB, DocumentsPickle
-from buster.retriever import PickleRetriever, SQLiteRetriever
+from buster.documents import DocumentsDB
+from buster.retriever import SQLiteRetriever
 
 
 @pytest.mark.parametrize(
     "documents_manager, retriever, extension",
-    [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")],
+    [(DocumentsDB, SQLiteRetriever, "db")],
 )
 def test_write_read(tmp_path, documents_manager, retriever, extension):
     db_path = tmp_path / f"test.{extension}"
@@ -43,7 +43,7 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
 
 @pytest.mark.parametrize(
     "documents_manager, retriever, extension",
-    [(DocumentsDB, SQLiteRetriever, "db"), (DocumentsPickle, PickleRetriever, "tar.gz")],
+    [(DocumentsDB, SQLiteRetriever, "db")],
 )
 def test_write_write_read(tmp_path, documents_manager, retriever, extension):
     db_path = tmp_path / f"test.{extension}"

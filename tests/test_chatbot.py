@@ -5,22 +5,22 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from buster.busterbot import Buster, BusterConfig
-from buster.completers.base import ChatGPTCompleter, Completer, Completion
+from buster.completers import ChatGPTCompleter, Completer, Completion
+from buster.docparser import generate_embeddings
+from buster.documents.sqlite.documents import DocumentsDB
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
-from buster.retriever import Retriever
-from buster.retriever.pickle import PickleRetriever
+from buster.retriever import Retriever, SQLiteRetriever
 from buster.tokenizers.gpt import GPTTokenizer
-from buster.validators.base import Validator
+from buster.validators import Validator
 
 logging.basicConfig(level=logging.INFO)
 
 
-TEST_DATA_DIR = Path(__file__).resolve().parent / "data"
-DB_PATH = os.path.join(str(TEST_DATA_DIR), "document_embeddings_huggingface_subset.tar.gz")
-DB_SOURCE = "huggingface"
+DOCUMENTS_CSV = Path(__file__).resolve().parent.parent / "buster/examples/stackoverflow.csv"
 UNKNOWN_PROMPT = "I'm sorry but I don't know how to answer."
 
 # default class used by our tests
@@ -38,7 +38,7 @@ buster_cfg_template = BusterConfig(
         "use_reranking": True,
     },
     retriever_cfg={
-        "db_path": DB_PATH,
+        # "db_path": to be set using pytest fixture,
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,
@@ -46,12 +46,16 @@ buster_cfg_template = BusterConfig(
     },
     prompt_formatter_cfg={
         "max_tokens": 3500,
-        "text_before_docs": "",
-        "text_after_docs": (
-            """You are a slack chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python.\n"""
-            """Make sure to format your answers in Markdown format, including code block and snippets.\n"""
-            """Do not include any links to urls or hyperlinks in your answers.\n\n"""
-            """Now answer the following question:\n"""
+        "text_after_docs": ("""Now answer the following question:\n"""),
+        "text_before_docs": (
+            """You are a chatbot assistant answering technical questions about artificial intelligence (AI). """
+            """If you do not know the answer to a question, or if it is completely irrelevant to your domain knowledge of AI library usage, let the user know you cannot answer."""
+            """Use this response when you cannot answer:\n"""
+            f"""'{UNKNOWN_PROMPT}'\n"""
+            """For example:\n"""
+            """What is the meaning of life?\n"""
+            f"""'{UNKNOWN_PROMPT}'\n"""
+            """Only use these prodived documents as reference:\n"""
         ),
     },
     documents_formatter_cfg={
@@ -117,6 +121,21 @@ class MockValidator(Validator):
         return completion
 
 
+@pytest.fixture(scope="session")
+def database_file(tmp_path_factory):
+    # Create a temporary directory and file for the database
+    db_file = tmp_path_factory.mktemp("data").joinpath("documents.db")
+
+    # Generate the actual embeddings
+    documents_manager = DocumentsDB(db_file)
+    documents = pd.read_csv(DOCUMENTS_CSV)
+    documents = generate_embeddings(documents, documents_manager)
+    yield db_file
+
+    # Teardown: Remove the temporary database file
+    db_file.unlink()
+
+
 def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
 
@@ -137,10 +156,11 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     assert completion.text.startswith(gpt_expected_answer)
 
 
-def test_chatbot_real_data__chatGPT():
+def test_chatbot_real_data__chatGPT(database_file):
     buster_cfg = copy.deepcopy(buster_cfg_template)
+    buster_cfg.retriever_cfg["db_path"] = database_file
 
-    retriever: Retriever = PickleRetriever(**buster_cfg.retriever_cfg)
+    retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     completer: Completer = ChatGPTCompleter(
         documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
@@ -150,33 +170,32 @@ def test_chatbot_real_data__chatGPT():
     validator: Validator = Validator(**buster_cfg.validator_cfg)
     buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
-    completion = buster.process_input("What is a transformer?", source=DB_SOURCE)
+    completion = buster.process_input("What is backpropagation?")
     completion = buster.postprocess_completion(completion)
     assert isinstance(completion.text, str)
 
     assert completion.answer_relevant == True
 
 
-def test_chatbot_real_data__chatGPT_OOD():
+def test_chatbot_real_data__chatGPT_OOD(database_file):
     buster_cfg = copy.deepcopy(buster_cfg_template)
+    buster_cfg.retriever_cfg["db_path"] = database_file
     buster_cfg.prompt_formatter_cfg = {
         "max_tokens": 3500,
         "text_before_docs": (
-            """You are a chatbot assistant answering technical questions about huggingface transformers, a library to train transformers in python. """
-            """Make sure to format your answers in Markdown format, including code block and snippets. """
-            """Do not include any links to urls or hyperlinks in your answers. """
-            """If you do not know the answer to a question, or if it is completely irrelevant to the library usage, let the user know you cannot answer. """
+            """You are a chatbot assistant answering technical questions about artificial intelligence (AI)."""
+            """If you do not know the answer to a question, or if it is completely irrelevant to your domain knowledge of AI library usage, let the user know you cannot answer."""
             """Use this response: """
             f"""'{UNKNOWN_PROMPT}'\n"""
             """For example:\n"""
-            """What is the meaning of life for huggingface?\n"""
+            """What is the meaning of life?\n"""
             f"""'{UNKNOWN_PROMPT}'\n"""
             """Now answer the following question:\n"""
         ),
         "text_after_docs": "Only use these documents as reference:\n",
     }
 
-    retriever: Retriever = PickleRetriever(**buster_cfg.retriever_cfg)
+    retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     completer: Completer = ChatGPTCompleter(
         documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
@@ -186,24 +205,24 @@ def test_chatbot_real_data__chatGPT_OOD():
     validator: Validator = Validator(**buster_cfg.validator_cfg)
     buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
-    completion = buster.process_input("What is a good recipe for brocolli soup?", source=DB_SOURCE)
+    completion = buster.process_input("What is a good recipe for brocolli soup?")
     completion = buster.postprocess_completion(completion)
     assert isinstance(completion.text, str)
 
     assert completion.answer_relevant == False
 
 
-def test_chatbot_real_data__no_docs_found():
+def test_chatbot_real_data__no_docs_found(database_file):
     buster_cfg = copy.deepcopy(buster_cfg_template)
     buster_cfg.retriever_cfg = {
-        "db_path": DB_PATH,
+        "db_path": database_file,
         "embedding_model": "text-embedding-ada-002",
         "top_k": 3,
         "thresh": 1,  # Set threshold very high to be sure no docs are matched
         "max_tokens": 3000,
     }
     buster_cfg.completion_cfg["no_documents_message"] = "No documents available."
-    retriever: Retriever = PickleRetriever(**buster_cfg.retriever_cfg)
+    retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     completer: Completer = ChatGPTCompleter(
         documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
@@ -213,7 +232,7 @@ def test_chatbot_real_data__no_docs_found():
     validator: Validator = Validator(**buster_cfg.validator_cfg)
     buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
-    completion = buster.process_input("What is a transformer?", source=DB_SOURCE)
+    completion = buster.process_input("What is backpropagation?")
     completion = buster.postprocess_completion(completion)
     assert isinstance(completion.text, str)
 

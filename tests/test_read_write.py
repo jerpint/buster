@@ -1,6 +1,6 @@
 import pandas as pd
 
-from buster.completers.base import Completion
+from buster.completers import Completion
 
 
 class MockValidator:

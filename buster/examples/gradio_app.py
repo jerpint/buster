@@ -3,12 +3,12 @@ import gradio as gr
 import pandas as pd
 
 from buster.busterbot import Buster
-from buster.completers.base import ChatGPTCompleter, Completer
+from buster.completers import ChatGPTCompleter, Completer
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import Retriever, SQLiteRetriever
 from buster.tokenizers import GPTTokenizer
-from buster.validators.base import Validator
+from buster.validators import Validator
 
 # initialize buster with the config in cfg.py (adapt to your needs) ...
 buster_cfg = cfg.buster_cfg
