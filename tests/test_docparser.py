@@ -2,11 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from buster.documents import DocumentsDB
 from buster.docparser import generate_embeddings
-from buster.utils import (
-    get_retriever_from_extension,
-)
+from buster.documents import DocumentsDB
+from buster.retriever.sqlite import SQLiteRetriever
 
 
 @pytest.mark.parametrize("extension", ["db"])
@@ -34,7 +32,7 @@ def test_generate_embeddings(tmp_path, monkeypatch, extension):
         "max_tokens": 3000,
         "embedding_model": "text-embedding-ada-002",
     }
-    read_df = get_retriever_from_extension(output_file)(**retriever_cfg).get_documents("my_source")
+    read_df = SQLiteRetriever(**retriever_cfg).get_documents("my_source")
 
     # Check all the values are correct across the files
     assert df["title"].iloc[0] == data["title"].iloc[0] == read_df["title"].iloc[0]
