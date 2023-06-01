@@ -36,9 +36,11 @@ class Retriever(ABC):
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
-    def retrieve(self, query: str, source: str = None) -> pd.DataFrame:
-        top_k = self.top_k
-        thresh = self.thresh
+    def retrieve(self, query: str, source: str = None, top_k: int = None, thresh: float = None) -> pd.DataFrame:
+        if top_k is None:
+            top_k = self.top_k
+        if thresh is None:
+            thresh = self.thresh
         query_embedding = self.get_embedding(query, engine=self.embedding_model)
 
         documents = self.get_documents(source)

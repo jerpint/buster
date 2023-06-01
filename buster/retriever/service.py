@@ -63,12 +63,13 @@ class ServiceRetriever(Retriever):
             display_name = self.db.sources.find_one({"name": source})["display_name"]
             return display_name
 
-    def retrieve(self, query: str, top_k: int = None, source: str = None) -> pd.DataFrame:
+    def retrieve(self, query: str, top_k: int = None, source: str = None, thresh: float = None) -> pd.DataFrame:
         if top_k is None:
-            # use default top_k value
             top_k = self.top_k
-        if source == "" or source is None:
+        if source is None:
             filter = None
+        if thresh is None:
+            thresh = self.thresh
         else:
             filter = {"source": {"$eq": source}}
             source_exists = self.db.sources.find_one({"name": source})
@@ -94,5 +95,13 @@ class ServiceRetriever(Retriever):
         # add additional information from matching
         matched_documents["similarity"] = matched_documents["_id"].apply(lambda x: matching_scores[str(x)])
         matched_documents["embedding"] = matched_documents["_id"].apply(lambda x: matching_embeddings[str(x)])
+
+
+        # log matched_documents to the console
+        logger.info(f"matched documents before thresh: {matched_documents}")
+
+        # filter out matched_documents using a threshold
+        matched_documents = matched_documents[matched_documents.similarity > thresh]
+        logger.info(f"matched documents after thresh: {matched_documents}")
 
         return matched_documents
