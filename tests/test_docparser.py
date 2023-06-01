@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from buster.documents import DocumentsDB
 from buster.docparser import generate_embeddings
 from buster.utils import (
-    get_documents_manager_from_extension,
     get_retriever_from_extension,
 )
 
@@ -22,7 +22,7 @@ def test_generate_embeddings(tmp_path, monkeypatch, extension):
 
     # Generate embeddings, store in a file
     output_file = tmp_path / f"test_document_embeddings.{extension}"
-    manager = get_documents_manager_from_extension(output_file)(output_file)
+    manager = DocumentsDB(output_file)
     df = generate_embeddings(data, manager)
 
     # Read the embeddings from the file
