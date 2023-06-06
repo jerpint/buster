@@ -42,7 +42,7 @@ class Retriever(ABC):
 
     @abstractmethod
     def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
-        """Get the topk documents matching a user's query.'
+        """Get the topk documents matching a user's query.
 
         If no mathces are found, returns an empty dataframe."""
         ...
