@@ -44,7 +44,7 @@ class Retriever(ABC):
     def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
         """Get the topk documents matching a user's query.
 
-        If no mathces are found, returns an empty dataframe."""
+        If no matches are found, returns an empty dataframe."""
         ...
 
     def threshold_documents(self, matched_documents, thresh: float) -> pd.DataFrame:
