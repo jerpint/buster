@@ -57,17 +57,14 @@ class ServiceRetriever(Retriever):
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
-        if source == "":
+        if source is None:
             return ALL_SOURCES
         else:
             display_name = self.db.sources.find_one({"name": source})["display_name"]
             return display_name
 
-    def retrieve(self, query: str, top_k: int = None, source: str = None) -> pd.DataFrame:
-        if top_k is None:
-            # use default top_k value
-            top_k = self.top_k
-        if source == "" or source is None:
+    def get_topk_documents(self, query: str, source: str, top_k: int) -> pd.DataFrame:
+        if source is None:
             filter = None
         else:
             filter = {"source": {"$eq": source}}
