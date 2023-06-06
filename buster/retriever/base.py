@@ -20,6 +20,8 @@ class Retriever(ABC):
         self.max_tokens = max_tokens
         self.embedding_model = embedding_model
 
+        # Add your access to documents in your own init
+
     @abstractmethod
     def get_documents(self, source: str = None) -> pd.DataFrame:
         """Get all current documents from a given source."""
@@ -27,7 +29,9 @@ class Retriever(ABC):
 
     @abstractmethod
     def get_source_display_name(self, source: str) -> str:
-        """Get the display name of a source."""
+        """Get the display name of a source.
+
+        If source is None, returns all documents. If source does not exist, returns empty dataframe."""
         ...
 
     @staticmethod
@@ -36,29 +40,39 @@ class Retriever(ABC):
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
+    def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
+        """Get the topk documents matching a user's query.'
+
+        If no mathces are found, returns an empty dataframe."""
+        ...
+
+    def threshold_documents(self, matched_documents, thresh: float) -> pd.DataFrame:
+        # filter out matched_documents using a threshold
+        return matched_documents[matched_documents.similarity > thresh]
+
     def retrieve(self, query: str, source: str = None, top_k: int = None, thresh: float = None) -> pd.DataFrame:
         if top_k is None:
             top_k = self.top_k
         if thresh is None:
             thresh = self.thresh
-        query_embedding = self.get_embedding(query, engine=self.embedding_model)
 
-        documents = self.get_documents(source)
-
-        documents["similarity"] = documents.embedding.apply(lambda x: cosine_similarity(x, query_embedding))
-
-        # sort the matched_documents by score
-        matched_documents = documents.sort_values("similarity", ascending=False)
-
-        # limit search to top_k matched_documents.
-        top_k = len(matched_documents) if top_k == -1 else top_k
-        matched_documents = matched_documents.head(top_k)
+        matched_documents = self.get_topk_documents(query=query, source=source, top_k=top_k)
 
         # log matched_documents to the console
         logger.info(f"matched documents before thresh: {matched_documents}")
 
+        # No matches were found, simply return at this point
+        if len(matched_documents) == 0:
+            return matched_documents
+
+        # otherwise, make sure we have the minimum required fields
+        assert "similarity" in matched_documents.columns
+        assert "embedding" in matched_documents.columns
+        assert "content" in matched_documents.columns
+
         # filter out matched_documents using a threshold
-        matched_documents = matched_documents[matched_documents.similarity > thresh]
+        matched_documents = self.threshold_documents(matched_documents, thresh)
+
         logger.info(f"matched documents after thresh: {matched_documents}")
 
         return matched_documents

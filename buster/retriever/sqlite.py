@@ -3,6 +3,7 @@ import sqlite3
 from pathlib import Path
 
 import pandas as pd
+from openai.embeddings_utils import cosine_similarity
 
 import buster.documents.sqlite.schema as schema
 from buster.retriever.base import ALL_SOURCES, Retriever
@@ -59,7 +60,7 @@ class SQLiteRetriever(Retriever):
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source."""
-        if source == "":
+        if source is None:
             return ALL_SOURCES
         else:
             cur = self.conn.execute("SELECT display_name FROM sources WHERE name = ?", (source,))
@@ -68,3 +69,19 @@ class SQLiteRetriever(Retriever):
                 raise KeyError(f'"{source}" is not a known source')
             (display_name,) = row
             return display_name
+
+    def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
+        query_embedding = self.get_embedding(query, engine=self.embedding_model)
+
+        documents = self.get_documents(source)
+
+        documents["similarity"] = documents.embedding.apply(lambda x: cosine_similarity(x, query_embedding))
+
+        # sort the matched_documents by score
+        matched_documents = documents.sort_values("similarity", ascending=False)
+
+        # limit search to top_k matched_documents.
+        top_k = len(matched_documents) if top_k == -1 else top_k
+        matched_documents = matched_documents.head(top_k)
+
+        return matched_documents

@@ -108,6 +108,12 @@ class MockRetriever(Retriever):
     def get_documents(self, source):
         return self.documents
 
+    def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
+        documents = self.documents
+        documents["embedding"] = [get_fake_embedding() for _ in range(len(documents))]
+        documents["similarity"] = [np.random.random() for _ in range(len(documents))]
+        return documents
+
     def get_embedding(self, query, engine):
         return get_fake_embedding()
 
