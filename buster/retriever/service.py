@@ -93,6 +93,6 @@ class ServiceRetriever(Retriever):
         matched_documents["embedding"] = matched_documents["_id"].apply(lambda x: matching_embeddings[str(x)])
 
         # sort by similarity
-        matched_documents = matched_documents.sort_values(by="similarity")
+        matched_documents = matched_documents.sort_values(by="similarity", ascending=False, ignore_index=True)
 
         return matched_documents
