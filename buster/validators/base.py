@@ -11,17 +11,25 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Validator:
-    def __init__(self, embedding_model: str, unknown_threshold: float, unknown_prompt: str, use_reranking: bool):
+    def __init__(self, embedding_model: str, unknown_threshold: float, unknown_prompt: str, use_reranking: bool, invalid_question_response: str):
         self.embedding_model = embedding_model
         self.unknown_threshold = unknown_threshold
         self.unknown_prompt = unknown_prompt
         self.use_reranking = use_reranking
+        self.invalid_question_response = invalid_question_response
 
     @staticmethod
     @lru_cache
     def get_embedding(query: str, engine: str):
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
+
+
+    def check_question_relevance(self, question: str) -> bool:
+        """Determines wether a question is relevant or not for our given framework.
+
+        Override this method with additonal logic if needed."""
+        return True
 
     def check_answer_relevance(self, answer: str, unknown_prompt: str = None) -> bool:
         """Check to see if a generated answer is relevant to the chatbot's knowledge or not.

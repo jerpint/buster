@@ -2,6 +2,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+import pandas as pd
+
 from buster.completers import Completer, Completion
 from buster.retriever import Retriever
 from buster.validators import Validator
@@ -77,17 +79,32 @@ class Buster:
 
         logger.info(f"User Input:\n{user_input}")
 
+
         # We make sure there is always a newline at the end of the question to avoid completing the question.
         if not user_input.endswith("\n"):
             user_input += "\n"
 
-        matched_documents = self.retriever.retrieve(user_input, source=source)
+        question_relevant = self.validator.check_question_relevance(user_input)
 
-        completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
+        if question_relevant:
+            matched_documents = self.retriever.retrieve(user_input, source=source)
 
-        logger.info(f"Completion:\n{completion}")
+            completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
+
+            logger.info(f"Completion:\n{completion}")
+        else:
+            completion = Completion(
+                error=False,
+                user_input=user_input,
+                matched_documents=pd.DataFrame(),
+                completor = self.validator.invalid_question_response,
+                answer_relevant = False,
+            )
+
+        completion.question_relevant = question_relevant
 
         return completion
 
     def postprocess_completion(self, completion) -> Completion:
+        """This will check if the answer is relevant, and rerank the sources by relevance too."""
         return self.validator.validate(completion=completion)
