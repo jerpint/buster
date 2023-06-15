@@ -68,6 +68,8 @@ class Validator:
         This score could be used to determine wether a document was actually relevant to generation.
         An extra column is added in-place for the similarity score.
         """
+        if len(matched_documents) == 0:
+            return matched_documents
         logger.info("Reranking documents based on answer similarity...")
 
         answer_embedding = self.get_embedding(
