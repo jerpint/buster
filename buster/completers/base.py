@@ -39,10 +39,11 @@ class Completion:
     matched_documents: pd.DataFrame
     completor: Iterator | str
     answer_relevant: bool = None
+    question_relevant: bool = None
 
     # private property, should not be set at init
     _completor: Iterator | str = field(init=False, repr=False)  # e.g. a streamed response from openai.ChatCompletion
-    _text: str = None
+    _text: str = None # once the generator of the completor is exhausted, the text will be available in the self.text property
 
     @property
     def text(self):
@@ -87,6 +88,7 @@ class Completion:
             "text": self.text,
             "matched_documents": self.matched_documents,
             "answer_relevant": self.answer_relevant,
+            "question_relevant": self.question_relevant,
             "error": self.error,
         }
         return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
@@ -114,11 +116,13 @@ class Completer(ABC):
         prompt_formatter: PromptFormatter,
         completion_kwargs: dict,
         no_documents_message: str = "No documents were found that match your question.",
+        completion_class: Completion = Completion,
     ):
         self.completion_kwargs = completion_kwargs
         self.documents_formatter = documents_formatter
         self.prompt_formatter = prompt_formatter
         self.no_documents_message = no_documents_message
+        self.completion_class = completion_class
 
     @abstractmethod
     def complete(self, prompt: str, user_input: str) -> Completion:
@@ -148,7 +152,7 @@ class Completer(ABC):
             # empty dataframe
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
-            completion = Completion(
+            completion = self.completion_class(
                 user_input=user_input,
                 completor=self.no_documents_message,
                 error=False,
@@ -163,7 +167,7 @@ class Completer(ABC):
         logger.info(f"querying model with parameters: {self.completion_kwargs}...")
         completor = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
 
-        completion = Completion(
+        completion = self.completion_class(
             completor=completor, error=self.error, matched_documents=matched_documents, user_input=user_input
         )
 
