@@ -91,7 +91,6 @@ class Buster:
 
             completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
 
-            logger.info(f"Completion:\n{completion}")
         else:
             completion = Completion(
                 error=False,
@@ -102,6 +101,7 @@ class Buster:
             )
 
         completion.question_relevant = question_relevant
+        logger.info(f"Completion:\n{completion}")
 
         return completion
 
