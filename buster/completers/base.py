@@ -141,26 +141,31 @@ class Completer(ABC):
         return prompt
 
     def get_completion(self, user_input: str, matched_documents: pd.DataFrame) -> Completion:
-        # Call the API to generate a response
+        """Generate a completion to a user's question based on matched documents."""
+
+        # The completor assumes a question was previously determined valid, otherwise it would not be called.
+        question_relevant = True
 
         logger.info(f"{user_input=}")
 
         if len(matched_documents) == 0:
-            logger.warning("no documents found...")
             # no document was found, pass the appropriate message instead...
+            logger.warning("no documents found...")
 
             # empty dataframe
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
+            # because we are proceeding with a completion, we assume the question is relevant.
             completion = self.completion_class(
                 user_input=user_input,
                 completor=self.no_documents_message,
                 error=False,
                 matched_documents=matched_documents,
+                question_relevant=question_relevant,
             )
             return completion
 
-        # prepare the prompt
+        # prepare the prompt with matched documents
         prompt = self.prepare_prompt(matched_documents)
         logger.info(f"{prompt=}")
 
@@ -168,7 +173,11 @@ class Completer(ABC):
         completor = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
 
         completion = self.completion_class(
-            completor=completor, error=self.error, matched_documents=matched_documents, user_input=user_input
+            completor=completor,
+            error=self.error,
+            matched_documents=matched_documents,
+            user_input=user_input,
+            question_relevant=question_relevant,
         )
 
         return completion
@@ -214,13 +223,13 @@ class ChatGPTCompleter(Completer):
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_input},
         ]
+        self.error = False
         try:
             response = openai.ChatCompletion.create(
                 messages=messages,
                 **completion_kwargs,
             )
 
-            self.error = False
             if completion_kwargs.get("stream") is True:
                 # We are entering streaming mode, so here were just wrapping the streamed
                 # openai response to be easier to handle later
