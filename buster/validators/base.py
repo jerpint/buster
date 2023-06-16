@@ -17,7 +17,7 @@ class Validator:
         unknown_threshold: float,
         unknown_prompt: str,
         use_reranking: bool,
-        invalid_question_response: str,
+        invalid_question_response: str = "This question is not relevant to my knowledge.",
     ):
         self.embedding_model = embedding_model
         self.unknown_threshold = unknown_threshold
