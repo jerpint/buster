@@ -43,7 +43,9 @@ class Completion:
 
     # private property, should not be set at init
     _completor: Iterator | str = field(init=False, repr=False)  # e.g. a streamed response from openai.ChatCompletion
-    _text: str = None # once the generator of the completor is exhausted, the text will be available in the self.text property
+    _text: str = (
+        None  # once the generator of the completor is exhausted, the text will be available in the self.text property
+    )
 
     @property
     def text(self):

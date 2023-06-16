@@ -11,7 +11,14 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Validator:
-    def __init__(self, embedding_model: str, unknown_threshold: float, unknown_prompt: str, use_reranking: bool, invalid_question_response: str):
+    def __init__(
+        self,
+        embedding_model: str,
+        unknown_threshold: float,
+        unknown_prompt: str,
+        use_reranking: bool,
+        invalid_question_response: str,
+    ):
         self.embedding_model = embedding_model
         self.unknown_threshold = unknown_threshold
         self.unknown_prompt = unknown_prompt
@@ -23,7 +30,6 @@ class Validator:
     def get_embedding(query: str, engine: str):
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
-
 
     def check_question_relevance(self, question: str) -> tuple[bool, str]:
         """Determines wether a question is relevant or not for our given framework."""
