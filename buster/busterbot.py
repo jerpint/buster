@@ -79,28 +79,29 @@ class Buster:
 
         logger.info(f"User Input:\n{user_input}")
 
-
         # We make sure there is always a newline at the end of the question to avoid completing the question.
         if not user_input.endswith("\n"):
             user_input += "\n"
 
-        question_relevant = self.validator.check_question_relevance(user_input)
+        # The returned message is either a generic invalid question message or an error handling message
+        question_relevant, irrelevant_question_message = self.validator.check_question_relevance(user_input)
 
         if question_relevant:
+            # question is relevant, get completor to generate completion
             matched_documents = self.retriever.retrieve(user_input, source=source)
-
             completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
 
         else:
+            # question was determined irrelevant, so we instead return a generic response set by the user.
             completion = Completion(
                 error=False,
                 user_input=user_input,
                 matched_documents=pd.DataFrame(),
-                completor = self.validator.invalid_question_response,
-                answer_relevant = False,
+                completor=irrelevant_question_message,
+                answer_relevant=False,
+                question_relevant=False,
             )
 
-        completion.question_relevant = question_relevant
         logger.info(f"Completion:\n{completion}")
 
         return completion

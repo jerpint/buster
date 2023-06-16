@@ -25,11 +25,15 @@ class Validator:
         return get_embedding(query, engine=engine)
 
 
-    def check_question_relevance(self, question: str) -> bool:
-        """Determines wether a question is relevant or not for our given framework.
-
-        Override this method with additonal logic if needed."""
-        return True
+    def check_question_relevance(self, question: str) -> tuple[bool, str]:
+        """Determines wether a question is relevant or not for our given framework."""
+        # Override this method to suit your needs.
+        # By default, no checks happen.
+        # You could for example use a GPT call to check your question validity, at extra cost/latency.
+        # The message will be what's printed should question_relevant be False.
+        question_relevant = True
+        message: str = self.invalid_question_response
+        return question_relevant, message
 
     def check_answer_relevance(self, answer: str, unknown_prompt: str = None) -> bool:
         """Check to see if a generated answer is relevant to the chatbot's knowledge or not.
