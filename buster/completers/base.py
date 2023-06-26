@@ -71,7 +71,7 @@ class Completion:
     def completor(self, value: str) -> None:
         self._completor = value
 
-    def to_json(self, columns_to_ignore: list[str]) -> Any:
+    def to_json(self, columns_to_ignore: list[str] = None) -> Any:
         """Converts selected attributes of the object to a JSON format.
 
         Args:
@@ -87,7 +87,7 @@ class Completion:
         """
 
         def encode_df(df: pd.DataFrame) -> dict:
-            if len(columns_to_ignore) > 0:
+            if columns_to_ignore is not None:
                 df = df.drop(columns=columns_to_ignore)
             return df.to_json(orient="index")
 
