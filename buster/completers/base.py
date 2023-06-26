@@ -2,7 +2,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any, Iterator, Optional
 
 import openai
 import pandas as pd
@@ -71,10 +71,24 @@ class Completion:
     def completor(self, value: str) -> None:
         self._completor = value
 
-    def to_json(self) -> Any:
+    def to_json(self, columns_to_ignore: Optional[list[str]] = None) -> Any:
+        """Converts selected attributes of the object to a JSON format.
+
+        Args:
+            columns_to_ignore (list[str]): A list of column names to ignore in the csulting matched_documents dataframe.
+
+        Returns:
+            Any: The object's attributes encoded as JSON.
+
+        Notes:
+            - The 'matched_documents' attribute of type pd.DataFrame is encoded separately
+            using a custom encoder.
+            - The resulting JSON may exclude specified columns based on the 'columns_to_ignore' parameter.
+        """
+
         def encode_df(df: pd.DataFrame) -> dict:
-            if "embedding" in df.columns:
-                df = df.drop(columns=["embedding"])
+            if columns_to_ignore is not None:
+                df = df.drop(columns=columns_to_ignore)
             return df.to_json(orient="index")
 
         custom_encoder = {
