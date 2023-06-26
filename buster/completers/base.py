@@ -88,7 +88,7 @@ class Completion:
 
         def encode_df(df: pd.DataFrame) -> dict:
             if columns_to_ignore is not None:
-                df = df.drop(columns=columns_to_ignore)
+                df = df.drop(columns=columns_to_ignore, errors='ignore')
             return df.to_json(orient="index")
 
         custom_encoder = {
