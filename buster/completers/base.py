@@ -2,7 +2,7 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Iterator
+from typing import Any, Iterator, Optional
 
 import openai
 import pandas as pd
@@ -71,7 +71,7 @@ class Completion:
     def completor(self, value: str) -> None:
         self._completor = value
 
-    def to_json(self, columns_to_ignore: list[str] = None) -> Any:
+    def to_json(self, columns_to_ignore: Optional[list[str]] = None) -> Any:
         """Converts selected attributes of the object to a JSON format.
 
         Args:
