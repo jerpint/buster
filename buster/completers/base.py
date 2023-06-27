@@ -39,10 +39,13 @@ class Completion:
     matched_documents: pd.DataFrame
     completor: Iterator | str
     answer_relevant: bool = None
+    question_relevant: bool = None
 
     # private property, should not be set at init
     _completor: Iterator | str = field(init=False, repr=False)  # e.g. a streamed response from openai.ChatCompletion
-    _text: str = None
+    _text: str = (
+        None  # once the generator of the completor is exhausted, the text will be available in the self.text property
+    )
 
     @property
     def text(self):
@@ -101,6 +104,7 @@ class Completion:
             "text": self.text,
             "matched_documents": self.matched_documents,
             "answer_relevant": self.answer_relevant,
+            "question_relevant": self.question_relevant,
             "error": self.error,
         }
         return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
@@ -128,11 +132,13 @@ class Completer(ABC):
         prompt_formatter: PromptFormatter,
         completion_kwargs: dict,
         no_documents_message: str = "No documents were found that match your question.",
+        completion_class: Completion = Completion,
     ):
         self.completion_kwargs = completion_kwargs
         self.documents_formatter = documents_formatter
         self.prompt_formatter = prompt_formatter
         self.no_documents_message = no_documents_message
+        self.completion_class = completion_class
 
     @abstractmethod
     def complete(self, prompt: str, user_input: str) -> Completion:
@@ -151,34 +157,43 @@ class Completer(ABC):
         return prompt
 
     def get_completion(self, user_input: str, matched_documents: pd.DataFrame) -> Completion:
-        # Call the API to generate a response
+        """Generate a completion to a user's question based on matched documents."""
+
+        # The completor assumes a question was previously determined valid, otherwise it would not be called.
+        question_relevant = True
 
         logger.info(f"{user_input=}")
 
         if len(matched_documents) == 0:
-            logger.warning("no documents found...")
             # no document was found, pass the appropriate message instead...
+            logger.warning("no documents found...")
 
             # empty dataframe
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
-            completion = Completion(
+            # because we are proceeding with a completion, we assume the question is relevant.
+            completion = self.completion_class(
                 user_input=user_input,
                 completor=self.no_documents_message,
                 error=False,
                 matched_documents=matched_documents,
+                question_relevant=question_relevant,
             )
             return completion
 
-        # prepare the prompt
+        # prepare the prompt with matched documents
         prompt = self.prepare_prompt(matched_documents)
         logger.info(f"{prompt=}")
 
         logger.info(f"querying model with parameters: {self.completion_kwargs}...")
         completor = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
 
-        completion = Completion(
-            completor=completor, error=self.error, matched_documents=matched_documents, user_input=user_input
+        completion = self.completion_class(
+            completor=completor,
+            error=self.error,
+            matched_documents=matched_documents,
+            user_input=user_input,
+            question_relevant=question_relevant,
         )
 
         return completion
@@ -224,13 +239,13 @@ class ChatGPTCompleter(Completer):
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_input},
         ]
+        self.error = False
         try:
             response = openai.ChatCompletion.create(
                 messages=messages,
                 **completion_kwargs,
             )
 
-            self.error = False
             if completion_kwargs.get("stream") is True:
                 # We are entering streaming mode, so here were just wrapping the streamed
                 # openai response to be easier to handle later

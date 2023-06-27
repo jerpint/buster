@@ -6,6 +6,7 @@ buster_cfg = BusterConfig(
         "unknown_threshold": 0.85,
         "embedding_model": "text-embedding-ada-002",
         "use_reranking": True,
+        "invalid_question_response": "This question does not seem relevant to my current knowledge.",
     },
     retriever_cfg={
         "db_path": "documents.db",

@@ -2,6 +2,8 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
+import pandas as pd
+
 from buster.completers import Completer, Completion
 from buster.retriever import Retriever
 from buster.validators import Validator
@@ -81,13 +83,29 @@ class Buster:
         if not user_input.endswith("\n"):
             user_input += "\n"
 
-        matched_documents = self.retriever.retrieve(user_input, source=source)
+        # The returned message is either a generic invalid question message or an error handling message
+        question_relevant, irrelevant_question_message = self.validator.check_question_relevance(user_input)
 
-        completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
+        if question_relevant:
+            # question is relevant, get completor to generate completion
+            matched_documents = self.retriever.retrieve(user_input, source=source)
+            completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
+
+        else:
+            # question was determined irrelevant, so we instead return a generic response set by the user.
+            completion = Completion(
+                error=False,
+                user_input=user_input,
+                matched_documents=pd.DataFrame(),
+                completor=irrelevant_question_message,
+                answer_relevant=False,
+                question_relevant=False,
+            )
 
         logger.info(f"Completion:\n{completion}")
 
         return completion
 
     def postprocess_completion(self, completion) -> Completion:
+        """This will check if the answer is relevant, and rerank the sources by relevance too."""
         return self.validator.validate(completion=completion)

@@ -11,17 +11,35 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Validator:
-    def __init__(self, embedding_model: str, unknown_threshold: float, unknown_prompt: str, use_reranking: bool):
+    def __init__(
+        self,
+        embedding_model: str,
+        unknown_threshold: float,
+        unknown_prompt: str,
+        use_reranking: bool,
+        invalid_question_response: str = "This question is not relevant to my knowledge.",
+    ):
         self.embedding_model = embedding_model
         self.unknown_threshold = unknown_threshold
         self.unknown_prompt = unknown_prompt
         self.use_reranking = use_reranking
+        self.invalid_question_response = invalid_question_response
 
     @staticmethod
     @lru_cache
     def get_embedding(query: str, engine: str):
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
+
+    def check_question_relevance(self, question: str) -> tuple[bool, str]:
+        """Determines wether a question is relevant or not for our given framework."""
+        # Override this method to suit your needs.
+        # By default, no checks happen.
+        # You could for example use a GPT call to check your question validity, at extra cost/latency.
+        # The message will be what's printed should question_relevant be False.
+        question_relevant = True
+        message: str = self.invalid_question_response
+        return question_relevant, message
 
     def check_answer_relevance(self, answer: str, unknown_prompt: str = None) -> bool:
         """Check to see if a generated answer is relevant to the chatbot's knowledge or not.
@@ -60,6 +78,8 @@ class Validator:
         This score could be used to determine wether a document was actually relevant to generation.
         An extra column is added in-place for the similarity score.
         """
+        if len(matched_documents) == 0:
+            return matched_documents
         logger.info("Reranking documents based on answer similarity...")
 
         answer_embedding = self.get_embedding(
