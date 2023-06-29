@@ -42,7 +42,7 @@ class Completion:
         error: bool,
         user_input: str,
         matched_documents: pd.DataFrame,
-        completor: Iterator | str,
+        answer_generator: Iterator | str,
         validator=None,
         answer_relevant: bool = None,
         question_relevant: bool = None,
@@ -51,7 +51,7 @@ class Completion:
         self.user_input = user_input
         self.matched_documents = matched_documents
         self.validator = validator
-        self._completor = completor
+        self._answer_generator = answer_generator
         self._answer_relevant = answer_relevant
         self._question_relevant = question_relevant
         self._text = None
@@ -83,7 +83,7 @@ class Completion:
     def text(self):
         if self._text is None:
             # generates the text if it wasn't already generated
-            self._text = "".join([i for i in self.completor])
+            self._text = "".join([i for i in self.answer_generator])
         return self._text
 
     @text.setter
@@ -91,20 +91,20 @@ class Completion:
         self._text = value
 
     @property
-    def completor(self):
-        if isinstance(self._completor, str):
+    def answer_generator(self):
+        if isinstance(self._answer_generator, str):
             # convert str to iterator if it isn't one already
-            self._completor = (msg for msg in self._completor)
+            self._answer_generator = (msg for msg in self._answer_generator)
 
         # keeps track of the yielded text
         self._text = ""
-        for token in self._completor:
+        for token in self._answer_generator:
             self._text += token
             yield token
 
-    @completor.setter
-    def completor(self, value: str) -> None:
-        self._completor = value
+    @answer_generator.setter
+    def answer_generator(self, value: str) -> None:
+        self._answer_generator = value
 
     def to_json(self, columns_to_ignore: Optional[list[str]] = None) -> Any:
         """Converts selected attributes of the object to a JSON format.
@@ -151,7 +151,7 @@ class Completion:
             raise ValueError(f"Unknown type for matched_documents: {type(completion_dict['matched_documents'])}")
 
         # avoids setting a property at init. the .text method will still be available.
-        completion_dict["completor"] = completion_dict["text"]
+        completion_dict["answer_relevant"] = completion_dict["text"]
         del completion_dict["text"]
 
         return cls(**completion_dict)
@@ -193,9 +193,7 @@ class Completer(ABC):
     ) -> Completion:
         """Generate a completion to a user's question based on matched documents.
 
-        We assume the question_relevance to be True if we made it here."""
-
-        # The completor assumes a question was previously determined valid, otherwise it would not be called.
+        It is safe to assume the question_relevance to be True if we made it here."""
 
         logger.info(f"{user_input=}")
 
@@ -209,7 +207,7 @@ class Completer(ABC):
             # because we are proceeding with a completion, we assume the question is relevant.
             completion = self.completion_class(
                 user_input=user_input,
-                completor=self.no_documents_message,
+                answer_generator=self.no_documents_message,
                 error=False,
                 matched_documents=matched_documents,
                 question_relevant=question_relevant,
@@ -222,10 +220,10 @@ class Completer(ABC):
         logger.info(f"{prompt=}")
 
         logger.info(f"querying model with parameters: {self.completion_kwargs}...")
-        completor = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
+        answer_generator = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
 
         completion = self.completion_class(
-            completor=completor,
+            answer_generator=answer_generator,
             error=self.error,
             matched_documents=matched_documents,
             user_input=user_input,
@@ -255,12 +253,12 @@ class GPT3Completer(Completer):
             self.error = False
             if completion_kwargs.get("stream") is True:
 
-                def completor():
+                def answer_generator():
                     for chunk in response:
                         token: str = chunk["choices"][0].get("text")
                         yield token
 
-                return completor()
+                return answer_generator()
             else:
                 return response["choices"][0]["text"]
         except Exception as e:
@@ -286,12 +284,12 @@ class ChatGPTCompleter(Completer):
             if completion_kwargs.get("stream") is True:
                 # We are entering streaming mode, so here were just wrapping the streamed
                 # openai response to be easier to handle later
-                def completor():
+                def answer_generator():
                     for chunk in response:
                         token: str = chunk["choices"][0]["delta"].get("content", "")
                         yield token
 
-                return completor()
+                return answer_generator()
 
             else:
                 full_response: str = response["choices"][0]["message"]["content"]
