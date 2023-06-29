@@ -11,9 +11,6 @@ from fastapi.encoders import jsonable_encoder
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
 
-# from buster.validators import Validator
-
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
