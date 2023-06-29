@@ -54,21 +54,15 @@ class Completion:
 
     @property
     def answer_relevant(self):
-        if self._answer_relevant is not None:
-            return self._answer_relevant
-        elif self.error:
+        if self.error:
             self._answer_relevant = False
         elif len(self.matched_documents) == 0:
             self._answer_relevant = False
+        elif self._answer_relevant is not None:
+            return self._answer_relevant
         else:
             # Check the answer relevance by looking at the embeddings
             self._answer_relevant = self.validator.check_answer_relevance(self.text)
-
-            if self.validator.use_reranking:
-                # rerank docs in order of cosine similarity to the question
-                self.matched_documents = self.validator.rerank_docs(
-                    answer=self.text, matched_documents=self.matched_documents
-                )
         return self._answer_relevant
 
     @property
@@ -97,6 +91,20 @@ class Completion:
         for token in self._answer_generator:
             self._text += token
             yield token
+
+        #  Once the generator finishes its completion, run the validations (e.g. check answer relevance, rerank docs, etc.)
+        self.postprocess()
+
+    def postprocess(self):
+        """Function executed after the answer is generated"""
+        if self.validator.use_reranking:
+            # rerank docs in order of cosine similarity to the question
+            self.matched_documents = self.validator.rerank_docs(
+                answer=self.text, matched_documents=self.matched_documents
+            )
+
+        # access the property so it gets set if not computed alerady
+        self.answer_relevant
 
     @answer_generator.setter
     def answer_generator(self, value: str) -> None:
