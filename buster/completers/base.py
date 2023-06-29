@@ -54,6 +54,12 @@ class Completion:
         self._validate_arguments(answer_generator, answer_text)
 
     def _validate_arguments(self, answer_generator: Optional[Iterator], answer_text: Optional[str]):
+        """Sets answer_generator and answer_text properties depending on the provided inputs.
+
+        Checks that one of either answer_generator or answer_text is not None.
+        If answer_text is set, a generator can simply be inferred from answer_text.
+        If answer_generator is set, answer_text will be set only once the generator gets called. Set to None for now.
+        """
         if (answer_generator is None and answer_text is None) or (
             answer_generator is not None and answer_text is not None
         ):
