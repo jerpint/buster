@@ -40,8 +40,6 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
 
 
 def add_sources(history, completion):
-    completion = buster.postprocess_completion(completion)
-
     if completion.answer_relevant:
         formatted_sources = format_sources(completion.matched_documents)
         history.append([None, formatted_sources])

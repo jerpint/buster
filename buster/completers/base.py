@@ -11,6 +11,10 @@ from fastapi.encoders import jsonable_encoder
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
 
+# from buster.validators import Validator
+
+
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
@@ -32,20 +36,48 @@ if promptlayer_api_key:
 openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
-@dataclass
 class Completion:
-    error: bool
-    user_input: str
-    matched_documents: pd.DataFrame
-    completor: Iterator | str
-    answer_relevant: bool = None
-    question_relevant: bool = None
+    def __init__(
+        self,
+        error: bool,
+        user_input: str,
+        matched_documents: pd.DataFrame,
+        completor: Iterator | str,
+        validator=None,
+        answer_relevant: bool = None,
+        question_relevant: bool = None,
+    ):
+        self.error = error
+        self.user_input = user_input
+        self.matched_documents = matched_documents
+        self.validator = validator
+        self._completor = completor
+        self._answer_relevant = answer_relevant
+        self._question_relevant = question_relevant
+        self._text = None
 
-    # private property, should not be set at init
-    _completor: Iterator | str = field(init=False, repr=False)  # e.g. a streamed response from openai.ChatCompletion
-    _text: str = (
-        None  # once the generator of the completor is exhausted, the text will be available in the self.text property
-    )
+    @property
+    def answer_relevant(self):
+        if self._answer_relevant is not None:
+            return self._answer_relevant
+        elif self.error:
+            self._answer_relevant = False
+        elif len(self.matched_documents) == 0:
+            self._answer_relevant = False
+        else:
+            # Check the answer relevance by looking at the embeddings
+            self._answer_relevant = self.validator.check_answer_relevance(self.text)
+
+            if self.validator.use_reranking:
+                # rerank docs in order of cosine similarity to the question
+                self.matched_documents = self.validator.rerank_docs(
+                    answer=self.text, matched_documents=self.matched_documents
+                )
+        return self._answer_relevant
+
+    @property
+    def question_relevant(self):
+        return self._question_relevant
 
     @property
     def text(self):
@@ -61,7 +93,7 @@ class Completion:
     @property
     def completor(self):
         if isinstance(self._completor, str):
-            # convert str to iterator
+            # convert str to iterator if it isn't one already
             self._completor = (msg for msg in self._completor)
 
         # keeps track of the yielded text
@@ -156,11 +188,14 @@ class Completer(ABC):
         prompt = self.prompt_formatter.format(formatted_documents)
         return prompt
 
-    def get_completion(self, user_input: str, matched_documents: pd.DataFrame) -> Completion:
-        """Generate a completion to a user's question based on matched documents."""
+    def get_completion(
+        self, user_input: str, matched_documents: pd.DataFrame, validator, question_relevant: bool = True
+    ) -> Completion:
+        """Generate a completion to a user's question based on matched documents.
+
+        We assume the question_relevance to be True if we made it here."""
 
         # The completor assumes a question was previously determined valid, otherwise it would not be called.
-        question_relevant = True
 
         logger.info(f"{user_input=}")
 
@@ -178,6 +213,7 @@ class Completer(ABC):
                 error=False,
                 matched_documents=matched_documents,
                 question_relevant=question_relevant,
+                validator=validator,
             )
             return completion
 
@@ -194,6 +230,7 @@ class Completer(ABC):
             matched_documents=matched_documents,
             user_input=user_input,
             question_relevant=question_relevant,
+            validator=validator,
         )
 
         return completion

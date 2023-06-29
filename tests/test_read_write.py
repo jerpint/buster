@@ -10,7 +10,7 @@ class MockValidator:
     def check_answer_relevance(self, completion: Completion) -> bool:
         return True
 
-    def rerank_docs(self, completion: Completion, matched_documents: pd.DataFrame) -> bool:
+    def rerank_docs(self, answer: str, matched_documents: pd.DataFrame) -> bool:
         return matched_documents
 
 
@@ -31,6 +31,7 @@ def test_read_write_completion():
         error=False,
         completor="This is my completed answer",
         matched_documents=matched_documents,
+        validator=MockValidator(),
     )
 
     c_json = c.to_json()
