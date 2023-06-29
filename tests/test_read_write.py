@@ -29,7 +29,7 @@ def test_read_write_completion():
     c = Completion(
         user_input="What is the meaning of life?",
         error=False,
-        answer_generator="This is my actual answer",
+        answer_text="This is my actual answer",
         matched_documents=matched_documents,
         validator=MockValidator(),
     )
