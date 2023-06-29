@@ -237,7 +237,7 @@ class Completer(ABC):
             # because we are proceeding with a completion, we assume the question is relevant.
             completion = self.completion_class(
                 user_input=user_input,
-                answer_generator=self.no_documents_message,
+                answer_text=self.no_documents_message,
                 error=False,
                 matched_documents=matched_documents,
                 question_relevant=question_relevant,

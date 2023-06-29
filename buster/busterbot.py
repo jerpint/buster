@@ -102,7 +102,7 @@ class Buster:
                 error=False,
                 user_input=user_input,
                 matched_documents=pd.DataFrame(),
-                answer_generator=irrelevant_question_message,
+                answer_text=irrelevant_question_message,
                 answer_relevant=False,
                 question_relevant=False,
                 validator=self.validator,
