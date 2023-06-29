@@ -82,7 +82,7 @@ class MockCompleter(Completer):
 
     def get_completion(self, user_input, matched_documents, validator, *arg, **kwarg) -> Completion:
         return Completion(
-            completor=self.expected_answer,
+            answer_generator=self.expected_answer,
             error=False,
             user_input=user_input,
             matched_documents=matched_documents,
