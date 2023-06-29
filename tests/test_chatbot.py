@@ -162,8 +162,8 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     validator = MockValidator(**buster_cfg.validator_cfg)
     buster = Buster(retriever=retriever, completer=completer, validator=validator)
     completion = buster.process_input("What is a transformer?", source="fake_source")
-    assert isinstance(completion.text, str)
-    assert completion.text.startswith(gpt_expected_answer)
+    assert isinstance(completion.answer_text, str)
+    assert completion.answer_text.startswith(gpt_expected_answer)
 
 
 def test_chatbot_real_data__chatGPT(database_file):
@@ -181,7 +181,7 @@ def test_chatbot_real_data__chatGPT(database_file):
     buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
     completion = buster.process_input("What is backpropagation?")
-    assert isinstance(completion.text, str)
+    assert isinstance(completion.answer_text, str)
 
     assert completion.answer_relevant == True
 
@@ -215,7 +215,7 @@ def test_chatbot_real_data__chatGPT_OOD(database_file):
     buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
     completion = buster.process_input("What is a good recipe for brocolli soup?")
-    assert isinstance(completion.text, str)
+    assert isinstance(completion.answer_text, str)
 
     assert completion.answer_relevant == False
 
@@ -241,7 +241,7 @@ def test_chatbot_real_data__no_docs_found(database_file):
     buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
 
     completion = buster.process_input("What is backpropagation?")
-    assert isinstance(completion.text, str)
+    assert isinstance(completion.answer_text, str)
 
     assert completion.answer_relevant == False
-    assert completion.text == "No documents available."
+    assert completion.answer_text == "No documents available."

@@ -38,7 +38,7 @@ def test_read_write_completion():
     c_back = Completion.from_dict(c_json)
 
     assert c.error == c_back.error
-    assert c.text == c.text
+    assert c.answer_text == c_back.answer_text
     assert c.user_input == c_back.user_input
     assert c.answer_relevant == c_back.answer_relevant
     for col in c_back.matched_documents.columns.tolist():
