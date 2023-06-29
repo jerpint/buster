@@ -92,19 +92,3 @@ class Validator:
         )
 
         return matched_documents.sort_values(by=col, ascending=False)
-
-    def validate(self, completion: Completion) -> Completion:
-        if completion.error:
-            completion.answer_relevant = False
-        elif len(completion.matched_documents) == 0:
-            completion.answer_relevant = False
-        else:
-            completion.answer_relevant = self.check_answer_relevance(completion.text)
-
-        completion.matched_documents = self.rerank_docs(completion.text, completion.matched_documents)
-
-        return completion
-
-
-def validator_factory(validator_cfg: dict) -> Validator:
-    return Validator(validator_cfg=validator_cfg)

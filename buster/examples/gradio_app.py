@@ -40,8 +40,6 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
 
 
 def add_sources(history, completion):
-    completion = buster.postprocess_completion(completion)
-
     if completion.answer_relevant:
         formatted_sources = format_sources(completion.matched_documents)
         history.append([None, formatted_sources])
@@ -61,7 +59,7 @@ def chat(history):
 
     history[-1][1] = ""
 
-    for token in completion.completor:
+    for token in completion.answer_generator:
         history[-1][1] += token
 
         yield history, completion

@@ -89,7 +89,12 @@ class Buster:
         if question_relevant:
             # question is relevant, get completor to generate completion
             matched_documents = self.retriever.retrieve(user_input, source=source)
-            completion = self.completer.get_completion(user_input=user_input, matched_documents=matched_documents)
+            completion = self.completer.get_completion(
+                user_input=user_input,
+                matched_documents=matched_documents,
+                validator=self.validator,
+                question_relevant=question_relevant,
+            )
 
         else:
             # question was determined irrelevant, so we instead return a generic response set by the user.
@@ -97,15 +102,12 @@ class Buster:
                 error=False,
                 user_input=user_input,
                 matched_documents=pd.DataFrame(),
-                completor=irrelevant_question_message,
+                answer_generator=irrelevant_question_message,
                 answer_relevant=False,
                 question_relevant=False,
+                validator=self.validator,
             )
 
         logger.info(f"Completion:\n{completion}")
 
         return completion
-
-    def postprocess_completion(self, completion) -> Completion:
-        """This will check if the answer is relevant, and rerank the sources by relevance too."""
-        return self.validator.validate(completion=completion)

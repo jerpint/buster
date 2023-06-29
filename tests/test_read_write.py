@@ -10,7 +10,7 @@ class MockValidator:
     def check_answer_relevance(self, completion: Completion) -> bool:
         return True
 
-    def rerank_docs(self, completion: Completion, matched_documents: pd.DataFrame) -> bool:
+    def rerank_docs(self, answer: str, matched_documents: pd.DataFrame) -> bool:
         return matched_documents
 
 
@@ -29,15 +29,16 @@ def test_read_write_completion():
     c = Completion(
         user_input="What is the meaning of life?",
         error=False,
-        completor="This is my completed answer",
+        answer_generator="This is my actual answer",
         matched_documents=matched_documents,
+        validator=MockValidator(),
     )
 
     c_json = c.to_json()
     c_back = Completion.from_dict(c_json)
 
     assert c.error == c_back.error
-    assert c.text == c.text
+    assert c.answer_text == c_back.answer_text
     assert c.user_input == c_back.user_input
     assert c.answer_relevant == c_back.answer_relevant
     for col in c_back.matched_documents.columns.tolist():
