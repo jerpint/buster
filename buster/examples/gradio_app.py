@@ -59,7 +59,7 @@ def chat(history):
 
     history[-1][1] = ""
 
-    for token in completion.completor:
+    for token in completion.answer_generator:
         history[-1][1] += token
 
         yield history, completion
