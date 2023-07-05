@@ -1,26 +1,7 @@
 import cfg
 import gradio as gr
 import pandas as pd
-
-from buster.busterbot import Buster
-from buster.completers import ChatGPTCompleter, Completer
-from buster.formatters.documents import DocumentsFormatter
-from buster.formatters.prompts import PromptFormatter
-from buster.retriever import Retriever, SQLiteRetriever
-from buster.tokenizers import GPTTokenizer
-from buster.validators import Validator
-
-# initialize buster with the config in cfg.py (adapt to your needs) ...
-buster_cfg = cfg.buster_cfg
-retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
-tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
-completer: Completer = ChatGPTCompleter(
-    documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
-    prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
-    **buster_cfg.completion_cfg,
-)
-validator: Validator = Validator(**buster_cfg.validator_cfg)
-buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
+from cfg import buster
 
 
 def format_sources(matched_documents: pd.DataFrame) -> str:

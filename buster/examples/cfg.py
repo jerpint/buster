@@ -1,12 +1,40 @@
-from buster.busterbot import BusterConfig
+from buster.busterbot import Buster, BusterConfig
+from buster.completers import ChatGPTCompleter, Completer, DocumentAnswerer
+from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.prompts import PromptFormatter
+from buster.retriever import Retriever, SQLiteRetriever
+from buster.tokenizers import GPTTokenizer
+from buster.validators import QuestionAnswerValidator, Validator
 
 buster_cfg = BusterConfig(
     validator_cfg={
-        "unknown_prompt": "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
+        "unknown_response_templates": [
+            "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
+        ],
         "unknown_threshold": 0.85,
         "embedding_model": "text-embedding-ada-002",
         "use_reranking": True,
         "invalid_question_response": "This question does not seem relevant to my current knowledge.",
+        "check_question_prompt": """You are an chatbot answering questions on artificial intelligence.
+
+Your job is to determine wether or not a question is valid, and should be answered.
+More general questions are not considered valid, even if you might know the response.
+You can only respond with one of ["Valid", "Not Valid"]. Please respect the puncutation.
+
+For example:
+
+Q: What is backpropagation?
+Valid
+
+Q: What is the meaning of life?
+Not Valid
+
+A user will submit a question. Only respond with one of ["Valid", "Not Valid"].""",
+        "completion_kwargs": {
+            "model": "gpt-3.5-turbo",
+            "stream": False,
+            "temperature": 0,
+        },
     },
     retriever_cfg={
         "db_path": "documents.db",
@@ -15,13 +43,15 @@ buster_cfg = BusterConfig(
         "max_tokens": 2000,
         "embedding_model": "text-embedding-ada-002",
     },
+    documents_answerer_cfg={
+        "no_documents_message": "No documents are available for this question.",
+    },
     completion_cfg={
         "completion_kwargs": {
             "model": "gpt-3.5-turbo",
             "stream": True,
             "temperature": 0,
         },
-        "no_documents_message": "No documents are available for this question.",
     },
     tokenizer_cfg={
         "model_name": "gpt-3.5-turbo",
@@ -59,3 +89,16 @@ buster_cfg = BusterConfig(
         ),
     },
 )
+
+# initialize buster with the config in cfg.py (adapt to your needs) ...
+# buster_cfg = cfg.buster_cfg
+retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
+tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
+document_answerer: DocumentAnswerer = DocumentAnswerer(
+    completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
+    documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+    prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
+    **buster_cfg.documents_answerer_cfg,
+)
+validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
+buster: Buster = Buster(retriever=retriever, completer=document_answerer, validator=validator)

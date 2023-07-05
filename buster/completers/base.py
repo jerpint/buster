@@ -188,23 +188,38 @@ class Completion:
 
 
 class Completer(ABC):
+    """Generic LLM-based completer. Requires a prompt and an input to produce an output."""
+
     def __init__(
         self,
-        documents_formatter: DocumentsFormatter,
-        prompt_formatter: PromptFormatter,
         completion_kwargs: dict,
-        no_documents_message: str = "No documents were found that match your question.",
-        completion_class: Completion = Completion,
     ):
         self.completion_kwargs = completion_kwargs
-        self.documents_formatter = documents_formatter
-        self.prompt_formatter = prompt_formatter
-        self.no_documents_message = no_documents_message
-        self.completion_class = completion_class
 
     @abstractmethod
     def complete(self, prompt: str, user_input: str) -> Completion:
         ...
+
+
+class DocumentAnswerer:
+    """Completer that will answer questions based on documents.
+
+    It takes care of formatting the prompts and the documents, and generating the answer when relevant.
+    """
+
+    def __init__(
+        self,
+        documents_formatter: DocumentsFormatter,
+        prompt_formatter: PromptFormatter,
+        completer: Completer,
+        completion_class: Completion = Completion,
+        no_documents_message: str = "No documents were found that match your question.",
+    ):
+        self.completer = completer
+        self.documents_formatter = documents_formatter
+        self.prompt_formatter = prompt_formatter
+        self.no_documents_message = no_documents_message
+        self.completion_class = completion_class
 
     def prepare_prompt(self, matched_documents) -> str:
         """Prepare the prompt with prompt engineering.
@@ -249,12 +264,33 @@ class Completer(ABC):
         prompt = self.prepare_prompt(matched_documents)
         logger.info(f"{prompt=}")
 
-        logger.info(f"querying model with parameters: {self.completion_kwargs}...")
-        answer_generator = self.complete(prompt=prompt, user_input=user_input, **self.completion_kwargs)
+        logger.info(f"querying model with parameters: {self.completer.completion_kwargs}...")
+
+        try:
+            answer_generator = self.completer.complete(prompt=prompt, user_input=user_input)
+            error = False
+
+        except openai.error.InvalidRequestError:
+            error = True
+            logger.exception("Invalid request to OpenAI API. See traceback:")
+            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
+            return error_msg
+
+        except openai.error.RateLimitError:
+            error = True
+            logger.exception("RateLimit error from OpenAI. See traceback:")
+            error_msg = "OpenAI servers seem to be overloaded, try again later!"
+            return error_msg
+
+        except Exception as e:
+            error = True
+            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
+            logger.exception("Unknown error when attempting to connect to OpenAI API. See traceback:")
+            return error_msg
 
         completion = self.completion_class(
             answer_generator=answer_generator,
-            error=self.error,
+            error=error,
             matched_documents=matched_documents,
             user_input=user_input,
             question_relevant=question_relevant,
@@ -262,92 +298,3 @@ class Completer(ABC):
         )
 
         return completion
-
-
-class GPT3Completer(Completer):
-    # TODO: Adapt...
-    def prepare_prompt(
-        self,
-        system_prompt: str,
-        user_input: str,
-    ) -> str:
-        """
-        Prepare the prompt with prompt engineering.
-        """
-        return system_prompt + user_input
-
-    def complete(self, prompt, user_input, **completion_kwargs):
-        prompt = prompt + user_input
-        try:
-            response = openai.Completion.create(prompt=prompt, **completion_kwargs)
-            self.error = False
-            if completion_kwargs.get("stream") is True:
-
-                def answer_generator():
-                    for chunk in response:
-                        token: str = chunk["choices"][0].get("text")
-                        yield token
-
-                return answer_generator()
-            else:
-                return response["choices"][0]["text"]
-        except Exception as e:
-            logger.exception(e)
-            self.error = True
-            error_msg = "Something went wrong..."
-            return error_msg
-
-
-class ChatGPTCompleter(Completer):
-    def complete(self, prompt: str, user_input, **completion_kwargs) -> str | Iterator:
-        messages = [
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": user_input},
-        ]
-        self.error = False
-        try:
-            response = openai.ChatCompletion.create(
-                messages=messages,
-                **completion_kwargs,
-            )
-
-            if completion_kwargs.get("stream") is True:
-                # We are entering streaming mode, so here were just wrapping the streamed
-                # openai response to be easier to handle later
-                def answer_generator():
-                    for chunk in response:
-                        token: str = chunk["choices"][0]["delta"].get("content", "")
-                        yield token
-
-                return answer_generator()
-
-            else:
-                full_response: str = response["choices"][0]["message"]["content"]
-                return full_response
-
-        except openai.error.InvalidRequestError:
-            self.error = True
-            logger.exception("Invalid request to OpenAI API. See traceback:")
-            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
-            return error_msg
-
-        except openai.error.RateLimitError:
-            self.error = True
-            logger.exception("RateLimit error from OpenAI. See traceback:")
-            error_msg = "OpenAI servers seem to be overloaded, try again later!"
-            return error_msg
-
-        except Exception as e:
-            self.error = True
-            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
-            logger.exception("Unknown error when attempting to connect to OpenAI API. See traceback:")
-            return error_msg
-
-
-def completer_factory(completer_cfg):
-    name = completer_cfg["name"]
-    completers = {
-        "GPT3": GPT3Completer,
-        "ChatGPT": ChatGPTCompleter,
-    }
-    return completers[name](completer_cfg["completion_kwargs"])

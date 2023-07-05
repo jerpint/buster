@@ -1,76 +1,41 @@
 import logging
+from abc import ABC, abstractmethod
 from functools import lru_cache
 
 import pandas as pd
 from openai.embeddings_utils import cosine_similarity, get_embedding
 
-from buster.completers import Completion
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-class Validator:
+class Validator(ABC):
     def __init__(
         self,
         embedding_model: str,
         unknown_threshold: float,
-        unknown_prompt: str,
         use_reranking: bool,
-        invalid_question_response: str = "This question is not relevant to my knowledge.",
+        invalid_question_response: str = "This question is not relevant to my internal knowledge base.",
     ):
         self.embedding_model = embedding_model
         self.unknown_threshold = unknown_threshold
-        self.unknown_prompt = unknown_prompt
         self.use_reranking = use_reranking
         self.invalid_question_response = invalid_question_response
 
     @staticmethod
     @lru_cache
     def get_embedding(query: str, engine: str):
+        """Currently supports OpenAI embeddings, override to add your own."""
         logger.info("generating embedding")
         return get_embedding(query, engine=engine)
 
+    @abstractmethod
     def check_question_relevance(self, question: str) -> tuple[bool, str]:
-        """Determines wether a question is relevant or not for our given framework."""
-        # Override this method to suit your needs.
-        # By default, no checks happen.
-        # You could for example use a GPT call to check your question validity, at extra cost/latency.
-        # The message will be what's printed should question_relevant be False.
-        question_relevant = True
-        message: str = self.invalid_question_response
-        return question_relevant, message
+        ...
 
-    def check_answer_relevance(self, answer: str, unknown_prompt: str = None) -> bool:
-        """Check to see if a generated answer is relevant to the chatbot's knowledge or not.
-
-        We assume we've prompt-engineered our bot to say a response is unrelated to the context if it isn't relevant.
-        Here, we compare the embedding of the response to the embedding of the prompt-engineered "I don't know" embedding.
-
-        unk_threshold can be a value between [-1,1]. Usually, 0.85 is a good value.
-        """
-        logger.info("Checking for answer relevance...")
-
-        if answer == "" or unknown_prompt == "":
-            raise ValueError("Cannot compute embedding of an empty string.")
-
-        if unknown_prompt is None:
-            unknown_prompt = self.unknown_prompt
-
-        unknown_embedding = self.get_embedding(
-            unknown_prompt,
-            engine=self.embedding_model,
-        )
-
-        answer_embedding = self.get_embedding(
-            answer,
-            engine=self.embedding_model,
-        )
-        unknown_similarity_score = cosine_similarity(answer_embedding, unknown_embedding)
-        logger.info(f"{unknown_similarity_score=}")
-
-        # Likely that the answer is meaningful, add the top sources
-        return bool(unknown_similarity_score < self.unknown_threshold)
+    @abstractmethod
+    def check_answer_relevance(self, answer: str) -> bool:
+        ...
 
     def rerank_docs(self, answer: str, matched_documents: pd.DataFrame) -> pd.DataFrame:
         """Here we re-rank matched documents according to the answer provided by the llm.

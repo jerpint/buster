@@ -18,7 +18,9 @@ class BusterConfig:
 
     validator_cfg: dict = field(
         default_factory=lambda: {
-            "unknown_prompt": "I Don't know how to answer your question.",
+            "unknown_prompts": [
+                "I Don't know how to answer your question.",
+            ],
             "unknown_threshold": 0.85,
             "embedding_model": "text-embedding-ada-002",
             "use_reranking": True,
@@ -45,22 +47,27 @@ class BusterConfig:
             "formatter": "{text_before_docs}\n{documents}\n{text_after_docs}",
         }
     )
-    documents_formatter_cfg: dict = field(
-        default_factory=lambda: {
-            "max_tokens": 3500,
-            "formatter": "{content}",
-        }
+    documents_formatter_cfg: dict = (
+        field(
+            default_factory=lambda: {
+                "max_tokens": 3500,
+                "formatter": "{content}",
+            }
+        ),
+    )
+    documents_answerer_cfg: dict = (
+        field(
+            default_factory=lambda: {
+                "no_documents_message": "No documents are available for this question.",
+            }
+        ),
     )
     completion_cfg: dict = field(
         default_factory=lambda: {
-            "name": "ChatGPT",
             "completion_kwargs": {
                 "engine": "gpt-3.5-turbo",
-                "max_tokens": 200,
-                "temperature": None,
-                "top_p": None,
-                "frequency_penalty": 1,
-                "presence_penalty": 1,
+                "temperature": 0,
+                "stream": True,
             },
         }
     )
