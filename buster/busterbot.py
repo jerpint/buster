@@ -4,7 +4,7 @@ from typing import Any
 
 import pandas as pd
 
-from buster.completers import Completer, Completion
+from buster.completers import Completer, Completion, DocumentAnswerer
 from buster.retriever import Retriever
 from buster.validators import Validator
 
@@ -55,12 +55,10 @@ class BusterConfig:
             }
         ),
     )
-    documents_answerer_cfg: dict = (
-        field(
-            default_factory=lambda: {
-                "no_documents_message": "No documents are available for this question.",
-            }
-        ),
+    documents_answerer_cfg: dict = field(
+        default_factory=lambda: {
+            "no_documents_message": "No documents are available for this question.",
+        }
     )
     completion_cfg: dict = field(
         default_factory=lambda: {
@@ -74,8 +72,8 @@ class BusterConfig:
 
 
 class Buster:
-    def __init__(self, retriever: Retriever, completer: Completer, validator: Validator):
-        self.completer = completer
+    def __init__(self, retriever: Retriever, document_answerer: DocumentAnswerer, validator: Validator):
+        self.document_answerer = document_answerer
         self.retriever = retriever
         self.validator = validator
 
@@ -96,7 +94,7 @@ class Buster:
         if question_relevant:
             # question is relevant, get completor to generate completion
             matched_documents = self.retriever.retrieve(user_input, source=source)
-            completion = self.completer.get_completion(
+            completion: Completion = self.document_answerer.get_completion(
                 user_input=user_input,
                 matched_documents=matched_documents,
                 validator=self.validator,
