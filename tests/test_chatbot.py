@@ -74,7 +74,7 @@ def get_fake_embedding(length=1536):
     return list(rng.random(length, dtype=np.float32))
 
 
-class MockCompleter(Completer):
+class MockAnswerer(Completer):
     def __init__(self, expected_answer):
         self.expected_answer = expected_answer
 
@@ -130,14 +130,17 @@ class MockRetriever(Retriever):
 
 
 class MockValidator(Validator):
+    def __init__(self, *args, **kwargs):
+        return
+
     def validate(self, completion):
         completion.answer_relevant = True
         return completion
 
-    def check_question_relevance(self):
-        return True
+    def check_question_relevance(self, *args, **kwargs):
+        return True, ""
 
-    def check_answer_relevance(self):
+    def check_answer_relevance(self, *args, **kwargs):
         return True
 
 
@@ -168,9 +171,9 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     }
 
     retriever = MockRetriever(**buster_cfg.retriever_cfg)
-    completer = MockCompleter(**buster_cfg.completion_cfg)
+    document_answerer = MockAnswerer(**buster_cfg.completion_cfg)
     validator = MockValidator(**buster_cfg.validator_cfg)
-    buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
     completion = buster.process_input("What is a transformer?", source="fake_source")
     assert isinstance(completion.answer_text, str)
     assert completion.answer_text.startswith(gpt_expected_answer)
