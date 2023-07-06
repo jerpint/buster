@@ -19,17 +19,17 @@ buster_cfg = BusterConfig(
 
 Your job is to determine wether or not a question is valid, and should be answered.
 More general questions are not considered valid, even if you might know the response.
-You can only respond with one of ["Valid", "Not Valid"]. Please respect the puncutation.
+A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.
 
 For example:
 
 Q: What is backpropagation?
-Valid
+true
 
 Q: What is the meaning of life?
-Not Valid
+false
 
-A user will submit a question. Only respond with one of ["Valid", "Not Valid"].""",
+A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.""",
         "completion_kwargs": {
             "model": "gpt-3.5-turbo",
             "stream": False,
@@ -101,4 +101,4 @@ document_answerer: DocumentAnswerer = DocumentAnswerer(
     **buster_cfg.documents_answerer_cfg,
 )
 validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
-buster: Buster = Buster(retriever=retriever, completer=document_answerer, validator=validator)
+buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
