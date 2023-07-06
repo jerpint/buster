@@ -24,11 +24,11 @@ class QuestionAnswerValidator(Validator):
 
         def get_relevance(outputs: str) -> bool:
             # remove trailing periods, happens sometimes...
-            outputs = outputs.strip(".")
+            outputs = outputs.strip(".").lower()
 
-            if outputs == "Valid":
+            if outputs == "true":
                 relevance = True
-            elif outputs == "Not Valid":
+            elif outputs == "false":
                 relevance = False
             else:
                 logger.warning(f"the question validation returned an unexpeced value: {outputs}. Assuming Invalid...")
