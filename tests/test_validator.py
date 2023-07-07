@@ -1,7 +1,7 @@
 import pandas as pd
 from openai.embeddings_utils import get_embedding
 
-from buster.validators import Validator, QuestionAnswerValidator
+from buster.validators import QuestionAnswerValidator, Validator
 
 validator_cfg = {
     "unknown_response_templates": [

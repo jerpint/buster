@@ -15,7 +15,7 @@ from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import Retriever, SQLiteRetriever
 from buster.tokenizers.gpt import GPTTokenizer
-from buster.validators import Validator, QuestionAnswerValidator
+from buster.validators import QuestionAnswerValidator, Validator
 
 logging.basicConfig(level=logging.INFO)
 
