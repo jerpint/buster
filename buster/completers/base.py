@@ -234,7 +234,6 @@ class Completer(ABC):
             # empty dataframe
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
-            # because we are proceeding with a completion, we assume the question is relevant.
             completion = self.completion_class(
                 user_input=user_input,
                 answer_text=self.no_documents_message,
