@@ -8,14 +8,14 @@ import pandas as pd
 import pytest
 
 from buster.busterbot import Buster, BusterConfig
-from buster.completers import ChatGPTCompleter, Completer, Completion
+from buster.completers import ChatGPTCompleter, Completer, Completion, DocumentAnswerer
 from buster.docparser import generate_embeddings
 from buster.documents.sqlite.documents import DocumentsDB
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import Retriever, SQLiteRetriever
 from buster.tokenizers.gpt import GPTTokenizer
-from buster.validators import Validator
+from buster.validators import QuestionAnswerValidator, Validator
 
 logging.basicConfig(level=logging.INFO)
 
@@ -32,10 +32,14 @@ buster_cfg_template = BusterConfig(
         },
     },
     validator_cfg={
-        "unknown_prompt": UNKNOWN_PROMPT,
+        "unknown_response_templates": [
+            UNKNOWN_PROMPT,
+        ],
         "unknown_threshold": 0.85,
         "embedding_model": "text-embedding-ada-002",
         "use_reranking": True,
+        "check_question_prompt": "You are validating if questions are related to AI. If a question is relevant, respond with 'true', if it is irrlevant, respond with 'false'.",
+        "completion_kwargs": {"temperature": 0, "model": "gpt-3.5-turbo"},
     },
     retriever_cfg={
         # "db_path": to be set using pytest fixture,
@@ -70,7 +74,7 @@ def get_fake_embedding(length=1536):
     return list(rng.random(length, dtype=np.float32))
 
 
-class MockCompleter(Completer):
+class MockAnswerer(Completer):
     def __init__(self, expected_answer):
         self.expected_answer = expected_answer
 
@@ -126,9 +130,18 @@ class MockRetriever(Retriever):
 
 
 class MockValidator(Validator):
+    def __init__(self, *args, **kwargs):
+        return
+
     def validate(self, completion):
         completion.answer_relevant = True
         return completion
+
+    def check_question_relevance(self, *args, **kwargs):
+        return True, ""
+
+    def check_answer_relevance(self, *args, **kwargs):
+        return True
 
 
 @pytest.fixture(scope="session")
@@ -158,9 +171,9 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     }
 
     retriever = MockRetriever(**buster_cfg.retriever_cfg)
-    completer = MockCompleter(**buster_cfg.completion_cfg)
+    document_answerer = MockAnswerer(**buster_cfg.completion_cfg)
     validator = MockValidator(**buster_cfg.validator_cfg)
-    buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
     completion = buster.process_input("What is a transformer?", source="fake_source")
     assert isinstance(completion.answer_text, str)
     assert completion.answer_text.startswith(gpt_expected_answer)
@@ -172,13 +185,13 @@ def test_chatbot_real_data__chatGPT(database_file):
 
     retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
-    completer: Completer = ChatGPTCompleter(
+    document_answerer = DocumentAnswerer(
+        completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
         documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
         prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
-        **buster_cfg.completion_cfg,
     )
-    validator: Validator = Validator(**buster_cfg.validator_cfg)
-    buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
+    buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
 
     completion = buster.process_input("What is backpropagation?")
     assert isinstance(completion.answer_text, str)
@@ -206,15 +219,15 @@ def test_chatbot_real_data__chatGPT_OOD(database_file):
 
     retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
-    completer: Completer = ChatGPTCompleter(
+    document_answerer = DocumentAnswerer(
+        completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
         documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
         prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
-        **buster_cfg.completion_cfg,
     )
-    validator: Validator = Validator(**buster_cfg.validator_cfg)
-    buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
+    buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
 
-    completion = buster.process_input("What is a good recipe for brocolli soup?")
+    completion: Completion = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(completion.answer_text, str)
 
     assert completion.answer_relevant == False
@@ -229,16 +242,17 @@ def test_chatbot_real_data__no_docs_found(database_file):
         "thresh": 1,  # Set threshold very high to be sure no docs are matched
         "max_tokens": 3000,
     }
-    buster_cfg.completion_cfg["no_documents_message"] = "No documents available."
+    buster_cfg.documents_answerer_cfg["no_documents_message"] = "No documents available."
     retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
-    completer: Completer = ChatGPTCompleter(
+    document_answerer = DocumentAnswerer(
+        completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
         documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
         prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
-        **buster_cfg.completion_cfg,
+        **buster_cfg.documents_answerer_cfg,
     )
-    validator: Validator = Validator(**buster_cfg.validator_cfg)
-    buster: Buster = Buster(retriever=retriever, completer=completer, validator=validator)
+    validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
+    buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
 
     completion = buster.process_input("What is backpropagation?")
     assert isinstance(completion.answer_text, str)
