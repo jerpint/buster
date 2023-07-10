@@ -184,6 +184,7 @@ def test_chatbot_real_data__chatGPT(database_file):
     assert isinstance(completion.answer_text, str)
 
     assert completion.answer_relevant == True
+    assert completion.completion_kwargs == buster_cfg.completion_cfg["completion_kwargs"]
 
 
 def test_chatbot_real_data__chatGPT_OOD(database_file):
@@ -218,6 +219,7 @@ def test_chatbot_real_data__chatGPT_OOD(database_file):
     assert isinstance(completion.answer_text, str)
 
     assert completion.answer_relevant == False
+    assert completion.completion_kwargs == buster_cfg.completion_cfg["completion_kwargs"]
 
 
 def test_chatbot_real_data__no_docs_found(database_file):
@@ -245,3 +247,4 @@ def test_chatbot_real_data__no_docs_found(database_file):
 
     assert completion.answer_relevant == False
     assert completion.answer_text == "No documents available."
+    assert completion.completion_kwargs == None

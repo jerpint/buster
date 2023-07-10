@@ -42,12 +42,14 @@ class Completion:
         answer_text: Optional[str] = None,
         answer_relevant: Optional[bool] = None,
         question_relevant: Optional[bool] = None,
+        completion_kwargs: Optional[dict] = None,
         validator=None,
     ):
         self.error = error
         self.user_input = user_input
         self.matched_documents = matched_documents
         self.validator = validator
+        self.completion_kwargs = completion_kwargs
         self._answer_relevant = answer_relevant
         self._question_relevant = question_relevant
 
@@ -170,6 +172,7 @@ class Completion:
             "answer_text": self.answer_text,
             "matched_documents": self.matched_documents,
             "answer_relevant": self.answer_relevant,
+            "completion_kwargs": self.completion_kwargs,
             "question_relevant": self.question_relevant,
             "error": self.error,
         }
@@ -258,6 +261,7 @@ class Completer(ABC):
             user_input=user_input,
             question_relevant=question_relevant,
             validator=validator,
+            completion_kwargs=self.completion_kwargs,
         )
 
         return completion
