@@ -55,6 +55,23 @@ class Completion:
 
         self._validate_arguments(answer_generator, answer_text)
 
+
+    def __repr__(self):
+        class_name = type(self).__name__
+        return (
+            f"{class_name}("
+            f"user_input={self.user_input!r}, "
+            f"error={self.error!r}, "
+            f"matched_documents={self.matched_documents!r}, "
+            f"answer_text={self._answer_text!r}, "
+            f"answer_generator={self.answer_generator!r}, "
+            f"answer_relevant={self._answer_relevant!r}, "
+            f"question_relevant={self.question_relevant!r}, "
+            f"completion_kwargs={self.completion_kwargs!r}, "
+            "),"
+        )
+
+
     def _validate_arguments(self, answer_generator: Optional[Iterator], answer_text: Optional[str]):
         """Sets answer_generator and answer_text properties depending on the provided inputs.
 
