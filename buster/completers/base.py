@@ -308,12 +308,3 @@ class ChatGPTCompleter(Completer):
             error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
             logger.exception("Unknown error when attempting to connect to OpenAI API. See traceback:")
             return error_msg
-
-
-def completer_factory(completer_cfg):
-    name = completer_cfg["name"]
-    completers = {
-        "GPT3": GPT3Completer,
-        "ChatGPT": ChatGPTCompleter,
-    }
-    return completers[name](completer_cfg["completion_kwargs"])
