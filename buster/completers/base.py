@@ -42,12 +42,14 @@ class Completion:
         answer_text: Optional[str] = None,
         answer_relevant: Optional[bool] = None,
         question_relevant: Optional[bool] = None,
+        completion_kwargs: Optional[dict] = None,
         validator=None,
     ):
         self.error = error
         self.user_input = user_input
         self.matched_documents = matched_documents
         self.validator = validator
+        self.completion_kwargs = completion_kwargs
         self._answer_relevant = answer_relevant
         self._question_relevant = question_relevant
 
@@ -171,6 +173,7 @@ class Completion:
             "matched_documents": self.matched_documents,
             "answer_relevant": self.answer_relevant,
             "question_relevant": self.question_relevant,
+            "completion_kwargs": self.completion_kwargs,
             "error": self.error,
         }
         return jsonable_encoder(to_encode, custom_encoder=custom_encoder)
@@ -243,13 +246,14 @@ class DocumentAnswerer:
         logger.info(f"{user_input=}")
 
         if len(matched_documents) == 0:
-            # no document was found, pass the appropriate message instead...
             logger.warning("no documents found...")
 
             # empty dataframe
             matched_documents = pd.DataFrame(columns=matched_documents.columns)
 
-            # because we are proceeding with a completion, we assume the question is relevant.
+            # because we are requesting a completion, we assume the question is relevant.
+            # However, no documents were found, so we pass the no documents found message instead of generating the answer.
+            # The completion does not get triggered, so we do not pass completion kwargs here either.
             completion = self.completion_class(
                 user_input=user_input,
                 answer_text=self.no_documents_message,
@@ -295,6 +299,7 @@ class DocumentAnswerer:
             user_input=user_input,
             question_relevant=question_relevant,
             validator=validator,
+            completion_kwargs=self.completer.completion_kwargs,
         )
 
         return completion

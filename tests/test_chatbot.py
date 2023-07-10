@@ -196,7 +196,10 @@ def test_chatbot_real_data__chatGPT(database_file):
     completion = buster.process_input("What is backpropagation?")
     assert isinstance(completion.answer_text, str)
 
+    assert completion.question_relevant == True
     assert completion.answer_relevant == True
+
+    assert completion.completion_kwargs == buster_cfg.completion_cfg["completion_kwargs"]
 
 
 def test_chatbot_real_data__chatGPT_OOD(database_file):
@@ -230,7 +233,10 @@ def test_chatbot_real_data__chatGPT_OOD(database_file):
     completion: Completion = buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(completion.answer_text, str)
 
+    assert completion.question_relevant == False
     assert completion.answer_relevant == False
+
+    assert completion.completion_kwargs is None
 
 
 def test_chatbot_real_data__no_docs_found(database_file):
@@ -257,5 +263,6 @@ def test_chatbot_real_data__no_docs_found(database_file):
     completion = buster.process_input("What is backpropagation?")
     assert isinstance(completion.answer_text, str)
 
+    assert completion.question_relevant == True
     assert completion.answer_relevant == False
     assert completion.answer_text == "No documents available."
