@@ -264,40 +264,6 @@ class Completer(ABC):
         return completion
 
 
-class GPT3Completer(Completer):
-    # TODO: Adapt...
-    def prepare_prompt(
-        self,
-        system_prompt: str,
-        user_input: str,
-    ) -> str:
-        """
-        Prepare the prompt with prompt engineering.
-        """
-        return system_prompt + user_input
-
-    def complete(self, prompt, user_input, **completion_kwargs):
-        prompt = prompt + user_input
-        try:
-            response = openai.Completion.create(prompt=prompt, **completion_kwargs)
-            self.error = False
-            if completion_kwargs.get("stream") is True:
-
-                def answer_generator():
-                    for chunk in response:
-                        token: str = chunk["choices"][0].get("text")
-                        yield token
-
-                return answer_generator()
-            else:
-                return response["choices"][0]["text"]
-        except Exception as e:
-            logger.exception(e)
-            self.error = True
-            error_msg = "Something went wrong..."
-            return error_msg
-
-
 class ChatGPTCompleter(Completer):
     def complete(self, prompt: str, user_input, **completion_kwargs) -> str | Iterator:
         messages = [
