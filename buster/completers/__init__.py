@@ -1,8 +1,4 @@
-from .base import (
-    ChatGPTCompleter,
-    Completer,
-    Completion,
-)
+from .base import ChatGPTCompleter, Completer, Completion
 
 __all__ = [
     ChatGPTCompleter,
