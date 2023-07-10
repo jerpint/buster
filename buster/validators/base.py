@@ -52,8 +52,6 @@ class Validator(ABC):
             engine=self.embedding_model,
         )
         col = "similarity_to_answer"
-        matched_documents[col] = matched_documents.embedding.apply(
-            lambda x: cosine_similarity(x, answer_embedding) * 100
-        )
+        matched_documents[col] = matched_documents.embedding.apply(lambda x: cosine_similarity(x, answer_embedding))
 
         return matched_documents.sort_values(by=col, ascending=False)
