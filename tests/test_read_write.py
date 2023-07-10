@@ -16,6 +16,7 @@ class MockValidator:
 
 def test_read_write_completion():
     n_samples = 3
+    completion_kwargs = {"param_1": "a"}
     matched_documents = pd.DataFrame.from_dict(
         {
             "title": ["test"] * n_samples,
@@ -32,6 +33,7 @@ def test_read_write_completion():
         answer_text="This is my actual answer",
         matched_documents=matched_documents,
         validator=MockValidator(),
+        completion_kwargs=completion_kwargs,
     )
 
     c_json = c.to_json()
@@ -41,6 +43,7 @@ def test_read_write_completion():
     assert c.answer_text == c_back.answer_text
     assert c.user_input == c_back.user_input
     assert c.answer_relevant == c_back.answer_relevant
+    assert c.completion_kwargs == c_back.completion_kwargs
     for col in c_back.matched_documents.columns.tolist():
         assert col in c.matched_documents.columns.tolist()
         assert c_back.matched_documents[col].tolist() == c.matched_documents[col].tolist()
