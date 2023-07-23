@@ -8,12 +8,13 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
     if len(matched_documents) == 0:
         return ""
 
+    matched_documents.similarity_to_answer = matched_documents.similarity_to_answer * 100
+
     documents_answer_template: str = (
         "📝 Here are the sources I used to answer your question:\n\n{documents}\n\n{footnote}"
     )
     document_template: str = "[🔗 {document.title}]({document.url}), relevance: {document.similarity_to_answer:2.1f} %"
 
-    matched_documents.similarity = matched_documents.similarity * 100
     documents = "\n".join([document_template.format(document=document) for _, document in matched_documents.iterrows()])
     footnote: str = "I'm a bot 🤖 and not always perfect."
 
