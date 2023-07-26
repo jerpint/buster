@@ -1,7 +1,6 @@
 import logging
 
 import pandas as pd
-from deeplake.core.vectorstore import VectorStore
 
 from buster.retriever.base import ALL_SOURCES, Retriever
 
@@ -11,6 +10,8 @@ logging.basicConfig(level=logging.INFO)
 
 class DeepLakeRetriever(Retriever):
     def __init__(self, path, **kwargs):
+        from deeplake.core.vectorstore import VectorStore
+
         super().__init__(**kwargs)
         self.vector_store = VectorStore(
             path=path,
