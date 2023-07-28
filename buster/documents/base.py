@@ -7,8 +7,12 @@ import pandas as pd
 @dataclass
 class DocumentsManager(ABC):
     @abstractmethod
-    def add(self, source: str, df: pd.DataFrame):
-        """Write all documents from the dataframe into the db as a new version."""
+    def add(self, df: pd.DataFrame):
+        """Write all documents from the dataframe into the db as a new version.
+
+        Each entry in the df is expected to have at least the following columns:
+        ["url", "source", "title", "content"]
+        """
         ...
 
     @abstractmethod
