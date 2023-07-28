@@ -2,16 +2,30 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from buster.documents import DocumentsDB
-from buster.retriever import SQLiteRetriever
+from buster.documents import DocumentsDB, DeepLakeDocumentsManager
+from buster.retriever import SQLiteRetriever, DeepLakeRetriever
 
 
 @pytest.mark.parametrize(
-    "documents_manager, retriever, extension",
-    [(DocumentsDB, SQLiteRetriever, "db")],
+    "documents_manager, retriever",
+    [
+        (DocumentsDB, SQLiteRetriever),
+        (DeepLakeDocumentsManager, DeepLakeRetriever),
+    ],
 )
-def test_write_read(tmp_path, documents_manager, retriever, extension):
-    db_path = tmp_path / f"test.{extension}"
+def test_write_read(tmp_path, documents_manager, retriever):
+    retriever_cfg = {
+        "top_k": 3,
+        "thresh": 0.7,
+        "max_tokens": 2000,
+        "embedding_model": "text-embedding-ada-002",
+    }
+    if documents_manager is DocumentsDB:
+        db_path = tmp_path / "test.db"
+        retriever_cfg["db_path"] = db_path
+    elif documents_manager is DeepLakeDocumentsManager:
+        db_path = tmp_path / "deeplake"
+        retriever_cfg["path"] = db_path
 
     db = documents_manager(db_path)
     data = pd.DataFrame.from_dict(
@@ -25,14 +39,6 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
         }
     )
     db.add(df=data)
-
-    retriever_cfg = {
-        "db_path": db_path,
-        "top_k": 3,
-        "thresh": 0.7,
-        "max_tokens": 2000,
-        "embedding_model": "text-embedding-ada-002",
-    }
     db_data = retriever(**retriever_cfg).get_documents("sourceA")
 
     assert db_data["title"].iloc[0] == data["title"].iloc[0]
@@ -43,11 +49,26 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
 
 
 @pytest.mark.parametrize(
-    "documents_manager, retriever, extension",
-    [(DocumentsDB, SQLiteRetriever, "db")],
+    "documents_manager, retriever",
+    [
+        (DocumentsDB, SQLiteRetriever),
+        (DeepLakeDocumentsManager, DeepLakeRetriever),
+    ],
 )
-def test_write_write_read(tmp_path, documents_manager, retriever, extension):
-    db_path = tmp_path / f"test.{extension}"
+def test_write_write_read(tmp_path, documents_manager, retriever):
+    retriever_cfg = {
+        "top_k": 3,
+        "thresh": 0.7,
+        "max_tokens": 2000,
+        "embedding_model": "text-embedding-ada-002",
+    }
+    if documents_manager is DocumentsDB:
+        db_path = tmp_path / "test.db"
+        retriever_cfg["db_path"] = db_path
+    elif documents_manager is DeepLakeDocumentsManager:
+        db_path = tmp_path / "deeplake"
+        retriever_cfg["path"] = db_path
+
     db = documents_manager(db_path)
 
     data_1 = pd.DataFrame.from_dict(
@@ -67,20 +88,13 @@ def test_write_write_read(tmp_path, documents_manager, retriever, extension):
             "title": ["other"],
             "url": ["http://url.com/page.html"],
             "content": ["lorem ipsum"],
-            "embedding": [np.arange(20, dtype=np.float32) / 10 - 2.3],
+            "embedding": [np.arange(10, dtype=np.float32) / 10 - 2.3],
             "source": ["sourceB"],
             "n_tokens": 5,
         }
     )
     db.add(df=data_2)
 
-    retriever_cfg = {
-        "db_path": db_path,
-        "top_k": 3,
-        "thresh": 0.7,
-        "max_tokens": 2000,
-        "embedding_model": "text-embedding-ada-002",
-    }
     db_data = retriever(**retriever_cfg).get_documents("sourceB")
 
     assert len(db_data) == len(data_2)

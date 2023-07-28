@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 import pandas as pd
 
@@ -20,7 +21,14 @@ class DeepLakeRetriever(Retriever):
 
     def get_documents(self, source: str = None):
         """Get all current documents from a given source."""
-        raise NotImplementedError()
+        k = len(self.vector_store)
+
+        # currently this is the only way to retrieve all embeddings in deeplake
+        # generate a dummy embedding and specify top-k equals the length of the vector store.
+        embedding_dim = self.vector_store.tensors()["embedding"].shape[1]
+        dummy_embedding = np.random.random(embedding_dim)
+
+        return self.get_topk_documents(query=None, embedding=dummy_embedding, top_k=k, source=source)
 
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source.
@@ -28,12 +36,24 @@ class DeepLakeRetriever(Retriever):
         If source is None, returns all documents. If source does not exist, returns empty dataframe."""
         raise NotImplementedError()
 
-    def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
+    def get_topk_documents(
+        self,
+        query: str = None,
+        embedding: np.array = None,
+        source: str = None,
+        top_k: int = None,
+        return_tensors: str = "*",
+    ) -> pd.DataFrame:
         """Get the topk documents matching a user's query.
 
         If no matches are found, returns an empty dataframe."""
 
-        query_embedding = self.get_embedding(query, engine=self.embedding_model)
+        if query is not None:
+            query_embedding = self.get_embedding(query, engine=self.embedding_model)
+        elif embedding is not None:
+            query_embedding = embedding
+        else:
+            raise ValueError("must provide either a query or an embedding")
 
         if source is not None:
             logger.info("Applying source {source} filter...")
@@ -45,7 +65,7 @@ class DeepLakeRetriever(Retriever):
             k=top_k,
             embedding=query_embedding,
             exec_option="python",
-            return_tensors="*",
+            return_tensors=return_tensors,
             filter=filter,
         )
         # rename 'score' to 'similarity'
