@@ -36,7 +36,7 @@ class DocumentsService(DocumentsManager):
         """Get the id of a source."""
         return str(self.db.sources.find_one({"name": source})["_id"])
 
-    def add(self, source: str, df: pd.DataFrame):
+    def add(self, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version."""
 
         for source in df.source.unique():
