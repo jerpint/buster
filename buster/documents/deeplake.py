@@ -3,10 +3,8 @@ from typing import Optional
 
 import openai
 import pandas as pd
-
-from buster.utils import zip_contents
-
 from .base import DocumentsManager
+from buster.utils import zip_contents
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -89,18 +87,10 @@ class DeepLakeDocumentsManager(DocumentsManager):
                 metadata=metadata,
             )
 
-    def to_zip(output_path: str = "."):
+    def to_zip(self, output_path: str = "."):
         """Zip the contents of the vector_store_path folder to a .zip file in output_path."""
+        vector_store_path = self.vector_store_path
         logger.info(f"Compressing {vector_store_path}...")
         zip_file_path = zip_contents(input_path=vector_store_path, output_path=output_path)
         logger.info(f"Compressed {vector_store_path} to {zip_file_path}.")
         return zip_file_path
-
-
-if __name__ == "__main__":
-    vector_store_path = "deeplake_store"
-    csv_file = "data/chunks_preprocessed.csv"
-    overwrite = True
-
-    docs_manager = DeepLakeDocumentsManager(vector_store_path=vector_store_path, overwrite=True)
-    zip_file = docs_manager.to_zip()
