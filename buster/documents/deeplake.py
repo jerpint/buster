@@ -3,8 +3,10 @@ from typing import Optional
 
 import openai
 import pandas as pd
-from .base import DocumentsManager
+
 from buster.utils import zip_contents
+
+from .base import DocumentsManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

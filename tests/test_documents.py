@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from buster.documents import DocumentsDB, DeepLakeDocumentsManager
-from buster.retriever import SQLiteRetriever, DeepLakeRetriever
+from buster.documents import DeepLakeDocumentsManager, DocumentsDB
+from buster.retriever import DeepLakeRetriever, SQLiteRetriever
 
 
 @pytest.mark.parametrize(
