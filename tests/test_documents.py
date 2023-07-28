@@ -19,11 +19,12 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
             "title": ["test"],
             "url": ["http://url.com"],
             "content": ["cool text"],
+            "source": ["sourceA"],
             "embedding": [np.arange(10, dtype=np.float32) - 0.3],
-            "n_tokens": [10],
+            "n_tokens": 5,
         }
     )
-    db.add(source="test", df=data)
+    db.add(df=data)
 
     retriever_cfg = {
         "db_path": db_path,
@@ -32,13 +33,13 @@ def test_write_read(tmp_path, documents_manager, retriever, extension):
         "max_tokens": 2000,
         "embedding_model": "text-embedding-ada-002",
     }
-    db_data = retriever(**retriever_cfg).get_documents("test")
+    db_data = retriever(**retriever_cfg).get_documents("sourceA")
 
     assert db_data["title"].iloc[0] == data["title"].iloc[0]
     assert db_data["url"].iloc[0] == data["url"].iloc[0]
     assert db_data["content"].iloc[0] == data["content"].iloc[0]
+    assert db_data["source"].iloc[0] == data["source"].iloc[0]
     assert np.allclose(db_data["embedding"].iloc[0], data["embedding"].iloc[0])
-    assert db_data["n_tokens"].iloc[0] == data["n_tokens"].iloc[0]
 
 
 @pytest.mark.parametrize(
@@ -55,10 +56,11 @@ def test_write_write_read(tmp_path, documents_manager, retriever, extension):
             "url": ["http://url.com"],
             "content": ["cool text"],
             "embedding": [np.arange(10, dtype=np.float32) - 0.3],
-            "n_tokens": [10],
+            "source": ["sourceA"],
+            "n_tokens": 10,
         }
     )
-    db.add(source="test", df=data_1)
+    db.add(df=data_1)
 
     data_2 = pd.DataFrame.from_dict(
         {
@@ -66,10 +68,11 @@ def test_write_write_read(tmp_path, documents_manager, retriever, extension):
             "url": ["http://url.com/page.html"],
             "content": ["lorem ipsum"],
             "embedding": [np.arange(20, dtype=np.float32) / 10 - 2.3],
-            "n_tokens": [20],
+            "source": ["sourceB"],
+            "n_tokens": 5,
         }
     )
-    db.add(source="test", df=data_2)
+    db.add(df=data_2)
 
     retriever_cfg = {
         "db_path": db_path,
@@ -78,14 +81,13 @@ def test_write_write_read(tmp_path, documents_manager, retriever, extension):
         "max_tokens": 2000,
         "embedding_model": "text-embedding-ada-002",
     }
-    db_data = retriever(**retriever_cfg).get_documents("test")
+    db_data = retriever(**retriever_cfg).get_documents("sourceB")
 
     assert len(db_data) == len(data_2)
     assert db_data["title"].iloc[0] == data_2["title"].iloc[0]
     assert db_data["url"].iloc[0] == data_2["url"].iloc[0]
     assert db_data["content"].iloc[0] == data_2["content"].iloc[0]
     assert np.allclose(db_data["embedding"].iloc[0], data_2["embedding"].iloc[0])
-    assert db_data["n_tokens"].iloc[0] == data_2["n_tokens"].iloc[0]
 
 
 def test_update_source(tmp_path):
@@ -93,7 +95,7 @@ def test_update_source(tmp_path):
     db_path = tmp_path / "test.db"
     db = DocumentsDB(db_path)
 
-    db.update_source(source="test", display_name=display_name)
+    db.update_source(source="sourceA", display_name=display_name)
 
     retriever_cfg = {
         "db_path": db_path,
@@ -103,6 +105,6 @@ def test_update_source(tmp_path):
         "embedding_model": "text-embedding-ada-002",
     }
 
-    returned_display_name = SQLiteRetriever(**retriever_cfg).get_source_display_name("test")
+    returned_display_name = SQLiteRetriever(**retriever_cfg).get_source_display_name("sourceA")
 
     assert display_name == returned_display_name
