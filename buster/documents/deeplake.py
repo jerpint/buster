@@ -3,7 +3,6 @@ from typing import Optional
 
 import openai
 import pandas as pd
-from deeplake.core.vectorstore import VectorStore
 from utils import zip_contents
 
 logger = logging.getLogger(__name__)
@@ -50,6 +49,8 @@ from base import DocumentsManager
 
 class DeepLakeDocumentsManager(DocumentsManager):
     def __init__(self, vector_store_path, **vector_store_kwargs):
+        from deeplake.core.vectorstore import VectorStore
+
         self.vector_store_path = vector_store_path
         self.vector_store = VectorStore(
             path=vector_store_path,
