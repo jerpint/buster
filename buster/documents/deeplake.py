@@ -54,7 +54,7 @@ class DeepLakeDocumentsManager(DocumentsManager):
         """Update the display name and/or note of a source. Also create the source if it does not exist."""
         raise NotImplementedError()
 
-    def add(self, df: pd.DataFrame):
+    def add(self, df: pd.DataFrame, **add_kwargs):
         """Write all documents from the dataframe into the db as a new version.
 
         Each entry in the df is expected to have at least the following columns:
@@ -66,7 +66,9 @@ class DeepLakeDocumentsManager(DocumentsManager):
             assert col in df.columns, "Check that all required columns are present."
         # extract the chunked text + metadata
         metadata = extract_metadata(
-            df.drop(columns=["content", "embedding"]),  # ignoring the content and embedding column for metadata
+            df.drop(
+                columns=["content", "embedding"], errors="ignore"
+            ),  # drop the content and embedding column for metadata if present
         )
         chunked_text = df.content.to_list()
 
@@ -77,6 +79,7 @@ class DeepLakeDocumentsManager(DocumentsManager):
                 text=chunked_text,
                 embedding=embeddings,
                 metadata=metadata,
+                **add_kwargs,
             )
 
         else:
@@ -87,6 +90,7 @@ class DeepLakeDocumentsManager(DocumentsManager):
                 embedding_function=openai_embedding_function,
                 embedding_data=chunked_text,
                 metadata=metadata,
+                **add_kwargs,
             )
 
     def to_zip(self, output_path: str = "."):
