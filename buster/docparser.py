@@ -156,7 +156,8 @@ def documents_to_db(
     logger.info("Preparing database...")
     sources = documents["source"].unique()
     for source in sources:
-        documents_manager.add(source, documents)
+        df = documents[documents.source == source]
+        documents_manager.add(df)
     logger.info(f"Documents saved to documents manager: {documents_manager}")
 
 

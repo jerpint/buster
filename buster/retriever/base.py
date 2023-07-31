@@ -70,6 +70,7 @@ class Retriever(ABC):
         assert "similarity" in matched_documents.columns
         assert "embedding" in matched_documents.columns
         assert "content" in matched_documents.columns
+        assert "title" in matched_documents.columns
 
         # filter out matched_documents using a threshold
         matched_documents = self.threshold_documents(matched_documents, thresh)

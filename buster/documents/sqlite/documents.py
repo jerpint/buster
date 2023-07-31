@@ -130,20 +130,22 @@ class DocumentsDB(DocumentsManager):
         )
         return cid
 
-    def add(self, source: str, df: pd.DataFrame):
+    def add(self, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version."""
-        data = sorted(df.itertuples(), key=lambda chunk: (chunk.url, chunk.title))
-        sections = []
-        size = 0
-        for (url, title), chunks in itertools.groupby(data, lambda chunk: (chunk.url, chunk.title)):
-            chunks = [Chunk(chunk.content, chunk.n_tokens, chunk.embedding) for chunk in chunks]
-            size = max(size, max(len(chunk.content) for chunk in chunks))
-            content = "".join(chunk.content for chunk in chunks)
-            sections.append((Section(title, url, content), chunks))
+        for source in df.source.unique():
+            df_source = df[df.source == source]
+            data = sorted(df_source.itertuples(), key=lambda chunk: (chunk.url, chunk.title))
+            sections = []
+            size = 0
+            for (url, title), chunks in itertools.groupby(data, lambda chunk: (chunk.url, chunk.title)):
+                chunks = [Chunk(chunk.content, chunk.n_tokens, chunk.embedding) for chunk in chunks]
+                size = max(size, max(len(chunk.content) for chunk in chunks))
+                content = "".join(chunk.content for chunk in chunks)
+                sections.append((Section(title, url, content), chunks))
 
-        sid, vid = self.add_parse(source, (section for section, _ in sections))
-        self.add_chunking(sid, vid, size, (chunks for _, chunks in sections))
-        self.conn.commit()
+            sid, vid = self.add_parse(source, (section for section, _ in sections))
+            self.add_chunking(sid, vid, size, (chunks for _, chunks in sections))
+            self.conn.commit()
 
     def update_source(self, source: str, display_name: str = None, note: str = None):
         """Update the display name and/or note of a source. Also create the source if it does not exist."""

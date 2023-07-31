@@ -36,22 +36,25 @@ class DocumentsService(DocumentsManager):
         """Get the id of a source."""
         return str(self.db.sources.find_one({"name": source})["_id"])
 
-    def add(self, source: str, df: pd.DataFrame):
+    def add(self, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version."""
-        source_exists = self.db.sources.find_one({"name": source})
-        if source_exists is None:
-            self.db.sources.insert_one({"name": source})
 
-        source_id = self.get_source_id(source)
+        for source in df.source.unique():
+            source_exists = self.db.sources.find_one({"name": source})
+            if source_exists is None:
+                self.db.sources.insert_one({"name": source})
 
-        for row in df.to_dict(orient="records"):
-            embedding = row["embedding"].tolist()
-            document = row.copy()
-            document.pop("embedding")
-            document["source_id"] = source_id
+            source_id = self.get_source_id(source)
 
-            document_id = str(self.db.documents.insert_one(document).inserted_id)
-            self.index.upsert([(document_id, embedding, {"source": source})])
+            df_source = df[df.source == source]
+            for row in df_source.to_dict(orient="records"):
+                embedding = row["embedding"].tolist()
+                document = row.copy()
+                document.pop("embedding")
+                document["source_id"] = source_id
+
+                document_id = str(self.db.documents.insert_one(document).inserted_id)
+                self.index.upsert([(document_id, embedding, {"source": source})])
 
     def update_source(self, source: str, display_name: str = None, note: str = None):
         """Update the display name and/or note of a source. Also create the source if it does not exist."""
