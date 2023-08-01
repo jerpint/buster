@@ -1,7 +1,9 @@
 import cfg
 import gradio as gr
 import pandas as pd
-from cfg import buster
+from cfg import setup_buster
+
+buster = setup_buster(cfg.buster_cfg)
 
 
 def format_sources(matched_documents: pd.DataFrame) -> str:
