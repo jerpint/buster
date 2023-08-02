@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from buster.documents import DeepLakeDocumentsManager
+from buster.documents_manager import DeepLakeDocumentsManager
 from buster.retriever import DeepLakeRetriever
 
 
@@ -103,7 +103,7 @@ def test_generate_embeddings(tmp_path, monkeypatch):
     # Patch the get_embedding function to return a fixed, fake embedding
     fake_embedding = [-0.005, 0.0018]
     monkeypatch.setattr(
-        "buster.documents.DeepLakeDocumentsManager._compute_embeddings",
+        "buster.documents_manager.DeepLakeDocumentsManager._compute_embeddings",
         lambda self, ser: ser.apply(lambda y: fake_embedding),
     )
 

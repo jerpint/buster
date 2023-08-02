@@ -9,7 +9,7 @@ import pytest
 
 from buster.busterbot import Buster, BusterConfig
 from buster.completers import ChatGPTCompleter, Completer, Completion, DocumentAnswerer
-from buster.documents import DeepLakeDocumentsManager
+from buster.documents_manager import DeepLakeDocumentsManager
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import DeepLakeRetriever, Retriever

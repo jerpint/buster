@@ -29,7 +29,7 @@ You will first ingest the documents to be ready for buster. In this example, we 
 
 
     import pandas as pd
-    from buster.documents import DeepLakeDocumentsManager
+    from buster.documents_manager import DeepLakeDocumentsManager
 
     # Read the csv
     df = pd.read_csv("stackoverflow.csv")

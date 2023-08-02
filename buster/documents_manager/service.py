@@ -5,7 +5,7 @@ import pinecone
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-from buster.documents.base import DocumentsManager
+from buster.documents_manager.base import DocumentsManager
 
 
 class DocumentsService(DocumentsManager):
