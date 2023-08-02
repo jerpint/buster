@@ -32,8 +32,8 @@ class DeepLakeDocumentsManager(DocumentsManager):
             **vector_store_kwargs,
         )
 
-    def _compute_embeddings(self, df) -> pd.Series:
-        embeddings = df.content.apply(lambda x: get_embedding_openai(x, model="text-embedding-ada-002"))
+    def _compute_embeddings(self, ser: pd.Series) -> pd.Series:
+        embeddings = ser.apply(lambda x: get_embedding_openai(x, model="text-embedding-ada-002"))
         return embeddings
 
     @classmethod
@@ -57,7 +57,7 @@ class DeepLakeDocumentsManager(DocumentsManager):
         Each entry in the df is expected to have at least the following columns:
         ["content", "embedding"]
 
-        You can pass precomputed embeddings in an "embedding" column, otherwise it will compute embeddings for you.
+        Embeddings will have been precomputed in the self.add() method, which calls this one.
         """
         # Embedding should already be computed in the .add method
         assert "embedding" in df.columns, "expected column=embedding in the dataframe"

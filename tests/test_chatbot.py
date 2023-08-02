@@ -12,7 +12,7 @@ from buster.completers import ChatGPTCompleter, Completer, Completion, DocumentA
 from buster.documents import DeepLakeDocumentsManager
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
-from buster.retriever import Retriever, DeepLakeRetriever
+from buster.retriever import DeepLakeRetriever, Retriever
 from buster.tokenizers.gpt import GPTTokenizer
 from buster.validators import QuestionAnswerValidator, Validator
 

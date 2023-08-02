@@ -30,7 +30,10 @@ class DocumentsManager(ABC):
             raise ValueError(f"DataFrame is missing one or more of {self.required_columns=}")
 
     @abstractmethod
-    def _compute_embeddings(self, df) -> pd.DataFrame:
+    def _compute_embeddings(self, ser: pd.Series) -> pd.Series:
+        """Compute the embeddings of a series, each entry expected to be a string.
+
+        Returns a Series with the actual embeddings."""
         ...
 
     def add(self, df: pd.DataFrame):
@@ -41,7 +44,7 @@ class DocumentsManager(ABC):
         # Check if embeddings are present, computes them if not
         if "embedding" not in df.columns:
             logger.info("Embeddings not present in the dataframe, computing embeddings")
-            df["embedding"] = self._compute_embeddings(df)
+            df["embedding"] = self._compute_embeddings(df["content"])
 
         else:
             logger.info("Embeddings already present, skipping computation of embeddings")

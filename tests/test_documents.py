@@ -2,16 +2,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from buster.documents import DeepLakeDocumentsManager, DocumentsDB
-from buster.retriever import DeepLakeRetriever, SQLiteRetriever
+from buster.documents import DeepLakeDocumentsManager
+from buster.retriever import DeepLakeRetriever
 
 
 @pytest.mark.parametrize(
     "documents_manager, retriever",
-    [
-        (DocumentsDB, SQLiteRetriever),
-        (DeepLakeDocumentsManager, DeepLakeRetriever),
-    ],
+    [(DeepLakeDocumentsManager, DeepLakeRetriever)],
 )
 def test_write_read(tmp_path, documents_manager, retriever):
     retriever_cfg = {
@@ -20,14 +17,9 @@ def test_write_read(tmp_path, documents_manager, retriever):
         "max_tokens": 2000,
         "embedding_model": "text-embedding-ada-002",
     }
-    if documents_manager is DocumentsDB:
-        db_path = tmp_path / "test.db"
-        retriever_cfg["db_path"] = db_path
-    elif documents_manager is DeepLakeDocumentsManager:
-        db_path = tmp_path / "deeplake"
-        retriever_cfg["path"] = db_path
+    dm_path = tmp_path / "tmp_dir_2"
+    retriever_cfg["path"] = dm_path
 
-    db = documents_manager(db_path)
     data = pd.DataFrame.from_dict(
         {
             "title": ["test"],
@@ -38,20 +30,22 @@ def test_write_read(tmp_path, documents_manager, retriever):
             "n_tokens": 5,
         }
     )
-    db.add(df=data)
-    db_data = retriever(**retriever_cfg).get_documents("sourceA")
 
-    assert db_data["title"].iloc[0] == data["title"].iloc[0]
-    assert db_data["url"].iloc[0] == data["url"].iloc[0]
-    assert db_data["content"].iloc[0] == data["content"].iloc[0]
-    assert db_data["source"].iloc[0] == data["source"].iloc[0]
-    assert np.allclose(db_data["embedding"].iloc[0], data["embedding"].iloc[0])
+    dm = DeepLakeDocumentsManager(vector_store_path=dm_path)
+
+    dm.add(df=data)
+    dm_data = retriever(**retriever_cfg).get_documents("sourceA")
+
+    assert dm_data["title"].iloc[0] == data["title"].iloc[0]
+    assert dm_data["url"].iloc[0] == data["url"].iloc[0]
+    assert dm_data["content"].iloc[0] == data["content"].iloc[0]
+    assert dm_data["source"].iloc[0] == data["source"].iloc[0]
+    assert np.allclose(dm_data["embedding"].iloc[0], data["embedding"].iloc[0])
 
 
 @pytest.mark.parametrize(
     "documents_manager, retriever",
     [
-        (DocumentsDB, SQLiteRetriever),
         (DeepLakeDocumentsManager, DeepLakeRetriever),
     ],
 )
@@ -62,12 +56,8 @@ def test_write_write_read(tmp_path, documents_manager, retriever):
         "max_tokens": 2000,
         "embedding_model": "text-embedding-ada-002",
     }
-    if documents_manager is DocumentsDB:
-        db_path = tmp_path / "test.db"
-        retriever_cfg["db_path"] = db_path
-    elif documents_manager is DeepLakeDocumentsManager:
-        db_path = tmp_path / "deeplake"
-        retriever_cfg["path"] = db_path
+    db_path = tmp_path / "tmp_dir"
+    retriever_cfg["path"] = db_path
 
     db = documents_manager(db_path)
 
@@ -104,21 +94,37 @@ def test_write_write_read(tmp_path, documents_manager, retriever):
     assert np.allclose(db_data["embedding"].iloc[0], data_2["embedding"].iloc[0])
 
 
-def test_update_source(tmp_path):
-    display_name = "Super Test"
-    db_path = tmp_path / "test.db"
-    db = DocumentsDB(db_path)
+def test_generate_embeddings(tmp_path, monkeypatch):
+    # Create fake data
+    df = pd.DataFrame.from_dict(
+        {"title": ["test"], "url": ["http://url.com"], "content": ["cool text"], "source": ["my_source"]}
+    )
 
-    db.update_source(source="sourceA", display_name=display_name)
+    # Patch the get_embedding function to return a fixed, fake embedding
+    fake_embedding = [-0.005, 0.0018]
+    monkeypatch.setattr(
+        "buster.documents.DeepLakeDocumentsManager._compute_embeddings",
+        lambda self, ser: ser.apply(lambda y: fake_embedding),
+    )
+
+    # Generate embeddings, store in a file
+    path = tmp_path / f"test_document_embeddings"
+    dm = DeepLakeDocumentsManager(path)
+    dm.add(df)
+
+    # Read the embeddings from the file
 
     retriever_cfg = {
-        "db_path": db_path,
+        "path": path,
         "top_k": 3,
-        "thresh": 0.7,
-        "max_tokens": 2000,
+        "thresh": 0.85,
+        "max_tokens": 3000,
         "embedding_model": "text-embedding-ada-002",
     }
+    read_df = DeepLakeRetriever(**retriever_cfg).get_documents("my_source")
 
-    returned_display_name = SQLiteRetriever(**retriever_cfg).get_source_display_name("sourceA")
-
-    assert display_name == returned_display_name
+    # Check all the values are correct across the files
+    assert df["title"].iloc[0] == df["title"].iloc[0] == read_df["title"].iloc[0]
+    assert df["url"].iloc[0] == df["url"].iloc[0] == read_df["url"].iloc[0]
+    assert df["content"].iloc[0] == df["content"].iloc[0] == read_df["content"].iloc[0]
+    assert np.allclose(fake_embedding, read_df["embedding"].iloc[0])
