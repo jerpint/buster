@@ -1,21 +1,61 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import pandas as pd
+import logging
 
 import pandas as pd
+import numpy as np
+import openai
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+EMBEDDING_MODEL = "text-embedding-ada-002"
+REQUIRED_COLUMNS = ["url", "source", "title", "content"]
+
+
+def get_embedding_openai(text, model="text-embedding-ada-002"):
+    text = text.replace("\n", " ")
+    return np.array(openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"], dtype=np.float32)
 
 
 @dataclass
 class DocumentsManager(ABC):
-    @abstractmethod
-    def add(self, df: pd.DataFrame):
-        """Write all documents from the dataframe into the db as a new version.
+    def _check_required_columns(self, df: pd.DataFrame):
+        """Each entry in the df is expected to have at least the following columns:
 
-        Each entry in the df is expected to have at least the following columns:
         ["url", "source", "title", "content"]
         """
-        ...
+        if not all(col in df.columns for col in self.required_columns):
+            raise ValueError(f"DataFrame is missing one or more of {self.required_columns=}")
 
     @abstractmethod
-    def update_source(self, source: str, display_name: str = None, note: str = None):
-        """Update the display name and/or note of a source. Also create the source if it does not exist."""
+    def _compute_embeddings(self, df) -> pd.DataFrame:
+        ...
+
+    def add(self, df: pd.DataFrame):
+        """Write all documents from the DataFrame into the db as a new version."""
+
+        self._check_required_columns(df)
+
+        # Check if embeddings are present, computes them if not
+        if "embedding" not in df.columns:
+            logger.info("Embeddings not present in the dataframe, computing embeddings")
+            df["embedding"] = self._compute_embeddings(df)
+
+            from IPython import embed
+
+            embed(colors="neutral")
+
+        else:
+            logger.info("Embeddings already present, skipping computation of embeddings")
+
+        self._add_documents(df)
+
+    @abstractmethod
+    def _add_documents(self, df: pd.DataFrame):
+        """Abstract method to be implemented by each inherited member.
+
+        This method should handle the actual process of adding documents to the database.
+        """
         ...

@@ -7,91 +7,74 @@ import pandas as pd
 from buster.utils import zip_contents
 
 from .base import DocumentsManager
+from .base import get_embedding_openai, REQUIRED_COLUMNS
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def openai_embedding_function(texts, model="text-embedding-ada-002"):
-    if isinstance(texts, str):
-        texts = [texts]
-
-    texts = [t.replace("\n", " ") for t in texts]
-    return [data["embedding"] for data in openai.Embedding.create(input=texts, model=model)["data"]]
-
-
-def extract_metadata(df: pd.DataFrame) -> dict:
-    """extract the metadata from the dataframe in deeplake dict format"""
-
-    columns = list(df.columns)
-
-    metadata = df.apply(
-        lambda x: {col: x[col] for col in columns},
-        axis=1,
-    ).to_list()
-    return metadata
-
-
 def read_csv(filename: str):
     """Assumes a pre-chunked csv file is provided with expected columns."""
     df = pd.read_csv(filename)
-    for col in ["url", "source", "title", "content"]:
-        assert col in df.columns
+    for col in REQUIRED_COLUMNS:
+        assert col in df.columns, f"{col} not found in csv."
     return df
 
 
 class DeepLakeDocumentsManager(DocumentsManager):
-    def __init__(self, vector_store_path, **vector_store_kwargs):
+    def __init__(self, vector_store_path, required_columns=REQUIRED_COLUMNS, **vector_store_kwargs):
+
         from deeplake.core.vectorstore import VectorStore
 
+        self.required_columns = required_columns
         self.vector_store_path = vector_store_path
         self.vector_store = VectorStore(
             path=self.vector_store_path,
             **vector_store_kwargs,
         )
 
-    def update_source(self, source: str, display_name: str = None, note: str = None):
-        """Update the display name and/or note of a source. Also create the source if it does not exist."""
-        raise NotImplementedError()
+    def _compute_embeddings(self, df) -> pd.Series:
+        embeddings = df.content.apply(lambda x: get_embedding_openai(x, model="text-embedding-ada-002"))
+        return embeddings
 
-    def add(self, df: pd.DataFrame, **add_kwargs):
+    @classmethod
+    def _extract_metadata(cls, df: pd.DataFrame) -> dict:
+        """extract the metadata from the dataframe in deeplake dict format"""
+
+        # Ignore the content and embedding column for metadata
+        df = df.drop(columns=["content", "embedding"], errors="ignore")
+
+        columns = list(df.columns)
+
+        metadata = df.apply(
+            lambda x: {col: x[col] for col in columns},
+            axis=1,
+        ).to_list()
+        return metadata
+
+    def _add_documents(self, df: pd.DataFrame, **add_kwargs):
         """Write all documents from the dataframe into the db as a new version.
 
         Each entry in the df is expected to have at least the following columns:
-        ["url", "source", "title", "content"]
+        ["content", "embedding"]
 
         You can pass precomputed embeddings in an "embedding" column, otherwise it will compute embeddings for you.
         """
-        for col in ["url", "source", "title", "content"]:
-            assert col in df.columns, "Check that all required columns are present."
+        # Embedding should already be computed in the .add method
+        assert "embedding" in df.columns, "expected column=embedding in the dataframe"
+
         # extract the chunked text + metadata
-        metadata = extract_metadata(
-            df.drop(
-                columns=["content", "embedding"], errors="ignore"
-            ),  # drop the content and embedding column for metadata if present
-        )
+        metadata = self._extract_metadata(df)
+
         chunked_text = df.content.to_list()
 
-        if "embedding" in df.columns:
-            logger.info("embeddings provided in csv, not computing them.")
-            embeddings = df.embedding.to_list()
-            self.vector_store.add(
-                text=chunked_text,
-                embedding=embeddings,
-                metadata=metadata,
-                **add_kwargs,
-            )
-
-        else:
-            # compute and add the embeddings
-            logger.info("Computing and adding embeddings...")
-            self.vector_store.add(
-                text=chunked_text,
-                embedding_function=openai_embedding_function,
-                embedding_data=chunked_text,
-                metadata=metadata,
-                **add_kwargs,
-            )
+        embeddings = df.embedding.to_list()
+        self.vector_store.add(
+            text=chunked_text,
+            embedding=embeddings,
+            metadata=metadata,
+            **add_kwargs,
+        )
 
     def to_zip(self, output_path: str = "."):
         """Zip the contents of the vector_store_path folder to a .zip file in output_path."""
