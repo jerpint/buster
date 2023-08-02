@@ -43,10 +43,6 @@ class DocumentsManager(ABC):
             logger.info("Embeddings not present in the dataframe, computing embeddings")
             df["embedding"] = self._compute_embeddings(df)
 
-            from IPython import embed
-
-            embed(colors="neutral")
-
         else:
             logger.info("Embeddings already present, skipping computation of embeddings")
 

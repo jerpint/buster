@@ -37,7 +37,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
         },
     },
     retriever_cfg={
-        "db_path": "documents.db",
+        "path": "deeplake_store",
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,

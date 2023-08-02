@@ -23,7 +23,6 @@ def read_csv(filename: str):
 
 class DeepLakeDocumentsManager(DocumentsManager):
     def __init__(self, vector_store_path, required_columns=REQUIRED_COLUMNS, **vector_store_kwargs):
-
         from deeplake.core.vectorstore import VectorStore
 
         self.required_columns = required_columns

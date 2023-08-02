@@ -9,11 +9,10 @@ import pytest
 
 from buster.busterbot import Buster, BusterConfig
 from buster.completers import ChatGPTCompleter, Completer, Completion, DocumentAnswerer
-from buster.docparser import generate_embeddings
-from buster.documents.sqlite.documents import DocumentsDB
+from buster.documents import DeepLakeDocumentsManager
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
-from buster.retriever import Retriever, SQLiteRetriever
+from buster.retriever import Retriever, DeepLakeRetriever
 from buster.tokenizers.gpt import GPTTokenizer
 from buster.validators import QuestionAnswerValidator, Validator
 
@@ -97,9 +96,9 @@ class MockAnswerer(Completer):
 class MockRetriever(Retriever):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        db_path = kwargs["db_path"]
+        path = kwargs["path"]
 
-        self.db_path = db_path
+        self.path = path
 
         n_samples = 100
         self.documents = pd.DataFrame.from_dict(
@@ -145,27 +144,24 @@ class MockValidator(Validator):
 
 
 @pytest.fixture(scope="session")
-def database_file(tmp_path_factory):
-    # Create a temporary directory and file for the database
-    db_file = tmp_path_factory.mktemp("data").joinpath("documents.db")
+def vector_store_path(tmp_path_factory):
+    # Create a temporary directory and folder for the database manager
+    dm_path = tmp_path_factory.mktemp("data").joinpath("deeplake_store")
 
-    # Generate the actual embeddings
-    documents_manager = DocumentsDB(db_file)
-    documents = pd.read_csv(DOCUMENTS_CSV)
-    documents = generate_embeddings(documents, documents_manager)
-    yield db_file
-
-    # Teardown: Remove the temporary database file
-    db_file.unlink()
+    # Add the documents (will generate embeddings)
+    dm = DeepLakeDocumentsManager(vector_store_path=dm_path)
+    df = pd.read_csv(DOCUMENTS_CSV)
+    dm.add(df)
+    return dm_path
 
 
 def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
 
-    db_path = tmp_path / "not_a_real_file.tar.gz"
+    path = tmp_path / "not_a_real_file.tar.gz"
 
     buster_cfg = copy.deepcopy(buster_cfg_template)
-    buster_cfg.retriever_cfg["db_path"] = db_path
+    buster_cfg.retriever_cfg["path"] = path
     buster_cfg.completion_cfg = {
         "expected_answer": gpt_expected_answer,
     }
@@ -179,11 +175,11 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     assert completion.answer_text.startswith(gpt_expected_answer)
 
 
-def test_chatbot_real_data__chatGPT(database_file):
+def test_chatbot_real_data__chatGPT(vector_store_path):
     buster_cfg = copy.deepcopy(buster_cfg_template)
-    buster_cfg.retriever_cfg["db_path"] = database_file
+    buster_cfg.retriever_cfg["path"] = vector_store_path
 
-    retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
+    retriever: Retriever = DeepLakeRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     document_answerer = DocumentAnswerer(
         completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
@@ -202,9 +198,9 @@ def test_chatbot_real_data__chatGPT(database_file):
     assert completion.completion_kwargs == buster_cfg.completion_cfg["completion_kwargs"]
 
 
-def test_chatbot_real_data__chatGPT_OOD(database_file):
+def test_chatbot_real_data__chatGPT_OOD(vector_store_path):
     buster_cfg = copy.deepcopy(buster_cfg_template)
-    buster_cfg.retriever_cfg["db_path"] = database_file
+    buster_cfg.retriever_cfg["path"] = vector_store_path
     buster_cfg.prompt_formatter_cfg = {
         "max_tokens": 3500,
         "text_before_docs": (
@@ -220,7 +216,7 @@ def test_chatbot_real_data__chatGPT_OOD(database_file):
         "text_after_docs": "Only use these documents as reference:\n",
     }
 
-    retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
+    retriever: Retriever = DeepLakeRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     document_answerer = DocumentAnswerer(
         completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
@@ -239,30 +235,31 @@ def test_chatbot_real_data__chatGPT_OOD(database_file):
     assert completion.completion_kwargs is None
 
 
-def test_chatbot_real_data__no_docs_found(database_file):
-    buster_cfg = copy.deepcopy(buster_cfg_template)
-    buster_cfg.retriever_cfg = {
-        "db_path": database_file,
-        "embedding_model": "text-embedding-ada-002",
-        "top_k": 3,
-        "thresh": 1,  # Set threshold very high to be sure no docs are matched
-        "max_tokens": 3000,
-    }
-    buster_cfg.documents_answerer_cfg["no_documents_message"] = "No documents available."
-    retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
-    tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
-    document_answerer = DocumentAnswerer(
-        completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
-        documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
-        prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
-        **buster_cfg.documents_answerer_cfg,
-    )
-    validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
-    buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
+def test_chatbot_real_data__no_docs_found(vector_store_path):
+    with pytest.warns():
+        buster_cfg = copy.deepcopy(buster_cfg_template)
+        buster_cfg.retriever_cfg = {
+            "path": vector_store_path,
+            "embedding_model": "text-embedding-ada-002",
+            "top_k": 3,
+            "thresh": 1,  # Set threshold very high to be sure no docs are matched
+            "max_tokens": 3000,
+        }
+        buster_cfg.documents_answerer_cfg["no_documents_message"] = "No documents available."
+        retriever: Retriever = DeepLakeRetriever(**buster_cfg.retriever_cfg)
+        tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
+        document_answerer = DocumentAnswerer(
+            completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
+            documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+            prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
+            **buster_cfg.documents_answerer_cfg,
+        )
+        validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
+        buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
 
-    completion = buster.process_input("What is backpropagation?")
-    assert isinstance(completion.answer_text, str)
+        completion = buster.process_input("What is backpropagation?")
+        assert isinstance(completion.answer_text, str)
 
-    assert completion.question_relevant == True
-    assert completion.answer_relevant == False
-    assert completion.answer_text == "No documents available."
+        assert completion.question_relevant == True
+        assert completion.answer_relevant == False
+        assert completion.answer_text == "No documents available."
