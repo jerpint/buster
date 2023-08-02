@@ -6,8 +6,7 @@ import pandas as pd
 
 from buster.utils import zip_contents
 
-from .base import DocumentsManager
-from .base import get_embedding_openai, REQUIRED_COLUMNS
+from .base import REQUIRED_COLUMNS, DocumentsManager, get_embedding_openai
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

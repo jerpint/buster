@@ -1,11 +1,10 @@
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-import pandas as pd
-import logging
 
-import pandas as pd
 import numpy as np
 import openai
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
