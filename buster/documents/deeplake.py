@@ -22,11 +22,11 @@ def read_csv(filename: str):
 
 
 class DeepLakeDocumentsManager(DocumentsManager):
-    def __init__(self, vector_store_path, required_columns=REQUIRED_COLUMNS, **vector_store_kwargs):
+    def __init__(self, vector_store_path: str ="deeplake_store", required_columns=REQUIRED_COLUMNS, **vector_store_kwargs):
         from deeplake.core.vectorstore import VectorStore
 
-        self.required_columns = required_columns
         self.vector_store_path = vector_store_path
+        self.required_columns = required_columns
         self.vector_store = VectorStore(
             path=self.vector_store_path,
             **vector_store_kwargs,

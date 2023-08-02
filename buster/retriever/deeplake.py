@@ -56,7 +56,7 @@ class DeepLakeRetriever(Retriever):
             raise ValueError("must provide either a query or an embedding")
 
         if source is not None:
-            logger.info("Applying source {source} filter...")
+            logger.info(f"Applying source {source} filter...")
             filter = {"metadata": {"source": source}}
         else:
             filter = None

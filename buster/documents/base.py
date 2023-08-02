@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 EMBEDDING_MODEL = "text-embedding-ada-002"
-REQUIRED_COLUMNS = ["url", "source", "title", "content"]
+REQUIRED_COLUMNS = ["url", "title", "content", "source"]
 
 
 def get_embedding_openai(text, model="text-embedding-ada-002"):
@@ -22,10 +22,7 @@ def get_embedding_openai(text, model="text-embedding-ada-002"):
 @dataclass
 class DocumentsManager(ABC):
     def _check_required_columns(self, df: pd.DataFrame):
-        """Each entry in the df is expected to have at least the following columns:
-
-        ["url", "source", "title", "content"]
-        """
+        """Each entry in the df is expected to have the columns in self.required_columns"""
         if not all(col in df.columns for col in self.required_columns):
             raise ValueError(f"DataFrame is missing one or more of {self.required_columns=}")
 
@@ -43,7 +40,7 @@ class DocumentsManager(ABC):
 
         # Check if embeddings are present, computes them if not
         if "embedding" not in df.columns:
-            logger.info("Embeddings not present in the dataframe, computing embeddings")
+            logger.info(f"Computing embeddings for {len(df)} documents...")
             df["embedding"] = self._compute_embeddings(df["content"])
 
         else:
