@@ -33,10 +33,6 @@ class DeepLakeDocumentsManager(DocumentsManager):
             **vector_store_kwargs,
         )
 
-    def _compute_embeddings(self, ser: pd.Series) -> pd.Series:
-        embeddings = ser.apply(lambda x: get_embedding_openai(x, model="text-embedding-ada-002"))
-        return embeddings
-
     @classmethod
     def _extract_metadata(cls, df: pd.DataFrame) -> dict:
         """extract the metadata from the dataframe in deeplake dict format"""
