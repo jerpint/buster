@@ -43,7 +43,7 @@ class DocumentsManager(ABC):
 
         # saves a temporary file with the pre-computed embeddings.
         # This is helpful to have in the future to avoid having to recompute embeddings.
-        filename ="chunks_with_embeddings.csv"
+        filename = "chunks_with_embeddings.csv"
         df.to_csv(filename)
         logger.info(f"Finished computing embeddings, saved csv with embeddings to: {filename}")
         return embeddings
