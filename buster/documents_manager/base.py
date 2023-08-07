@@ -48,7 +48,7 @@ class DocumentsManager(ABC):
         logger.info(f"Finished computing embeddings, saved csv with embeddings to: {filename}")
         return embeddings
 
-    def add(self, df: pd.DataFrame):
+    def add(self, df: pd.DataFrame, **add_kwargs):
         """Write all documents from the DataFrame into the db as a new version."""
 
         self._check_required_columns(df)
@@ -61,10 +61,10 @@ class DocumentsManager(ABC):
         else:
             logger.info("Embeddings already present, skipping computation of embeddings")
 
-        self._add_documents(df)
+        self._add_documents(df, **add_kwargs)
 
     @abstractmethod
-    def _add_documents(self, df: pd.DataFrame):
+    def _add_documents(self, df: pd.DataFrame, **add_kwargs):
         """Abstract method to be implemented by each inherited member.
 
         This method should handle the actual process of adding documents to the database.
