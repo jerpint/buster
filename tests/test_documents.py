@@ -104,7 +104,7 @@ def test_generate_embeddings(tmp_path, monkeypatch):
     fake_embedding = [-0.005, 0.0018]
     monkeypatch.setattr(
         "buster.documents_manager.DeepLakeDocumentsManager._compute_embeddings",
-        lambda self, ser: ser.apply(lambda y: fake_embedding),
+        lambda self, df: df.content.apply(lambda y: fake_embedding),
     )
 
     # Generate embeddings, store in a file
