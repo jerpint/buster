@@ -12,14 +12,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def read_csv(filename: str):
-    """Assumes a pre-chunked csv file is provided with expected columns."""
-    df = pd.read_csv(filename)
-    for col in REQUIRED_COLUMNS:
-        assert col in df.columns, f"{col} not found in csv."
-    return df
-
-
 class DeepLakeDocumentsManager(DocumentsManager):
     def __init__(
         self, vector_store_path: str = "deeplake_store", required_columns=REQUIRED_COLUMNS, **vector_store_kwargs
