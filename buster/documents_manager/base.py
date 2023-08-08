@@ -1,6 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+from typing import Optional
 
 import numpy as np
 import openai
@@ -28,13 +29,17 @@ def get_embedding_openai(text: str):
 
 @dataclass
 class DocumentsManager(ABC):
+    def __init__(self, required_columns=list[str], csv_checkpoint: Optional[str] = None):
+        self.required_columns = required_columns
+        self.csv_checkpoint = csv_checkpoint
+
     def _check_required_columns(self, df: pd.DataFrame):
         """Each entry in the df is expected to have the columns in self.required_columns"""
         if not all(col in df.columns for col in self.required_columns):
             raise ValueError(f"DataFrame is missing one or more of {self.required_columns=}")
 
     def _compute_embeddings(self, df: pd.DataFrame) -> pd.Series:
-        """Compute the embeddings of a series, each entry expected to be a string.
+        """Compute the embeddings on the 'content' column of a df, each entry expected to be a string.
 
         Override this method with an other embedding function if necessary.
         Returns a Series with the actual embeddings."""
@@ -60,6 +65,10 @@ class DocumentsManager(ABC):
 
         else:
             logger.info("Embeddings already present, skipping computation of embeddings")
+
+        if self.csv_checkpoint is not None:
+            df.to_csv(self.csv_checkpoint)
+            logger.info("Saved intermediate embeddings to {self.csv_checkpoint}")
 
         self._add_documents(df, **add_kwargs)
 
