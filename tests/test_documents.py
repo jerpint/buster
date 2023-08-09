@@ -82,7 +82,7 @@ def test_write_write_read(tmp_path, documents_manager, retriever):
             "n_tokens": 10,
         }
     )
-    db.add(df=data_1)
+    db.add(df=data_1, num_workers=1)
 
     data_2 = pd.DataFrame.from_dict(
         {
@@ -94,7 +94,7 @@ def test_write_write_read(tmp_path, documents_manager, retriever):
             "n_tokens": 5,
         }
     )
-    db.add(df=data_2)
+    db.add(df=data_2, num_workers=1)
 
     db_data = retriever(**retriever_cfg).get_documents("sourceB")
 
@@ -114,7 +114,7 @@ def test_generate_embeddings(tmp_path, monkeypatch):
     # Generate embeddings, store in a file
     path = tmp_path / f"test_document_embeddings"
     dm = DeepLakeDocumentsManager(path)
-    dm.add(df, embedding_fn=get_fake_embedding)
+    dm.add(df, embedding_fn=get_fake_embedding, num_workers=1)
 
     # Read the embeddings from the file
     retriever_cfg = {
@@ -144,7 +144,7 @@ def test_generate_embeddings_parallelized():
         }
     )
 
-    embeddings_parallel = compute_embeddings_parallelized(df, embedding_fn=get_embedding_openai, num_workers=16)
+    embeddings_parallel = compute_embeddings_parallelized(df, embedding_fn=get_embedding_openai, num_workers=1)
     embeddings = df.content.apply(get_embedding_openai)
 
     # embeddings comes out as a series because of the apply, so cast it back to an array

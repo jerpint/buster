@@ -151,7 +151,7 @@ def vector_store_path(tmp_path_factory):
     # Add the documents (will generate embeddings)
     dm = DeepLakeDocumentsManager(vector_store_path=dm_path)
     df = pd.read_csv(DOCUMENTS_CSV)
-    dm.add(df)
+    dm.add(df, num_workers=1)
     return dm_path
 
 
