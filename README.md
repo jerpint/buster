@@ -16,7 +16,7 @@ First step, install buster. Note that buster requires python>=3.10.
 
 ```
 git clone https://github.com/jerpint/buster.git
-pip install -e .
+pip install .
 ```
 
 Then, go to the examples folder:

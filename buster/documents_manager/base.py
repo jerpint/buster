@@ -29,7 +29,7 @@ def get_embedding_openai(text: str):
 
 @dataclass
 class DocumentsManager(ABC):
-    def __init__(self, required_columns=list[str], csv_checkpoint: Optional[str] = None):
+    def __init__(self, required_columns: list[str], csv_checkpoint: Optional[str] = None):
         self.required_columns = required_columns
         self.csv_checkpoint = csv_checkpoint
 
