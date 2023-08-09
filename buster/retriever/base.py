@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 import pandas as pd
-from openai.embeddings_utils import cosine_similarity, get_embedding
+
+from buster.documents_manager.base import get_embedding_openai
 
 ALL_SOURCES = "All"
 
@@ -36,9 +37,9 @@ class Retriever(ABC):
 
     @staticmethod
     @lru_cache
-    def get_embedding(query: str, engine: str):
+    def get_embedding(query: str, model: str):
         logger.info("generating embedding")
-        return get_embedding(query, engine=engine)
+        return get_embedding_openai(query, model=model)
 
     @abstractmethod
     def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:

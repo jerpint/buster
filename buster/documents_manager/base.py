@@ -14,12 +14,10 @@ tqdm.pandas()
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-EMBEDDING_MODEL = "text-embedding-ada-002"
 REQUIRED_COLUMNS = ["url", "title", "content", "source"]
 
 
-def get_embedding_openai(text: str):
-    model = EMBEDDING_MODEL
+def get_embedding_openai(text: str, model="text-embedding-ada-002"):
     text = text.replace("\n", " ")
     try:
         return np.array(openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"], dtype=np.float32)

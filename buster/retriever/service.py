@@ -73,7 +73,7 @@ class ServiceRetriever(Retriever):
                 logger.warning(f"Source {source} does not exist. Returning empty dataframe.")
                 return pd.DataFrame()
 
-        query_embedding = self.get_embedding(query, engine=self.embedding_model)
+        query_embedding = self.get_embedding(query, model=self.embedding_model)
 
         # Pinecone retrieval
         matches = self.index.query(query_embedding, top_k=top_k, filter=filter, include_values=True)["matches"]
