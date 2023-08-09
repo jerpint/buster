@@ -2,9 +2,10 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
-import numpy as np
 
+import numpy as np
 import pandas as pd
+
 from buster.documents_manager.base import get_embedding_openai
 
 ALL_SOURCES = "All"

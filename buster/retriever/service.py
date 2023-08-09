@@ -1,6 +1,6 @@
 import logging
-import numpy as np
 
+import numpy as np
 import pandas as pd
 import pinecone
 from bson.objectid import ObjectId
