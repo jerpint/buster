@@ -43,14 +43,10 @@ class DocumentsManager(ABC):
 
         Override this method with an other embedding function if necessary.
         Returns a Series with the actual embeddings."""
-        embeddings = df.content.progress_apply(get_embedding_openai)
-        df["embedding"] = embeddings
 
-        # saves a temporary file with the pre-computed embeddings.
-        # This is helpful to have in the future to avoid having to recompute embeddings.
-        filename = "chunks_with_embeddings.csv"
-        df.to_csv(filename)
-        logger.info(f"Finished computing embeddings, saved csv with embeddings to: {filename}")
+        logger.info(f"Computing embeddings for {len(df)} documents...")
+        embeddings = df.content.progress_apply(get_embedding_openai)
+        logger.info(f"Finished computing embeddings")
         return embeddings
 
     def add(self, df: pd.DataFrame, **add_kwargs):
@@ -60,11 +56,7 @@ class DocumentsManager(ABC):
 
         # Check if embeddings are present, computes them if not
         if "embedding" not in df.columns:
-            logger.info(f"Computing embeddings for {len(df)} documents...")
             df["embedding"] = self._compute_embeddings(df)
-
-        else:
-            logger.info("Embeddings already present, skipping computation of embeddings")
 
         if self.csv_checkpoint is not None:
             df.to_csv(self.csv_checkpoint)
