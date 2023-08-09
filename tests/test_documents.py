@@ -3,6 +3,10 @@ import pandas as pd
 import pytest
 
 from buster.documents_manager import DeepLakeDocumentsManager
+from buster.documents_manager.base import (
+    compute_embeddings_parallelized,
+    get_embedding_openai,
+)
 from buster.retriever import DeepLakeRetriever
 
 
@@ -128,3 +132,23 @@ def test_generate_embeddings(tmp_path, monkeypatch):
     assert df["url"].iloc[0] == df["url"].iloc[0] == read_df["url"].iloc[0]
     assert df["content"].iloc[0] == df["content"].iloc[0] == read_df["content"].iloc[0]
     assert np.allclose(fake_embedding, read_df["embedding"].iloc[0])
+
+
+def test_generate_embeddings_parallelized():
+    # Create fake data
+    df = pd.DataFrame.from_dict(
+        {
+            "title": ["test"] * 5,
+            "url": ["http://url.com"] * 5,
+            "content": ["cool text" + str(x) for x in range(5)],
+            "source": ["my_source"] * 5,
+        }
+    )
+
+    embeddings_parallel = compute_embeddings_parallelized(df, embedding_fn=get_embedding_openai, num_workers=16)
+    embeddings = df.content.apply(get_embedding_openai)
+
+    # embeddings comes out as a series because of the apply, so cast it back to an array
+    embeddings_arr = np.array(embeddings.to_list())
+
+    assert np.allclose(embeddings_parallel, embeddings_arr, atol=1e-3)
