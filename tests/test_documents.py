@@ -9,6 +9,13 @@ from buster.documents_manager.base import (
 )
 from buster.retriever import DeepLakeRetriever
 
+# Patch the get_embedding function to return a fixed, fake embedding
+fake_embedding = [-0.005, 0.0018]
+
+
+def get_fake_embedding(*arg, **kwargs):
+    return fake_embedding
+
 
 @pytest.mark.parametrize(
     "documents_manager, retriever",
@@ -104,26 +111,18 @@ def test_generate_embeddings(tmp_path, monkeypatch):
         {"title": ["test"], "url": ["http://url.com"], "content": ["cool text"], "source": ["my_source"]}
     )
 
-    # Patch the get_embedding function to return a fixed, fake embedding
-    fake_embedding = [-0.005, 0.0018]
-    monkeypatch.setattr(
-        "buster.documents_manager.DeepLakeDocumentsManager._compute_embeddings",
-        lambda self, df: df.content.apply(lambda y: fake_embedding),
-    )
-
     # Generate embeddings, store in a file
     path = tmp_path / f"test_document_embeddings"
     dm = DeepLakeDocumentsManager(path)
-    dm.add(df)
+    dm.add(df, embedding_fn=get_fake_embedding)
 
     # Read the embeddings from the file
-
     retriever_cfg = {
         "path": path,
         "top_k": 3,
         "thresh": 0.85,
         "max_tokens": 3000,
-        "embedding_model": "text-embedding-ada-002",
+        "embedding_model": "fake-embedding",
     }
     read_df = DeepLakeRetriever(**retriever_cfg).get_documents("my_source")
 
