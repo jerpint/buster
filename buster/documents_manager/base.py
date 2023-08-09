@@ -66,7 +66,7 @@ class DocumentsManager(ABC):
     def add(
         self,
         df: pd.DataFrame,
-        num_workers: int = 32,
+        num_workers: int = 16,
         embedding_fn: callable = get_embedding_openai,
         **add_kwargs,
     ):
