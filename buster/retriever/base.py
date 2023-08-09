@@ -2,9 +2,9 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
+import numpy as np
 
 import pandas as pd
-
 from buster.documents_manager.base import get_embedding_openai
 
 ALL_SOURCES = "All"
@@ -37,7 +37,7 @@ class Retriever(ABC):
 
     @staticmethod
     @lru_cache
-    def get_embedding(query: str, model: str):
+    def get_embedding(query: str, model: str) -> np.ndarray:
         logger.info("generating embedding")
         return get_embedding_openai(query, model=model)
 

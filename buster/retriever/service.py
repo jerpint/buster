@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 import pandas as pd
 import pinecone
@@ -74,6 +75,10 @@ class ServiceRetriever(Retriever):
                 return pd.DataFrame()
 
         query_embedding = self.get_embedding(query, model=self.embedding_model)
+
+        if isinstance(query_embedding, np.ndarray):
+            # pinecone expects a list of floats, so convert from ndarray if necessary
+            query_embedding = query_embedding.tolist()
 
         # Pinecone retrieval
         matches = self.index.query(query_embedding, top_k=top_k, filter=filter, include_values=True)["matches"]

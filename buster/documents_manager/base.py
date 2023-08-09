@@ -17,7 +17,7 @@ logging.basicConfig(level=logging.INFO)
 REQUIRED_COLUMNS = ["url", "title", "content", "source"]
 
 
-def get_embedding_openai(text: str, model="text-embedding-ada-002"):
+def get_embedding_openai(text: str, model="text-embedding-ada-002") -> np.ndarray:
     text = text.replace("\n", " ")
     try:
         return np.array(openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"], dtype=np.float32)
