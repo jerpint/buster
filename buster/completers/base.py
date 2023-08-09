@@ -149,15 +149,14 @@ class Completion:
             logger.info("No validator was set, skipping postprocessing.")
             return
 
-        with Span({}, "postprocess") as span:
-            if self.validator.use_reranking:
-                # rerank docs in order of cosine similarity to the question
-                self.matched_documents = self.validator.rerank_docs(
-                    answer=self.answer_text, matched_documents=self.matched_documents
-                )
+        if self.validator.use_reranking:
+            # rerank docs in order of cosine similarity to the question
+            self.matched_documents = self.validator.rerank_docs(
+                answer=self.answer_text, matched_documents=self.matched_documents
+            )
 
-            # access the property so it gets set if not computed alerady
-            self.answer_relevant
+        # access the property so it gets set if not computed alerady
+        self.answer_relevant
 
     def to_json(self, columns_to_ignore: Optional[list[str]] = None) -> Any:
         """Converts selected attributes of the object to a JSON format.
