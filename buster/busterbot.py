@@ -1,8 +1,11 @@
+import json
 import logging
 from dataclasses import dataclass, field
 from typing import Any
 
 import pandas as pd
+
+from comet_llm import Span
 
 from buster.completers import Completer, Completion, DocumentAnswerer
 from buster.retriever import Retriever
@@ -89,11 +92,22 @@ class Buster:
             user_input += "\n"
 
         # The returned message is either a generic invalid question message or an error handling message
-        question_relevant, irrelevant_question_message = self.validator.check_question_relevance(user_input)
+        with Span({"user_input": user_input}, "check-relevance") as span:
+            question_relevant, irrelevant_question_message = self.validator.check_question_relevance(user_input)
+
+            outputs = {
+                "question_relevant": question_relevant,
+                "irrelevant_question_message": irrelevant_question_message,
+            }
+            span.set_outputs(outputs)
 
         if question_relevant:
             # question is relevant, get completor to generate completion
-            matched_documents = self.retriever.retrieve(user_input, source=source)
+            with Span({"user_input": user_input, "source": source}, "retrieve-context") as span:
+                matched_documents = self.retriever.retrieve(user_input, source=source)
+
+                span.set_outputs({"matched_documents": json.loads(matched_documents.to_json())})
+
             completion: Completion = self.document_answerer.get_completion(
                 user_input=user_input,
                 matched_documents=matched_documents,

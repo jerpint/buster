@@ -1,7 +1,9 @@
+from comet_llm import start_chain, end_chain, Span
 import cfg
 import gradio as gr
 import pandas as pd
 from cfg import setup_buster
+import json
 
 buster = setup_buster(cfg.buster_cfg)
 
@@ -24,9 +26,14 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
 
 
 def add_sources(history, completion):
+    final_generation = history[-1][1]
+    formatted_sources = None
+
     if completion.answer_relevant:
         formatted_sources = format_sources(completion.matched_documents)
         history.append([None, formatted_sources])
+
+    end_chain(outputs={"response": final_generation, "formatted_sources": formatted_sources})
 
     return history
 
@@ -38,15 +45,21 @@ def user(user_input, history):
 
 def chat(history):
     user_input = history[-1][0]
+    start_chain(inputs={"user_input": user_input}, project_name="mila-buster-test")
 
-    completion = buster.process_input(user_input)
+    with Span({"user_input": user_input}, "llm-generation") as span:
+        completion = buster.process_input(user_input)
 
-    history[-1][1] = ""
+        history[-1][1] = ""
 
-    for token in completion.answer_generator:
-        history[-1][1] += token
+        for token in completion.answer_generator:
+            history[-1][1] += token
 
-        yield history, completion
+            yield history, completion
+
+        final_generation = history[-1][1]
+
+    span.set_outputs({"generation": final_generation})
 
 
 block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")

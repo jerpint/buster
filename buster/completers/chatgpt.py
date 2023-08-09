@@ -1,4 +1,5 @@
 from typing import Iterator
+from comet_llm import Span
 
 import openai
 
@@ -15,21 +16,29 @@ class ChatGPTCompleter(Completer):
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_input},
         ]
-        response = openai.ChatCompletion.create(
-            messages=messages,
-            **completion_kwargs,
-        )
+        stream = completion_kwargs.get("stream")
 
-        if completion_kwargs.get("stream") is True:
-            # We are entering streaming mode, so here were just wrapping the streamed
-            # openai response to be easier to handle later
-            def answer_generator():
-                for chunk in response:
-                    token: str = chunk["choices"][0]["delta"].get("content", "")
-                    yield token
+        inputs = completion_kwargs.copy()
+        inputs["messages"] = messages
 
-            return answer_generator()
+        with Span(inputs, "llm-call", metadata={"stream": stream}) as span:
+            response = openai.ChatCompletion.create(
+                messages=messages,
+                **completion_kwargs,
+            )
 
-        else:
-            full_response: str = response["choices"][0]["message"]["content"]
-            return full_response
+            if stream is True:
+                # We are entering streaming mode, so here were just wrapping the streamed
+                # openai response to be easier to handle later
+                def answer_generator():
+                    for chunk in response:
+                        token: str = chunk["choices"][0]["delta"].get("content", "")
+                        yield token
+
+                span.set_outputs(outputs={"output": "stream"})
+                return answer_generator()
+
+            else:
+                full_response: str = response["choices"][0]["message"]["content"]
+                span.set_outputs(outputs={"output": full_response})
+                return full_response
