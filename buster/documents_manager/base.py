@@ -29,7 +29,7 @@ def get_embedding_openai(text: str):
         return None
 
 
-def compute_embeddings_parallelized(df: pd.DataFrame, embedding_fn: callable, num_workers) -> pd.Series:
+def compute_embeddings_parallelized(df: pd.DataFrame, embedding_fn: callable, num_workers: int) -> pd.Series:
     """Compute the embeddings on the 'content' column of a DataFrame in parallel.
 
     This method calculates embeddings for the entries in the 'content' column of the provided DataFrame using the specified
