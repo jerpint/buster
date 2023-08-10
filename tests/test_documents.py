@@ -145,7 +145,9 @@ def test_generate_embeddings_parallelized():
         }
     )
 
-    embeddings_parallel = compute_embeddings_parallelized(df, embedding_fn=get_embedding_openai, num_workers=NUM_WORKERS)
+    embeddings_parallel = compute_embeddings_parallelized(
+        df, embedding_fn=get_embedding_openai, num_workers=NUM_WORKERS
+    )
     embeddings = df.content.apply(get_embedding_openai)
 
     # embeddings comes out as a series because of the apply, so cast it back to an array
