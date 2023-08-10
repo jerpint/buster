@@ -15,7 +15,6 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-
 def get_embedding_openai(text: str, model="text-embedding-ada-002") -> np.ndarray:
     text = text.replace("\n", " ")
     try:
@@ -61,7 +60,6 @@ class DocumentsManager(ABC):
         """
 
         self.required_columns = required_columns
-
 
     def _check_required_columns(self, df: pd.DataFrame):
         """Each entry in the df is expected to have the columns in self.required_columns"""
