@@ -96,9 +96,13 @@ def get_all_documents(
 
     dfs = []
     for file in files:
-        filepath = os.path.join(root_dir, file)
-        df = get_document(filepath, base_url, parser_cls, min_section_length, max_section_length)
-        dfs.append(df)
+        try:
+            filepath = os.path.join(root_dir, file)
+            df = get_document(filepath, base_url, parser_cls, min_section_length, max_section_length)
+            dfs.append(df)
+        except:
+            print(f"Skipping {filepath}...")
+            continue
 
     documents_df = pd.concat(dfs, ignore_index=True)
 
