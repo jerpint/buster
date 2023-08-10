@@ -1,4 +1,5 @@
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
@@ -106,6 +107,75 @@ class DocumentsManager(ABC):
             logger.info(f"Saving DataFrame with embeddings to {csv_checkpoint}")
 
         self._add_documents(df, **add_kwargs)
+
+    def batch_add(
+        self,
+        df: pd.DataFrame,
+        batch_size: int = 3000,
+        min_time_interval: int = 60,
+        num_workers: int = 16,
+        embedding_fn: callable = get_embedding_openai,
+        csv_checkpoint: Optional[str] = None,
+        **add_kwargs,
+    ):
+        """
+        This function takes a DataFrame and adds its data to a DataManager instance in batches.
+        It ensures that a minimum time interval is maintained between successive batches
+        to prevent timeouts or excessive load. This is useful for APIs like openAI with rate limits.
+
+        Args:
+            df (pandas.DataFrame): The input DataFrame containing data to be added.
+            batch_size (int, optional): The size of each batch. Defaults to 3000.
+            min_time_interval (int, optional): The minimum time interval (in seconds) between batches.
+                                            Defaults to 60.
+            num_workers (int, optional): The number of parallel workers to use when adding data.
+                                        Defaults to 32.
+            embedding_fn (callable, optional): A function that computes embeddings for a given input string.
+                Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
+            csv_checkpoint: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+                Omit the .csv extension. It will be appended with batch_idx number to separate between batches.
+
+            **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
+
+        Returns:
+            None
+        """
+        total_batches = (len(df) // batch_size) + 1
+
+        logger.info(f"Adding {len(df)} documents with {batch_size=} for {total_batches=}")
+
+        for batch_idx in range(total_batches):
+            logger.info(f"Processing batch {batch_idx + 1}/{total_batches}")
+            start_time = time.time()
+
+            # Calculate batch indices and extract batch DataFrame
+            start_idx = batch_idx * batch_size
+            end_idx = min((batch_idx + 1) * batch_size, len(df))
+            batch_df = df.iloc[start_idx:end_idx]
+
+            # Generate CSV checkpoint file name
+            checkpoint_file = None
+            if csv_checkpoint is not None:
+                checkpoint_file = f"{csv_checkpoint}_batch_{batch_idx}.csv"
+
+            # Add the batch data to using specified parameters
+            self.add(
+                batch_df,
+                num_workers=num_workers,
+                csv_checkpoint=checkpoint_file,
+                embedding_fn=embedding_fn,
+                **add_kwargs,
+            )
+
+            elapsed_time = time.time() - start_time
+            sleep_time = max(0, min_time_interval - elapsed_time)
+
+            # Sleep to ensure the minimum time interval is maintained
+            if sleep_time > 0:
+                logger.info(f"Sleeping for {round(sleep_time)} seconds...")
+                time.sleep(sleep_time)
+
+        logger.info("All batches processed.")
 
     @abstractmethod
     def _add_documents(self, df: pd.DataFrame, **add_kwargs):

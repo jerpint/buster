@@ -6,7 +6,7 @@ import pandas as pd
 
 from buster.utils import zip_contents
 
-from .base import DocumentsManager, get_embedding_openai
+from .base import DocumentsManager
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -27,6 +27,9 @@ class DeepLakeDocumentsManager(DocumentsManager):
             path=self.vector_store_path,
             **vector_store_kwargs,
         )
+
+    def __len__(self):
+        return len(self.vector_store)
 
     @classmethod
     def _extract_metadata(cls, df: pd.DataFrame) -> dict:

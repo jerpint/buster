@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -154,3 +156,37 @@ def test_generate_embeddings_parallelized():
     embeddings_arr = np.array(embeddings.to_list())
 
     assert np.allclose(embeddings_parallel, embeddings_arr, atol=1e-3)
+
+
+def test_add_batches(tmp_path):
+    dm_path = tmp_path / "deeplake_store"
+    num_samples = 20
+    batch_size = 16
+    csv_checkpoint = os.path.join(tmp_path, "embedding_")
+
+    dm = DeepLakeDocumentsManager(vector_store_path=dm_path)
+
+    # Create fake data
+    df = pd.DataFrame.from_dict(
+        {
+            "title": ["test"] * num_samples,
+            "url": ["http://url.com"] * num_samples,
+            "content": ["cool text" + str(x) for x in range(num_samples)],
+            "source": ["my_source"] * num_samples,
+        }
+    )
+
+    dm.batch_add(
+        df,
+        embedding_fn=get_fake_embedding,
+        num_workers=NUM_WORKERS,
+        batch_size=batch_size,
+        min_time_interval=0,
+        csv_checkpoint=csv_checkpoint,
+    )
+
+    csv_files = [f for f in os.listdir(tmp_path) if f.endswith(".csv")]
+
+    # check that we registered the good number of doucments and that files were generated
+    assert len(dm) == num_samples
+    assert len(csv_files) == num_samples // batch_size + 1
