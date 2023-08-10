@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.INFO)
 
 DOCUMENTS_CSV = Path(__file__).resolve().parent.parent / "buster/examples/stackoverflow.csv"
 UNKNOWN_PROMPT = "I'm sorry but I don't know how to answer."
+NUM_WORKERS = 1
 
 # default class used by our tests
 buster_cfg_template = BusterConfig(
