@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 import pandas as pd
 import pinecone
 from bson.objectid import ObjectId
@@ -73,7 +74,11 @@ class ServiceRetriever(Retriever):
                 logger.warning(f"Source {source} does not exist. Returning empty dataframe.")
                 return pd.DataFrame()
 
-        query_embedding = self.get_embedding(query, engine=self.embedding_model)
+        query_embedding = self.get_embedding(query, model=self.embedding_model)
+
+        if isinstance(query_embedding, np.ndarray):
+            # pinecone expects a list of floats, so convert from ndarray if necessary
+            query_embedding = query_embedding.tolist()
 
         # Pinecone retrieval
         matches = self.index.query(query_embedding, top_k=top_k, filter=filter, include_values=True)["matches"]

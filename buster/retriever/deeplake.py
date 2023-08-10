@@ -49,14 +49,14 @@ class DeepLakeRetriever(Retriever):
         If no matches are found, returns an empty dataframe."""
 
         if query is not None:
-            query_embedding = self.get_embedding(query, engine=self.embedding_model)
+            query_embedding = self.get_embedding(query, model=self.embedding_model)
         elif embedding is not None:
             query_embedding = embedding
         else:
             raise ValueError("must provide either a query or an embedding")
 
         if source is not None:
-            logger.info("Applying source {source} filter...")
+            logger.info(f"Applying source {source} filter...")
             filter = {"metadata": {"source": source}}
         else:
             filter = None

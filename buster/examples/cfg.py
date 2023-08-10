@@ -2,7 +2,7 @@ from buster.busterbot import Buster, BusterConfig
 from buster.completers import ChatGPTCompleter, Completer, DocumentAnswerer
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
-from buster.retriever import Retriever, SQLiteRetriever
+from buster.retriever import DeepLakeRetriever, Retriever
 from buster.tokenizers import GPTTokenizer
 from buster.validators import QuestionAnswerValidator, Validator
 
@@ -37,7 +37,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
         },
     },
     retriever_cfg={
-        "db_path": "documents.db",
+        "path": "deeplake_store",
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,
@@ -93,7 +93,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
 
 def setup_buster(buster_cfg: BusterConfig):
     """initialize buster with a buster_cfg class"""
-    retriever: Retriever = SQLiteRetriever(**buster_cfg.retriever_cfg)
+    retriever: Retriever = DeepLakeRetriever(**buster_cfg.retriever_cfg)
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     document_answerer: DocumentAnswerer = DocumentAnswerer(
         completer=ChatGPTCompleter(**buster_cfg.completion_cfg),

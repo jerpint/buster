@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Any, Iterator, Optional
@@ -261,7 +262,9 @@ class DocumentAnswerer:
         logger.info(f"{user_input=}")
 
         if len(matched_documents) == 0:
-            logger.warning("no documents found...")
+            warning_msg = "No documents found during retrieval."
+            warnings.warn(warning_msg)
+            logger.warning(warning_msg)
 
             # empty dataframe
             matched_documents = pd.DataFrame(columns=matched_documents.columns)

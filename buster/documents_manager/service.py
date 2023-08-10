@@ -5,7 +5,7 @@ import pinecone
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
-from buster.documents.base import DocumentsManager
+from buster.documents_manager.base import DocumentsManager
 
 
 class DocumentsService(DocumentsManager):
@@ -36,7 +36,7 @@ class DocumentsService(DocumentsManager):
         """Get the id of a source."""
         return str(self.db.sources.find_one({"name": source})["_id"])
 
-    def add(self, df: pd.DataFrame):
+    def _add_documents(self, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version."""
 
         for source in df.source.unique():
