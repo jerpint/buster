@@ -14,7 +14,6 @@ tqdm.pandas()
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-REQUIRED_COLUMNS = ["url", "title", "content", "source"]
 
 
 def get_embedding_openai(text: str, model="text-embedding-ada-002") -> np.ndarray:
@@ -52,9 +51,17 @@ def compute_embeddings_parallelized(df: pd.DataFrame, embedding_fn: callable, nu
 
 @dataclass
 class DocumentsManager(ABC):
-    def __init__(self, required_columns: list[str], csv_checkpoint: Optional[str] = None):
+    def __init__(self, required_columns: Optional[list[str]] = None):
+        """
+        Constructor for DocumentsManager class.
+
+        Parameters:
+            required_columns (Optional[list[str]]): A list of column names that are required for the dataframe to contain.
+                                                    If None, no columns are enforced.
+        """
+
         self.required_columns = required_columns
-        self.csv_checkpoint = csv_checkpoint
+
 
     def _check_required_columns(self, df: pd.DataFrame):
         """Each entry in the df is expected to have the columns in self.required_columns"""
@@ -66,6 +73,7 @@ class DocumentsManager(ABC):
         df: pd.DataFrame,
         num_workers: int = 16,
         embedding_fn: callable = get_embedding_openai,
+        csv_checkpoint: Optional[str] = None,
         **add_kwargs,
     ):
         """Write documents from a DataFrame into the DocumentManager store.
@@ -81,20 +89,23 @@ class DocumentsManager(ABC):
             num_workers (int, optional): The number of parallel workers to use for computing embeddings. Default is 32.
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
+
+            csv_checkpoint: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
 
 
         """
 
-        self._check_required_columns(df)
+        if self.required_columns is not None:
+            self._check_required_columns(df)
 
         # Check if embeddings are present, computes them if not
         if "embedding" not in df.columns:
             df["embedding"] = compute_embeddings_parallelized(df, embedding_fn=embedding_fn, num_workers=num_workers)
 
-        if self.csv_checkpoint is not None:
-            df.to_csv(self.csv_checkpoint)
-            logger.info("Saving .csv with embeddings to {self.csv_checkpoint}")
+        if csv_checkpoint is not None:
+            df.to_csv(csv_checkpoint)
+            logger.info(f"Saving DataFrame with embeddings to {csv_checkpoint}")
 
         self._add_documents(df, **add_kwargs)
 

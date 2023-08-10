@@ -6,7 +6,7 @@ import pandas as pd
 
 from buster.utils import zip_contents
 
-from .base import REQUIRED_COLUMNS, DocumentsManager, get_embedding_openai
+from .base import DocumentsManager, get_embedding_openai
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -16,15 +16,13 @@ class DeepLakeDocumentsManager(DocumentsManager):
     def __init__(
         self,
         vector_store_path: str = "deeplake_store",
-        required_columns: list[str] = REQUIRED_COLUMNS,
-        csv_checkpoint: Optional[str] = None,
+        required_columns: Optional[list[str]] = None,
         **vector_store_kwargs,
     ):
         from deeplake.core.vectorstore import VectorStore
 
         self.vector_store_path = vector_store_path
         self.required_columns = required_columns
-        self.csv_checkpoint = csv_checkpoint
         self.vector_store = VectorStore(
             path=self.vector_store_path,
             **vector_store_kwargs,
