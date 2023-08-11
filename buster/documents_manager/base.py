@@ -1,4 +1,5 @@
 import logging
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
@@ -66,12 +67,31 @@ class DocumentsManager(ABC):
         if not all(col in df.columns for col in self.required_columns):
             raise ValueError(f"DataFrame is missing one or more of {self.required_columns=}")
 
+    def _checkpoint_csv(self, df, csv_filename: str, csv_overwrite: bool = True):
+        import os
+
+        if csv_overwrite:
+            df.to_csv(csv_filename)
+            logger.info(f"Saved DataFrame with embeddings to {csv_filename}")
+
+        else:
+            if os.path.exists(csv_filename):
+                # append to existing file
+                append_df = pd.read_csv(csv_filename)
+                append_df = pd.concat([append_df, df])
+            else:
+                # will create the new file
+                append_df = df.copy()
+            append_df.to_csv(csv_filename)
+            logger.info(f"Appending DataFrame embeddings to {csv_filename}")
+
     def add(
         self,
         df: pd.DataFrame,
         num_workers: int = 16,
         embedding_fn: callable = get_embedding_openai,
-        csv_checkpoint: Optional[str] = None,
+        csv_filename: Optional[str] = None,
+        csv_overwrite: bool = True,
         **add_kwargs,
     ):
         """Write documents from a DataFrame into the DocumentManager store.
@@ -88,7 +108,8 @@ class DocumentsManager(ABC):
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
 
-            csv_checkpoint: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
 
 
@@ -101,11 +122,77 @@ class DocumentsManager(ABC):
         if "embedding" not in df.columns:
             df["embedding"] = compute_embeddings_parallelized(df, embedding_fn=embedding_fn, num_workers=num_workers)
 
-        if csv_checkpoint is not None:
-            df.to_csv(csv_checkpoint)
-            logger.info(f"Saving DataFrame with embeddings to {csv_checkpoint}")
+        if csv_filename is not None:
+            self._checkpoint_csv(df, csv_filename=csv_filename, csv_overwrite=csv_overwrite)
 
         self._add_documents(df, **add_kwargs)
+
+    def batch_add(
+        self,
+        df: pd.DataFrame,
+        batch_size: int = 3000,
+        min_time_interval: int = 60,
+        num_workers: int = 16,
+        embedding_fn: callable = get_embedding_openai,
+        csv_filename: Optional[str] = None,
+        csv_overwrite: bool = False,
+        **add_kwargs,
+    ):
+        """
+        This function takes a DataFrame and adds its data to a DataManager instance in batches.
+        It ensures that a minimum time interval is maintained between successive batches
+        to prevent timeouts or excessive load. This is useful for APIs like openAI with rate limits.
+
+        Args:
+            df (pandas.DataFrame): The input DataFrame containing data to be added.
+            batch_size (int, optional): The size of each batch. Defaults to 3000.
+            min_time_interval (int, optional): The minimum time interval (in seconds) between batches.
+                                            Defaults to 60.
+            num_workers (int, optional): The number of parallel workers to use when adding data.
+                                        Defaults to 32.
+            embedding_fn (callable, optional): A function that computes embeddings for a given input string.
+                Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
+            csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
+                When using batches, set to False to keep all embeddings in the same file. You may want to manually remove the file if experimenting.
+
+            **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
+
+        Returns:
+            None
+        """
+        total_batches = (len(df) // batch_size) + 1
+
+        logger.info(f"Adding {len(df)} documents with {batch_size=} for {total_batches=}")
+
+        for batch_idx in range(total_batches):
+            logger.info(f"Processing batch {batch_idx + 1}/{total_batches}")
+            start_time = time.time()
+
+            # Calculate batch indices and extract batch DataFrame
+            start_idx = batch_idx * batch_size
+            end_idx = min((batch_idx + 1) * batch_size, len(df))
+            batch_df = df.iloc[start_idx:end_idx]
+
+            # Add the batch data to using specified parameters
+            self.add(
+                batch_df,
+                num_workers=num_workers,
+                csv_filename=csv_filename,
+                csv_overwrite=csv_overwrite,
+                embedding_fn=embedding_fn,
+                **add_kwargs,
+            )
+
+            elapsed_time = time.time() - start_time
+            sleep_time = max(0, min_time_interval - elapsed_time)
+
+            # Sleep to ensure the minimum time interval is maintained
+            if sleep_time > 0:
+                logger.info(f"Sleeping for {round(sleep_time)} seconds...")
+                time.sleep(sleep_time)
+
+        logger.info("All batches processed.")
 
     @abstractmethod
     def _add_documents(self, df: pd.DataFrame, **add_kwargs):
