@@ -162,7 +162,7 @@ def test_add_batches(tmp_path):
     dm_path = tmp_path / "deeplake_store"
     num_samples = 20
     batch_size = 16
-    csv_checkpoint = os.path.join(tmp_path, "embedding_")
+    csv_filename = os.path.join(tmp_path, "embedding_")
 
     dm = DeepLakeDocumentsManager(vector_store_path=dm_path)
 
@@ -182,11 +182,14 @@ def test_add_batches(tmp_path):
         num_workers=NUM_WORKERS,
         batch_size=batch_size,
         min_time_interval=0,
-        csv_checkpoint=csv_checkpoint,
+        csv_filename=csv_filename,
     )
 
     csv_files = [f for f in os.listdir(tmp_path) if f.endswith(".csv")]
 
     # check that we registered the good number of doucments and that files were generated
     assert len(dm) == num_samples
-    assert len(csv_files) == num_samples // batch_size + 1
+
+    df_saved = pd.read_csv(csv_filename)
+    assert len(df_saved) == num_samples
+    assert "embedding" in df_saved.columns

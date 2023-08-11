@@ -67,12 +67,31 @@ class DocumentsManager(ABC):
         if not all(col in df.columns for col in self.required_columns):
             raise ValueError(f"DataFrame is missing one or more of {self.required_columns=}")
 
+    def _checkpoint_csv(self, df, csv_filename: str, csv_overwrite: bool = True):
+        import os
+
+        if csv_overwrite:
+            df.to_csv(csv_filename)
+            logger.info(f"Saved DataFrame with embeddings to {csv_filename}")
+
+        else:
+            if os.path.exists(csv_filename):
+                # append to existing file
+                append_df = pd.read_csv(csv_filename)
+                append_df = pd.concat([append_df, df])
+            else:
+                # will create the new file
+                append_df = df.copy()
+            append_df.to_csv(csv_filename)
+            logger.info(f"Appending DataFrame embeddings to {csv_filename}")
+
     def add(
         self,
         df: pd.DataFrame,
         num_workers: int = 16,
         embedding_fn: callable = get_embedding_openai,
-        csv_checkpoint: Optional[str] = None,
+        csv_filename: Optional[str] = None,
+        csv_overwrite: bool = True,
         **add_kwargs,
     ):
         """Write documents from a DataFrame into the DocumentManager store.
@@ -89,7 +108,8 @@ class DocumentsManager(ABC):
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
 
-            csv_checkpoint: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
 
 
@@ -102,9 +122,8 @@ class DocumentsManager(ABC):
         if "embedding" not in df.columns:
             df["embedding"] = compute_embeddings_parallelized(df, embedding_fn=embedding_fn, num_workers=num_workers)
 
-        if csv_checkpoint is not None:
-            df.to_csv(csv_checkpoint)
-            logger.info(f"Saving DataFrame with embeddings to {csv_checkpoint}")
+        if csv_filename is not None:
+            self._checkpoint_csv(df, csv_filename=csv_filename, csv_overwrite=csv_overwrite)
 
         self._add_documents(df, **add_kwargs)
 
@@ -115,7 +134,8 @@ class DocumentsManager(ABC):
         min_time_interval: int = 60,
         num_workers: int = 16,
         embedding_fn: callable = get_embedding_openai,
-        csv_checkpoint: Optional[str] = None,
+        csv_filename: Optional[str] = None,
+        csv_overwrite: bool = False,
         **add_kwargs,
     ):
         """
@@ -132,8 +152,9 @@ class DocumentsManager(ABC):
                                         Defaults to 32.
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
-            csv_checkpoint: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
-                Omit the .csv extension. It will be appended with batch_idx number to separate between batches.
+            csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
+                When using batches, set to False to keep all embeddings in the same file. You may want to manually remove the file if experimenting.
 
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
 
@@ -153,16 +174,12 @@ class DocumentsManager(ABC):
             end_idx = min((batch_idx + 1) * batch_size, len(df))
             batch_df = df.iloc[start_idx:end_idx]
 
-            # Generate CSV checkpoint file name
-            checkpoint_file = None
-            if csv_checkpoint is not None:
-                checkpoint_file = f"{csv_checkpoint}_batch_{batch_idx}.csv"
-
             # Add the batch data to using specified parameters
             self.add(
                 batch_df,
                 num_workers=num_workers,
-                csv_checkpoint=checkpoint_file,
+                csv_filename=csv_filename,
+                csv_overwrite=csv_overwrite,
                 embedding_fn=embedding_fn,
                 **add_kwargs,
             )
