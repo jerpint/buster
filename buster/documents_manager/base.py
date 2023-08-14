@@ -185,12 +185,15 @@ class DocumentsManager(ABC):
             )
 
             elapsed_time = time.time() - start_time
-            sleep_time = max(0, min_time_interval - elapsed_time)
+
 
             # Sleep to ensure the minimum time interval is maintained
-            if sleep_time > 0:
-                logger.info(f"Sleeping for {round(sleep_time)} seconds...")
-                time.sleep(sleep_time)
+            # Only sleep if it's not the last iteration
+            if batch_idx < total_batches - 1:
+                sleep_time = max(0, min_time_interval - elapsed_time)
+                if sleep_time > 0:
+                    logger.info(f"Sleeping for {round(sleep_time)} seconds...")
+                    time.sleep(sleep_time)
 
         logger.info("All batches processed.")
 
