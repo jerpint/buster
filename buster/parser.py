@@ -3,6 +3,7 @@ import re
 from abc import ABC, abstractmethod
 from dataclasses import InitVar, dataclass, field
 from itertools import takewhile, zip_longest
+from pathlib import Path
 from typing import Iterator
 
 import bs4
@@ -73,6 +74,8 @@ class Section:
 class Parser(ABC):
     soup: BeautifulSoup
     base_url: str
+    root_dir: str
+    filepath: str
     filename: str
     min_section_length: int = 100
     max_section_length: int = 2000
@@ -122,12 +125,18 @@ class HuggingfaceParser(Parser):
             href = section.find("a", href=True, class_="header-link")
             nodes = list(takewhile(lambda sibling: sibling != next_section, section.find_next_siblings()))
 
-            url = self.build_url(href["href"].strip().replace("\n", ""))
+            suffix = href["href"].strip().replace("\n", "")
+            url = self.build_url(suffix)
             name = section.text.strip().replace("\n", "")
             yield Section(url, name, nodes)
 
         return
 
     def build_url(self, suffix: str) -> str:
-        # The splitext is to remove the .html extension
-        return self.base_url + os.path.splitext(self.filename)[0] + suffix
+        # gets the relative path of the file to the root dir
+        # The split is to remove the .html extension
+        parent = Path(self.root_dir)
+        son = Path(self.filepath)
+        rel_path = str(son.relative_to(parent)).split(".")[0]
+
+        return self.base_url + rel_path + suffix

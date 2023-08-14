@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
 from openai.embeddings_utils import get_embedding
+from tqdm import tqdm
 
 from buster.parser import HuggingfaceParser, Parser, SphinxParser
 
@@ -49,7 +50,8 @@ supported_docs = {
 
 
 def get_document(
-    filepath: str,
+    root_dir: str,
+    file: str,
     base_url: str,
     parser_cls: Type[Parser],
     min_section_length: int = 100,
@@ -60,12 +62,13 @@ def get_document(
     Sections are broken into subsections if they are longer than `max_section_length`.
     Sections correspond to `section` HTML tags that have a headerlink attached.
     """
+    filepath = os.path.join(root_dir, file)
     with open(filepath, "r") as f:
         source = f.read()
 
     filename = Path(filepath).name
     soup = BeautifulSoup(source, "html.parser")
-    parser = parser_cls(soup, base_url, filename, min_section_length, max_section_length)
+    parser = parser_cls(soup, base_url, root_dir, filepath, filename, min_section_length, max_section_length)
 
     sections = []
     urls = []
@@ -95,13 +98,12 @@ def get_all_documents(
     files = glob.glob("**/*.html", root_dir=root_dir, recursive=True)
 
     dfs = []
-    for file in files:
+    for file in tqdm(files):
         try:
-            filepath = os.path.join(root_dir, file)
-            df = get_document(filepath, base_url, parser_cls, min_section_length, max_section_length)
+            df = get_document(root_dir, file, base_url, parser_cls, min_section_length, max_section_length)
             dfs.append(df)
         except:
-            print(f"Skipping {filepath}...")
+            print(f"Skipping {file}...")
             continue
 
     documents_df = pd.concat(dfs, ignore_index=True)
