@@ -76,7 +76,6 @@ class Parser(ABC):
     base_url: str
     root_dir: str
     filepath: str
-    filename: str
     min_section_length: int = 100
     max_section_length: int = 2000
 

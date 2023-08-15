@@ -66,9 +66,8 @@ def get_document(
     with open(filepath, "r") as f:
         source = f.read()
 
-    filename = Path(filepath).name
     soup = BeautifulSoup(source, "html.parser")
-    parser = parser_cls(soup, base_url, root_dir, filepath, filename, min_section_length, max_section_length)
+    parser = parser_cls(soup, base_url, root_dir, filepath, min_section_length, max_section_length)
 
     sections = []
     urls = []
