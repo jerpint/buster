@@ -80,9 +80,20 @@ class Parser(ABC):
     min_section_length: int = 100
     max_section_length: int = 2000
 
-    @abstractmethod
+    @property
+    def relative_path(self) -> str:
+        """Gets the relative path of the file to the root dir.
+
+        This is particularly useful for websites with pages, subdomains, etc.
+        The split is to remove the .html extension
+        """
+        parent = Path(self.root_dir)
+        son = Path(self.filepath)
+        self._relative_path = str(son.relative_to(parent)).split(".")[0]
+        return self._relative_path
+
     def build_url(self, suffix: str) -> str:
-        ...
+        return self.base_url + self.relative_path + suffix
 
     @abstractmethod
     def find_sections(self) -> Iterator[Section]:
@@ -114,9 +125,6 @@ class SphinxParser(Parser):
             yield section
         return
 
-    def build_url(self, suffix: str) -> str:
-        return self.base_url + self.filename + suffix
-
 
 class HuggingfaceParser(Parser):
     def find_sections(self) -> Iterator[Section]:
@@ -129,14 +137,4 @@ class HuggingfaceParser(Parser):
             url = self.build_url(suffix)
             name = section.text.strip().replace("\n", "")
             yield Section(url, name, nodes)
-
         return
-
-    def build_url(self, suffix: str) -> str:
-        # gets the relative path of the file to the root dir
-        # The split is to remove the .html extension
-        parent = Path(self.root_dir)
-        son = Path(self.filepath)
-        rel_path = str(son.relative_to(parent)).split(".")[0]
-
-        return self.base_url + rel_path + suffix
