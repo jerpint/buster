@@ -101,9 +101,10 @@ def get_all_documents(
         try:
             df = get_document(root_dir, file, base_url, parser_cls, min_section_length, max_section_length)
             dfs.append(df)
-        except:
-            print(f"Skipping {file}...")
+        except Exception as e:
+            print(f"Skipping {file} due to the following error: {e}")
             continue
+
 
     documents_df = pd.concat(dfs, ignore_index=True)
 
