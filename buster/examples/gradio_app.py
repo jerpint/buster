@@ -49,7 +49,7 @@ def chat(history):
         yield history, completion
 
 
-block = gr.Blocks(css="#chatbot .overflow-y-auto{height:500px}")
+block = gr.Blocks()
 
 with block:
     with gr.Row():
