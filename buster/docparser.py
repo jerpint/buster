@@ -105,7 +105,6 @@ def get_all_documents(
             print(f"Skipping {file} due to the following error: {e}")
             continue
 
-
     documents_df = pd.concat(dfs, ignore_index=True)
 
     return documents_df
