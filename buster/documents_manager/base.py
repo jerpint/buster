@@ -186,7 +186,6 @@ class DocumentsManager(ABC):
 
             elapsed_time = time.time() - start_time
 
-
             # Sleep to ensure the minimum time interval is maintained
             # Only sleep if it's not the last iteration
             if batch_idx < total_batches - 1:
