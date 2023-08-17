@@ -11,4 +11,4 @@ df = pd.read_csv("stackoverflow.csv")
 dm = DeepLakeDocumentsManager(vector_store_path="deeplake_store", overwrite=True, required_columns=REQUIRED_COLUMNS)
 
 # Generate the embeddings for our documents and store them to the deeplake store
-dm.add(df, csv_checkpoint="embeddings.csv")
+dm.add(df, csv_filename="embeddings.csv")
