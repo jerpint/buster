@@ -1,9 +1,27 @@
+from typing import Optional, Tuple
+
 import cfg
 import gradio as gr
 import pandas as pd
 from cfg import setup_buster
 
+from buster.completers import Completion
+
+# Typehint for chatbot history
+ChatHistory = list[list[Optional[str], Optional[str]]]
+
 buster = setup_buster(cfg.buster_cfg)
+
+
+def add_user_question(user_question: str, chat_history: Optional[ChatHistory] = None) -> ChatHistory:
+    """Adds a user's question to the chat history.
+
+    If no history is provided, the first element of the history will be the user conversation.
+    """
+    if chat_history is None:
+        chat_history = []
+    chat_history.append([user_question, None])
+    return chat_history
 
 
 def format_sources(matched_documents: pd.DataFrame) -> str:
@@ -31,22 +49,21 @@ def add_sources(history, completion):
     return history
 
 
-def user(user_input, history):
-    """Adds user's question immediately to the chat."""
-    return "", history + [[user_input, None]]
+def chat(chat_history: ChatHistory) -> Tuple[ChatHistory, Completion]:
+    """Answer a user's question using retrieval augmented generation."""
 
+    # We assume that the question is the user's last interaction
+    user_input = chat_history[-1][0]
 
-def chat(history):
-    user_input = history[-1][0]
-
+    # Do retrieval + augmented generation with buster
     completion = buster.process_input(user_input)
 
-    history[-1][1] = ""
-
+    # Stream tokens one at a time to the user
+    chat_history[-1][1] = ""
     for token in completion.answer_generator:
-        history[-1][1] += token
+        chat_history[-1][1] += token
 
-        yield history, completion
+        yield chat_history, completion
 
 
 block = gr.Blocks()
@@ -60,10 +77,10 @@ with block:
     with gr.Row():
         question = gr.Textbox(
             label="What's your question?",
-            placeholder="Ask a question to AI stackoverflow here...",
+            placeholder="Type your question here...",
             lines=1,
         )
-        submit = gr.Button(value="Send", variant="secondary").style(full_width=False)
+        submit = gr.Button(value="Send", variant="secondary")
 
     examples = gr.Examples(
         examples=[
@@ -80,12 +97,35 @@ with block:
 
     response = gr.State()
 
-    submit.click(user, [question, chatbot], [question, chatbot], queue=False).then(
-        chat, inputs=[chatbot], outputs=[chatbot, response]
-    ).then(add_sources, inputs=[chatbot, response], outputs=[chatbot])
-    question.submit(user, [question, chatbot], [question, chatbot], queue=False).then(
-        chat, inputs=[chatbot], outputs=[chatbot, response]
-    ).then(add_sources, inputs=[chatbot, response], outputs=[chatbot])
+    # fmt: off
+    submit.click(
+        add_user_question,
+        inputs=[question],
+        outputs=[chatbot]
+    ).then(
+        chat,
+        inputs=[chatbot],
+        outputs=[chatbot, response]
+    ).then(
+        add_sources,
+        inputs=[chatbot, response],
+        outputs=[chatbot]
+    )
+
+    question.submit(
+        add_user_question,
+        inputs=[question],
+        outputs=[chatbot],
+    ).then(
+        chat,
+        inputs=[chatbot],
+        outputs=[chatbot, response]
+    ).then(
+        add_sources,
+        inputs=[chatbot, response],
+        outputs=[chatbot]
+    )
+    # fmt: on
 
 
 block.queue(concurrency_count=16)
