@@ -100,7 +100,7 @@ with block:
     # fmt: off
     submit.click(
         add_user_question,
-        inputs=[question, chatbot],
+        inputs=[question],
         outputs=[chatbot]
     ).then(
         chat,
@@ -114,7 +114,7 @@ with block:
 
     question.submit(
         add_user_question,
-        inputs=[question, chatbot],
+        inputs=[question],
         outputs=[chatbot],
     ).then(
         chat,
