@@ -19,6 +19,7 @@ class ServiceRetriever(Retriever):
         pinecone_api_key: str,
         pinecone_env: str,
         pinecone_index: str,
+        pinecone_namespace: str,
         mongo_uri: str,
         mongo_db_name: str,
         **kwargs,
@@ -28,6 +29,7 @@ class ServiceRetriever(Retriever):
         pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
 
         self.index = pinecone.Index(pinecone_index)
+        self.namespace = pinecone_namespace
 
         self.client = MongoClient(mongo_uri, server_api=ServerApi("1"))
         self.db = self.client[mongo_db_name]
@@ -81,7 +83,9 @@ class ServiceRetriever(Retriever):
             query_embedding = query_embedding.tolist()
 
         # Pinecone retrieval
-        matches = self.index.query(query_embedding, top_k=top_k, filter=filter, include_values=True)["matches"]
+        matches = self.index.query(
+            query_embedding, top_k=top_k, filter=filter, include_values=True, namespace=self.namespace
+        )["matches"]
         matching_ids = [ObjectId(match.id) for match in matches]
         matching_scores = {match.id: match.score for match in matches}
         matching_embeddings = {match.id: match.values for match in matches}

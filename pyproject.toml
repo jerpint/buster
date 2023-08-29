@@ -13,6 +13,9 @@ dynamic = ["dependencies"]
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
+[tool.setuptools.packages.find]
+include = ["buster"]
+
 [tool.isort]
 profile = "black"
 
