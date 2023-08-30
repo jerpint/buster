@@ -16,6 +16,7 @@ class DocumentsService(DocumentsManager):
         pinecone_api_key: str,
         pinecone_env: str,
         pinecone_index: str,
+        pinecone_namespace: str,
         mongo_uri: str,
         mongo_db_name: str,
         **kwargs,
@@ -25,6 +26,7 @@ class DocumentsService(DocumentsManager):
         pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
 
         self.index = pinecone.Index(pinecone_index)
+        self.namespace = pinecone_namespace
 
         self.client = MongoClient(mongo_uri, server_api=ServerApi("1"))
         self.db = self.client[mongo_db_name]
@@ -54,7 +56,7 @@ class DocumentsService(DocumentsManager):
                 document["source_id"] = source_id
 
                 document_id = str(self.db.documents.insert_one(document).inserted_id)
-                self.index.upsert([(document_id, embedding, {"source": source})])
+                self.index.upsert([(document_id, embedding, {"source": source})], namespace=self.namespace)
 
     def update_source(self, source: str, display_name: str = None, note: str = None):
         """Update the display name and/or note of a source. Also create the source if it does not exist."""
@@ -71,6 +73,6 @@ class DocumentsService(DocumentsManager):
         documents_deleted = self.db.documents.delete_many({"source_id": source_id}).deleted_count
 
         # Pinecone
-        self.index.delete(filter={"source": source})
+        self.index.delete(filter={"source": source}, namespace=self.namespace)
 
         return source_deleted, documents_deleted
