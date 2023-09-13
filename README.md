@@ -15,6 +15,12 @@ We will look at deploying a simple app locally.
 First step, install buster. Note that buster requires python>=3.10.
 
 ```
+pip install buster-doctalk
+```
+
+If you would like to install a local version, run this instead:
+
+```
 git clone https://github.com/jerpint/buster.git
 pip install .
 ```
