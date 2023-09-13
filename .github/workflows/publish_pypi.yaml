@@ -21,7 +21,7 @@ jobs:
         pip install poetry
     - name: Build and publish
 
-    - name: unit tests
+    - name: Deploy to pypi
       env:
         POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
       run: |
