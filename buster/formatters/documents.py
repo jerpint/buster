@@ -53,3 +53,33 @@ class DocumentsFormatterHTML:
         documents_str = f"<DOCUMENTS>{documents_str}<\\DOCUMENTS>"
 
         return documents_str, matched_documents
+
+
+@dataclass
+class DocumentsFormatterJSON:
+    tokenizer: Tokenizer
+    max_tokens: int
+    formatter: str = "{content}"
+
+    def format(
+        self,
+        matched_documents: pd.DataFrame,
+    ) -> tuple[str, pd.DataFrame]:
+        """Format our matched documents to plaintext.
+
+        We also make sure they fit in the alloted max_tokens space.
+        """
+        documents_str = ""
+        max_tokens = self.max_tokens
+
+        documents_str = matched_documents[["content", "source"]].to_json(orient="records")
+        token_count, _ = self.tokenizer.num_tokens(documents_str, return_encoded=True)
+
+        while token_count > max_tokens:
+            logger.warning("truncating document to fit...")
+            matched_documents = matched_documents.iloc[:-1]
+            documents_str = matched_documents[["content", "source"]].to_json(orient="records")
+            token_count, _ = self.tokenizer.num_tokens(documents_str, return_encoded=True)
+            logger.warning(f"Documents after truncation: {documents_str}")
+
+        return documents_str, matched_documents

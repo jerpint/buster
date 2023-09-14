@@ -1,6 +1,6 @@
 from buster.busterbot import Buster, BusterConfig
 from buster.completers import ChatGPTCompleter, Completer, DocumentAnswerer
-from buster.formatters.documents import DocumentsFormatterHTML
+from buster.formatters.documents import DocumentsFormatterJSON
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import DeepLakeRetriever, Retriever
 from buster.tokenizers import GPTTokenizer
@@ -95,7 +95,7 @@ def setup_buster(buster_cfg: BusterConfig):
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     document_answerer: DocumentAnswerer = DocumentAnswerer(
         completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
-        documents_formatter=DocumentsFormatterHTML(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+        documents_formatter=DocumentsFormatterJSON(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
         prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
         **buster_cfg.documents_answerer_cfg,
     )
