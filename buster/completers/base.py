@@ -9,7 +9,7 @@ import openai
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
 
-from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.documents import DocumentsFormatterHTML
 from buster.formatters.prompts import PromptFormatter
 
 logger = logging.getLogger(__name__)
@@ -228,7 +228,7 @@ class DocumentAnswerer:
 
     def __init__(
         self,
-        documents_formatter: DocumentsFormatter,
+        documents_formatter: DocumentsFormatterHTML,
         prompt_formatter: PromptFormatter,
         completer: Completer,
         completion_class: Completion = Completion,

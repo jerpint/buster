@@ -10,7 +10,7 @@ logging.basicConfig(level=logging.INFO)
 
 
 @dataclass
-class DocumentsFormatter:
+class DocumentsFormatterHTML:
     tokenizer: Tokenizer
     max_tokens: int
     formatter: str = "{content}"
@@ -50,12 +50,6 @@ class DocumentsFormatter:
             )
             matched_documents = matched_documents.iloc[:num_preserved_docs]
 
+        documents_str = f"<DOCUMENTS>{documents_str}<\\DOCUMENTS>"
+
         return documents_str, matched_documents
-
-
-def documents_formatter_factory(tokenizer: Tokenizer, max_tokens: int, formatter: str) -> DocumentsFormatter:
-    return DocumentsFormatter(
-        tokenizer=tokenizer,
-        max_tokens=max_tokens,
-        formatter=formatter,
-    )

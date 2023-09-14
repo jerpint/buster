@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 
-from buster.formatters.documents import DocumentsFormatter
+from buster.formatters.documents import DocumentsFormatterHTML
 from buster.formatters.prompts import PromptFormatter
 from buster.tokenizers import GPTTokenizer
 
@@ -9,7 +9,7 @@ from buster.tokenizers import GPTTokenizer
 def test_documents_formatter__normal():
     """In this test, we expect all 3 documents to be matched and returned normally."""
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    documents_formatter = DocumentsFormatter(
+    documents_formatter = DocumentsFormatterHTML(
         tokenizer=tokenizer,
         max_tokens=100,
     )
@@ -19,9 +19,11 @@ def test_documents_formatter__normal():
     document_3 = "This is also a short document."
 
     expected_docs_str = (
+        "<DOCUMENTS>"
         f"<DOCUMENT>{document_1}<\\DOCUMENT>"
         f"<DOCUMENT>{document_2}<\\DOCUMENT>"
         f"<DOCUMENT>{document_3}<\\DOCUMENT>"
+        "<\\DOCUMENTS>"
     )
 
     matched_documents = pd.DataFrame({"content": [document_1, document_2, document_3]})
@@ -40,12 +42,13 @@ def test_documents_formatter__doc_to_long():
     we only expect a part of it to be contained.
     """
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    documents_formatter = DocumentsFormatter(
+    documents_formatter = DocumentsFormatterHTML(
         tokenizer=tokenizer,
         max_tokens=100,
     )
 
-    document_1 = "This is a very long document. It is long on purpose." * 50
+    long_sentence = "This is a very long document. It is long on purpose."
+    document_1 = long_sentence * 50
     document_2 = "This is a very short document."
     document_3 = "This is also a short document"
 
@@ -58,8 +61,10 @@ def test_documents_formatter__doc_to_long():
     assert len(matched_documents_new) == 1
     assert len(docs_str) < len(document_1)
 
-    # ignore the <DOCUMENT> </DOCUMENT> tags from the formatter...
-    assert docs_str[11:-11] in document_1
+    # The long document gets truncated, the others don't make it in.
+    assert long_sentence in docs_str
+    assert document_2 not in docs_str
+    assert document_3 not in docs_str
 
 
 def test_documents_formatter__doc_to_long_2():
@@ -69,7 +74,7 @@ def test_documents_formatter__doc_to_long_2():
     """
 
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    documents_formatter = DocumentsFormatter(
+    documents_formatter = DocumentsFormatterHTML(
         tokenizer=tokenizer,
         max_tokens=100,
     )
@@ -94,7 +99,7 @@ def test_documents_formatter__doc_to_long_2():
 def test_documents_formatter__complex_format():
     """In this test, we expect all 3 documents to be matched and returned in a particular format."""
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    documents_formatter = DocumentsFormatter(
+    documents_formatter = DocumentsFormatterHTML(
         tokenizer=tokenizer,
         max_tokens=100,
         formatter="Title: {title}\n{content}\n",
@@ -113,9 +118,11 @@ def test_documents_formatter__complex_format():
     country_3 = "Germany"
 
     expected_docs_str = (
+        "<DOCUMENTS>"
         f"<DOCUMENT>Title: {title_1}\n{document_1}\n<\\DOCUMENT>"
         f"<DOCUMENT>Title: {title_2}\n{document_2}\n<\\DOCUMENT>"
         f"<DOCUMENT>Title: {title_3}\n{document_3}\n<\\DOCUMENT>"
+        "<\\DOCUMENTS>"
     )
 
     matched_documents = pd.DataFrame(
