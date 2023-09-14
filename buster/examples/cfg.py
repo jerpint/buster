@@ -1,5 +1,5 @@
 from buster.busterbot import Buster, BusterConfig
-from buster.completers import ChatGPTCompleter, Completer, DocumentAnswerer
+from buster.completers import ChatGPTCompleter, DocumentAnswerer
 from buster.formatters.documents import DocumentsFormatterJSON
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import DeepLakeRetriever, Retriever
@@ -58,7 +58,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
     },
     documents_formatter_cfg={
         "max_tokens": 3500,
-        "formatter": "{content}",
+        "columns": ["content", "title", "source"],
     },
     prompt_formatter_cfg={
         "max_tokens": 3500,

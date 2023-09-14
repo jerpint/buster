@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import logging
 from dataclasses import dataclass
 
@@ -9,8 +10,14 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+class DocumentsFormatter(ABC):
+    @abstractmethod
+    def format():
+        ...
+
+
 @dataclass
-class DocumentsFormatterHTML:
+class DocumentsFormatterHTML(DocumentsFormatter):
     tokenizer: Tokenizer
     max_tokens: int
     formatter: str = "{content}"
@@ -56,10 +63,10 @@ class DocumentsFormatterHTML:
 
 
 @dataclass
-class DocumentsFormatterJSON:
+class DocumentsFormatterJSON(DocumentsFormatter):
     tokenizer: Tokenizer
     max_tokens: int
-    formatter: str = "{content}"
+    columns: list[str]
 
     def format(
         self,
@@ -72,10 +79,11 @@ class DocumentsFormatterJSON:
         documents_str = ""
         max_tokens = self.max_tokens
 
-        documents_str = matched_documents[["content", "source"]].to_json(orient="records")
+        documents_str = matched_documents[self.columns].to_json(orient="records")
         token_count, _ = self.tokenizer.num_tokens(documents_str, return_encoded=True)
 
         while token_count > max_tokens:
+            # Too many tokens, drop a document and try again.
             logger.warning("truncating document to fit...")
             matched_documents = matched_documents.iloc[:-1]
             documents_str = matched_documents[["content", "source"]].to_json(orient="records")
