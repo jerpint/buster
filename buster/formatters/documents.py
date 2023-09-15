@@ -1,5 +1,5 @@
-from abc import ABC, abstractmethod
 import logging
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 import pandas as pd
@@ -28,7 +28,7 @@ class DocumentsFormatterHTML(DocumentsFormatter):
     ) -> tuple[str, pd.DataFrame]:
         """Format our matched documents to plaintext.
 
-        We also make sure they fit in the alloted max_tokens space.
+        When the length of max_tokens is exceeded, we truncate the text of the documents that don't fit.
         """
         documents_str = ""
         total_tokens = 0
@@ -74,7 +74,7 @@ class DocumentsFormatterJSON(DocumentsFormatter):
     ) -> tuple[str, pd.DataFrame]:
         """Format our matched documents to plaintext.
 
-        We also make sure they fit in the alloted max_tokens space.
+        When the length of max_tokens is exceeded, we remove one document at a time.
         """
         documents_str = ""
         max_tokens = self.max_tokens
