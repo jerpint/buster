@@ -113,7 +113,7 @@ def test_DocumentsFormatterJSON__doc_too_long():
     we only expect a part of it to be contained.
     """
     tokenizer = GPTTokenizer(model_name="gpt-3.5-turbo")
-    documents_formatter = DocumentsFormatterJSON(tokenizer=tokenizer, max_tokens=100, columns=["source", "content"])
+    documents_formatter = DocumentsFormatterJSON(tokenizer=tokenizer, max_tokens=100, columns=["content", "source"])
 
     long_sentence = "This is a very long document. It is long on purpose."
 
