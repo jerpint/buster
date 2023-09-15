@@ -1,6 +1,6 @@
 from buster.busterbot import Buster, BusterConfig
-from buster.completers import ChatGPTCompleter, Completer, DocumentAnswerer
-from buster.formatters.documents import DocumentsFormatter
+from buster.completers import ChatGPTCompleter, DocumentAnswerer
+from buster.formatters.documents import DocumentsFormatterJSON
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import DeepLakeRetriever, Retriever
 from buster.tokenizers import GPTTokenizer
@@ -58,7 +58,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
     },
     documents_formatter_cfg={
         "max_tokens": 3500,
-        "formatter": "{content}",
+        "columns": ["content", "title", "source"],
     },
     prompt_formatter_cfg={
         "max_tokens": 3500,
@@ -69,10 +69,8 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
             "If it isn't, simply reply that you cannot answer the question. "
             "Do not refer to the documentation directly, but use the instructions provided within it to answer questions. "
             "Here is the documentation: "
-            "<DOCUMENTS> "
         ),
         "text_after_docs": (
-            "<\DOCUMENTS>\n"
             "REMEMBER:\n"
             "You are a chatbot assistant answering technical questions about artificial intelligence (AI)."
             "Here are the rules you must follow:\n"
@@ -97,7 +95,7 @@ def setup_buster(buster_cfg: BusterConfig):
     tokenizer = GPTTokenizer(**buster_cfg.tokenizer_cfg)
     document_answerer: DocumentAnswerer = DocumentAnswerer(
         completer=ChatGPTCompleter(**buster_cfg.completion_cfg),
-        documents_formatter=DocumentsFormatter(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
+        documents_formatter=DocumentsFormatterJSON(tokenizer=tokenizer, **buster_cfg.documents_formatter_cfg),
         prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
         **buster_cfg.documents_answerer_cfg,
     )
