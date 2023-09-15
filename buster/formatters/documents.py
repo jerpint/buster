@@ -11,25 +11,57 @@ logging.basicConfig(level=logging.INFO)
 
 
 class DocumentsFormatter(ABC):
+    """
+    Abstract base class for document formatters.
+
+    Subclasses are required to implement the `format` method which transforms the input documents
+    into the desired format.
+    """
+
     @abstractmethod
-    def format():
-        ...
+    def format(self, matched_documents: pd.DataFrame) -> tuple[str, pd.DataFrame]:
+        """
+        Abstract method to format matched documents.
+
+        Parameters:
+        - matched_documents (pd.DataFrame): DataFrame containing the matched documents to be formatted.
+
+        Returns:
+        - tuple[str, pd.DataFrame]: A tuple containing the formatted documents as a string and
+                                    the possibly truncated matched documents DataFrame.
+        """
+        pass
+
 
 
 @dataclass
 class DocumentsFormatterHTML(DocumentsFormatter):
+    """
+    Formatter class to convert matched documents into an HTML format.
+
+    Attributes:
+    - tokenizer (Tokenizer): Tokenizer instance to count tokens in the documents.
+    - max_tokens (int): Maximum allowed tokens for the formatted documents.
+    - formatter (str): String formatter for the document's content.
+    """
     tokenizer: Tokenizer
     max_tokens: int
     formatter: str = "{content}"
 
-    def format(
-        self,
-        matched_documents: pd.DataFrame,
-    ) -> tuple[str, pd.DataFrame]:
-        """Format our matched documents to plaintext.
-
-        When the length of max_tokens is exceeded, we truncate the text of the documents that don't fit.
+    def format(self, matched_documents: pd.DataFrame) -> tuple[str, pd.DataFrame]:
         """
+        Format the matched documents into an HTML format.
+
+        If the total tokens exceed max_tokens, documents are truncated or omitted to fit within the limit.
+
+        Parameters:
+        - matched_documents (pd.DataFrame): DataFrame containing the matched documents to be formatted.
+
+        Returns:
+        - tuple[str, pd.DataFrame]: A tuple containing the formatted documents as an HTML string and
+                                    the possibly truncated matched documents DataFrame.
+        """
+
         documents_str = ""
         total_tokens = 0
         max_tokens = self.max_tokens
@@ -64,18 +96,33 @@ class DocumentsFormatterHTML(DocumentsFormatter):
 
 @dataclass
 class DocumentsFormatterJSON(DocumentsFormatter):
+    """
+    Formatter class to convert matched documents into a JSON format.
+
+    Attributes:
+    - tokenizer (Tokenizer): Tokenizer instance to count tokens in the documents.
+    - max_tokens (int): Maximum allowed tokens for the formatted documents.
+    - columns (list[str]): List of columns to include in the JSON format.
+    """
+
     tokenizer: Tokenizer
     max_tokens: int
     columns: list[str]
 
-    def format(
-        self,
-        matched_documents: pd.DataFrame,
-    ) -> tuple[str, pd.DataFrame]:
-        """Format our matched documents to plaintext.
-
-        When the length of max_tokens is exceeded, we remove one document at a time.
+    def format(self, matched_documents: pd.DataFrame) -> tuple[str, pd.DataFrame]:
         """
+        Format the matched documents into a JSON format.
+
+        If the total tokens exceed max_tokens, documents are omitted one at a time until it fits the limit.
+
+        Parameters:
+        - matched_documents (pd.DataFrame): DataFrame containing the matched documents to be formatted.
+
+        Returns:
+        - tuple[str, pd.DataFrame]: A tuple containing the formatted documents as a JSON string and
+                                    the possibly truncated matched documents DataFrame.
+        """
+
         documents_str = ""
         max_tokens = self.max_tokens
 
