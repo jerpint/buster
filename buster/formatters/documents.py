@@ -33,7 +33,6 @@ class DocumentsFormatter(ABC):
         pass
 
 
-
 @dataclass
 class DocumentsFormatterHTML(DocumentsFormatter):
     """
@@ -44,6 +43,7 @@ class DocumentsFormatterHTML(DocumentsFormatter):
     - max_tokens (int): Maximum allowed tokens for the formatted documents.
     - formatter (str): String formatter for the document's content.
     """
+
     tokenizer: Tokenizer
     max_tokens: int
     formatter: str = "{content}"
@@ -140,8 +140,8 @@ class DocumentsFormatterJSON(DocumentsFormatter):
             token_count, _ = self.tokenizer.num_tokens(documents_str, return_encoded=True)
 
             # Log a warning with more details
-            logger.warning(f"Truncating documents to fit. Remaining documents after truncation: {len(matched_documents)}")
-
-
+            logger.warning(
+                f"Truncating documents to fit. Remaining documents after truncation: {len(matched_documents)}"
+            )
 
         return documents_str, matched_documents
