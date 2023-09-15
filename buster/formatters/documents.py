@@ -42,11 +42,15 @@ class DocumentsFormatterHTML(DocumentsFormatter):
     - tokenizer (Tokenizer): Tokenizer instance to count tokens in the documents.
     - max_tokens (int): Maximum allowed tokens for the formatted documents.
     - formatter (str): String formatter for the document's content.
+    - inner_tag (str): HTML tag that will be used at the document level.
+    - outer_tag (str): HTML tag that will be used at the documents collection level.
     """
 
     tokenizer: Tokenizer
     max_tokens: int
     formatter: str = "{content}"
+    inner_tag: str = "DOCUMENT"
+    outer_tag: str = "DOCUMENTS"
 
     def format(self, matched_documents: pd.DataFrame) -> tuple[str, pd.DataFrame]:
         """
@@ -73,13 +77,13 @@ class DocumentsFormatterHTML(DocumentsFormatter):
             num_preserved_docs += 1
             token_count, encoded = self.tokenizer.num_tokens(doc, return_encoded=True)
             if total_tokens + token_count <= max_tokens:
-                documents_str += f"<DOCUMENT>{doc}<\\DOCUMENT>"
+                documents_str += f"<{self.inner_tag}>{doc}<\\{self.inner_tag}>"
                 total_tokens += token_count
             else:
                 logger.warning("truncating document to fit...")
                 remaining_tokens = max_tokens - total_tokens
                 truncated_doc = self.tokenizer.decode(encoded[:remaining_tokens])
-                documents_str += f"<DOCUMENT>{truncated_doc}<\\DOCUMENT>"
+                documents_str += f"<{self.inner_tag}>{truncated_doc}<\\{self.inner_tag}>"
                 logger.warning(f"Documents after truncation: {documents_str}")
                 break
 
@@ -89,7 +93,7 @@ class DocumentsFormatterHTML(DocumentsFormatter):
             )
             matched_documents = matched_documents.iloc[:num_preserved_docs]
 
-        documents_str = f"<DOCUMENTS>{documents_str}<\\DOCUMENTS>"
+        documents_str = f"<{self.outer_tag}>{documents_str}<\\{self.outer_tag}>"
 
         return documents_str, matched_documents
 
