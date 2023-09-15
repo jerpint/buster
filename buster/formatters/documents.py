@@ -123,23 +123,25 @@ class DocumentsFormatterJSON(DocumentsFormatter):
                                     the possibly truncated matched documents DataFrame.
         """
 
-        documents_str = ""
         max_tokens = self.max_tokens
-
         documents_str = matched_documents[self.columns].to_json(orient="records")
         token_count, _ = self.tokenizer.num_tokens(documents_str, return_encoded=True)
 
         while token_count > max_tokens:
-            # Too many tokens, drop a document and try again.
-            logger.warning("truncating document to fit...")
-            matched_documents = matched_documents.iloc[:-1]
-
+            # Truncated too much, no documents left, raise an error
             if len(matched_documents) == 0:
                 raise ValueError(
                     f"Could not truncate documents to fit {max_tokens=}. Consider increasing max_tokens or decreasing chunk lengths."
                 )
-            documents_str = matched_documents[["content", "source"]].to_json(orient="records")
+
+            # Too many tokens, drop a document and try again.
+            matched_documents = matched_documents.iloc[:-1]
+            documents_str = matched_documents[self.columns].to_json(orient="records")
             token_count, _ = self.tokenizer.num_tokens(documents_str, return_encoded=True)
-            logger.warning(f"Documents after truncation: {documents_str}")
+
+            # Log a warning with more details
+            logger.warning(f"Truncating documents to fit. Remaining documents after truncation: {len(matched_documents)}")
+
+
 
         return documents_str, matched_documents
