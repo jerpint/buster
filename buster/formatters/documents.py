@@ -86,6 +86,11 @@ class DocumentsFormatterJSON(DocumentsFormatter):
             # Too many tokens, drop a document and try again.
             logger.warning("truncating document to fit...")
             matched_documents = matched_documents.iloc[:-1]
+
+            if len(matched_documents) == 0:
+                raise ValueError(
+                    f"Could not truncate documents to fit {max_tokens=}. Consider increasing max_tokens or decreasing chunk lengths."
+                )
             documents_str = matched_documents[["content", "source"]].to_json(orient="records")
             token_count, _ = self.tokenizer.num_tokens(documents_str, return_encoded=True)
             logger.warning(f"Documents after truncation: {documents_str}")
