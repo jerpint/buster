@@ -72,6 +72,7 @@ class DocumentsFormatterHTML(DocumentsFormatter):
 
         num_total_docs = len(matched_documents)
         num_preserved_docs = 0
+        # TODO: uniformize this logic with the DocumentsFormatterJSON
         for _, row in matched_documents.iterrows():
             doc = self.formatter.format_map(row.to_dict())
             num_preserved_docs += 1
