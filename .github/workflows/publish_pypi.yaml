@@ -24,5 +24,6 @@ jobs:
         POETRY_PYPI_TOKEN_PYPI: ${{ secrets.POETRY_PYPI_TOKEN_PYPI }}
       run: |
         poetry version $(git describe --tags --abbrev=0)
+        poetry add $(cat requirements.txt)
         poetry build
         poetry publish
