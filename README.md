@@ -13,25 +13,33 @@ Buster is a question-answering chatbot that can be tuned to any source of docume
 
 # Demo
 
-You can try out our [live demo here](https://huggingface.co/spaces/jerpint/buster), where it will answer questions about a bunch of libraries we've already scraped, including [🤗 Transformers](https://huggingface.co/docs/transformers/index).
-
+In order to view the full abilities of Buster, you can play with our [live demo here](https://huggingface.co/spaces/jerpint/buster).
+We scraped the documentation of [huggingface 🤗 Transformers](https://huggingface.co/docs/transformers/index) and instructed Buster to answer questions related to its usage.
 
 # Quickstart
 
-Here is a quick guide to help you deploy buster on your own dataset!
+This section is meant to help you install and run local version of Buster.
+First step, install buster:
 
-We will look at deploying a simple app locally.
-First step, install buster. Note that buster requires python>=3.10.
+**Note**: Buster requires python>=3.10
 
 ```bash
 pip install buster-doctalk
 ```
 
-Then, go to the examples folder:
+Then, go to the examples folder and launch the app.
+We've included small sample data on stackoverflow-ai questions that you can test your setup with to try app:
 
-    cd buster/buster/examples
+```bash
+cd buster/buster/examples
+gradio gradio_app.py
+```
+This will launch the gradio app locally.
 
-We've attached a sample `stackoverflow.csv` file to help you get started.
+# Generating your own embeddings
+
+Once your local version of Buster is up and running, the next step is for you to be able to import your own data.
+We will be using the `stackoverflow.csv` file in the `buster/examples/` folder for this. This is the same data that was used to generate the demo app's embeddings.
 
 You will first ingest the documents to be ready for buster. In this example, we use Deeplake's vectore store, but you can always write your own custom `DocumentManager`:
 
@@ -50,26 +58,32 @@ dm.add(df)
 
 You can also just simply run the script:
 
-    python generate_embeddings.py
+    python generate_embeddings.py --csv stackoverflow.csv
 
 
-This will generate the embeddings and save them locally in the `deeplake_store` folder.
-Note: You only need to run this operation one time.
+This will generate the embeddings and save them locally in the `deeplake_store`.
 
-Now, you can launch your gradio app:
 
-    gradio gradio_app.py
+**NOTE**: You will need to set a valid openai key for computing embeddings:
 
-This will launch the gradio app locally, which you should be able to view on [localhost]( http://127.0.0.1:7860)
+```bash
+export OPENAI_API_KEY=sk-...
+```
+
+You only need to run this operation one time.
 
 In the .csv, we expect columns ["title", "url", "content", "source"] for each row of the csv:
 
 * title: this will be the title of the url to display
-* url: the actual link that will be shown to the user
-* source: where the content was originally sourced from (e.g. wikipedia, medium, etc.)
-* content: plaintext of the document to be embedded. Note that we do not do any chunking (yet). It is your responsibility to ensure each document is of an appropriate context length.
+* url: the link that clicking the title will redirect to
+* source: where the content was originally sourced from (e.g. wikipedia, stackoverflow, etc.)
+* content: plaintext of the documents to be embedded. It is your responsibility to chunk your documents appropriately. For better results, we recommend chunks of 400-600 words.
 
-## How does Buster work?
+# Additional Configurations
+
+Properly prompting models as well as playing around with various model parameters can lead to different results. We use a `BusterConfig` object to keep track of the various Buster configurations. In the `buster/examples/` folder, the config is stored inside `cfg.py`. Modify this config to update parameters, prompts, etc.
+
+# How does Buster work?
 
 First, we parsed the documentation into snippets. For each snippet, we obtain an embedding by using the [OpenAI API](https://beta.openai.com/docs/guides/embeddings/what-are-embeddings).
 
