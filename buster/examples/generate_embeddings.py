@@ -12,3 +12,6 @@ dm = DeepLakeDocumentsManager(vector_store_path="deeplake_store", overwrite=True
 
 # Generate the embeddings for our documents and store them to the deeplake store
 dm.add(df, csv_filename="embeddings.csv")
+
+# Save it to a zip file
+dm.to_zip()

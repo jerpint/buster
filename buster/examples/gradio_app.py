@@ -6,9 +6,12 @@ import pandas as pd
 from cfg import setup_buster
 
 from buster.completers import Completion
+from buster.utils import extract_zip
 
 # Typehint for chatbot history
 ChatHistory = list[list[Optional[str], Optional[str]]]
+
+extract_zip("deeplake_store.zip", "deeplake_store")
 
 buster = setup_buster(cfg.buster_cfg)
 
