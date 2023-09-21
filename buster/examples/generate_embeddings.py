@@ -6,8 +6,10 @@ from buster.documents_manager import DeepLakeDocumentsManager
 REQUIRED_COLUMNS = ["url", "title", "content", "source"]
 
 
-@click.command()
-@click.option("--csv", default="stackoverflow.csv", help="Path to the CSV file.")
+@click.command(
+    help="This script processes a CSV file and generates embeddings. The CSV argument specifies the path to the input CSV file."
+)
+@click.argument("csv", metavar="<path_to_csv_file>")
 def main(csv):
     # Read the csv
     df = pd.read_csv(csv)
