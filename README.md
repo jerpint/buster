@@ -34,7 +34,14 @@ We've included small sample data on stackoverflow-ai questions that you can test
 cd buster/buster/examples
 gradio gradio_app.py
 ```
+
 This will launch the gradio app locally.
+
+
+**NOTE**: The demo uses chatGPT to generate text and compute embeddings, make sure to set a valid openai API key:
+```bash
+export OPENAI_API_KEY=sk-...
+```
 
 # Generating your own embeddings
 
