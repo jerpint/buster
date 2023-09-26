@@ -1,3 +1,4 @@
+import os
 from typing import Optional, Tuple
 
 import cfg
@@ -6,9 +7,16 @@ import pandas as pd
 from cfg import setup_buster
 
 from buster.completers import Completion
+from buster.utils import extract_zip
+
+# Check if an openai key is set as an env. variable
+if os.getenv("OPENAI_API_KEY") is None:
+    print("Warning: No openai key detected. You can set it with 'export OPENAI_API_KEY=sk-...'.")
 
 # Typehint for chatbot history
 ChatHistory = list[list[Optional[str], Optional[str]]]
+
+extract_zip("deeplake_store.zip", "deeplake_store")
 
 buster = setup_buster(cfg.buster_cfg)
 
