@@ -28,7 +28,7 @@ pip install buster-doctalk
 ```
 
 Then, go to the examples folder and launch the app.
-We've included small sample data on stackoverflow-ai questions that you can test your setup with to try app:
+We've included small sample data off stackoverflow-ai questions that you can test your setup with to try app:
 
 ```bash
 cd buster/buster/examples
@@ -48,7 +48,7 @@ export OPENAI_API_KEY=sk-...
 Once your local version of Buster is up and running, the next step is for you to be able to import your own data.
 We will be using the `stackoverflow.csv` file in the `buster/examples/` folder for this. This is the same data that was used to generate the demo app's embeddings.
 
-You will first ingest the documents to be ready for buster. In this example, we use Deeplake's vectore store, but you can always write your own custom `DocumentManager`:
+You will first ingest the documents to be ready for buster. In this example, we use Deeplake's vector store, but you can always write your own custom `DocumentManager`:
 
 
 ```python
