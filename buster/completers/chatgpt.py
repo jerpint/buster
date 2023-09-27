@@ -1,8 +1,27 @@
+import logging
+import os
 from typing import Iterator
 
 import openai
 
 from buster.completers import Completer
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
+
+# Check if an API key exists for promptlayer, if it does, use it
+promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
+if promptlayer_api_key:
+    try:
+        import promptlayer
+
+        logger.info("Enabling prompt layer...")
+        promptlayer.api_key = promptlayer_api_key
+
+        # replace openai with the promptlayer wrapper
+        openai = promptlayer.openai
+    except Exception as e:
+        logger.exception("Something went wrong enabling promptlayer.")
 
 
 class ChatGPTCompleter(Completer):

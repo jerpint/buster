@@ -1,9 +1,7 @@
 import io
 import logging
-import os
 import warnings
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
 from typing import Any, Iterator, Optional
 
 import openai
@@ -15,23 +13,6 @@ from buster.formatters.prompts import PromptFormatter
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-# Check if an API key exists for promptlayer, if it does, use it
-promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
-if promptlayer_api_key:
-    try:
-        import promptlayer
-
-        logger.info("Enabling prompt layer...")
-        promptlayer.api_key = promptlayer_api_key
-
-        # replace openai with the promptlayer wrapper
-        openai = promptlayer.openai
-    except Exception as e:
-        logger.exception("Something went wrong enabling promptlayer.")
-
-# Set openai credentials
-openai.api_key = os.environ.get("OPENAI_API_KEY")
 
 
 class Completion:
