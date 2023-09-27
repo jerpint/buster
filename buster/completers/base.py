@@ -200,6 +200,7 @@ class Completion:
         if isinstance(completion_dict["matched_documents"], str):
             # avoids deprecation warning
             json_data = io.StringIO(completion_dict["matched_documents"])
+
             completion_dict["matched_documents"] = pd.read_json(json_data, orient="index")
         elif isinstance(completion_dict["matched_documents"], dict):
             completion_dict["matched_documents"] = pd.DataFrame(completion_dict["matched_documents"]).T
