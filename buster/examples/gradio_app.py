@@ -38,6 +38,11 @@ def format_sources(matched_documents: pd.DataFrame) -> str:
 
     matched_documents.similarity_to_answer = matched_documents.similarity_to_answer * 100
 
+    # drop duplicate pages (by title), keep highest ranking ones
+    matched_documents = matched_documents.sort_values(
+        "similarity_to_answer", ascending=False
+    ).drop_duplicates("title", keep="first")
+
     documents_answer_template: str = (
         "📝 Here are the sources I used to answer your question:\n\n{documents}\n\n{footnote}"
     )
