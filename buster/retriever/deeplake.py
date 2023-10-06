@@ -129,5 +129,5 @@ class DeepLakeRetriever(Retriever):
                 filter=filter,
             )
 
-            matched_documents = data_dict_to_df(data)
-            return matched_documents
+        matched_documents = data_dict_to_df(data)
+        return matched_documents
