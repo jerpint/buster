@@ -1,4 +1,5 @@
 import logging
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -66,14 +67,16 @@ class ServiceRetriever(Retriever):
             display_name = self.db.sources.find_one({"name": source})["display_name"]
             return display_name
 
-    def get_topk_documents(self, query: str, source: str, top_k: int) -> pd.DataFrame:
-        if source is None:
+    def get_topk_documents(self, query: str, sources: Optional[list[str]], top_k: int) -> pd.DataFrame:
+        if sources is None:
             filter = None
         else:
-            filter = {"source": {"$eq": source}}
-            source_exists = self.db.sources.find_one({"name": source})
+            if len(sources) > 1:
+                raise ValueError("Service retriever only supports one source for now...")
+            filter = {"source": {"$eq": sources[0]}}
+            source_exists = self.db.sources.find_one({"name": sources[0]})
             if source_exists is None:
-                logger.warning(f"Source {source} does not exist. Returning empty dataframe.")
+                logger.warning(f"Source {sources[0]} does not exist. Returning empty dataframe.")
                 return pd.DataFrame()
 
         query_embedding = self.get_embedding(query, model=self.embedding_model)

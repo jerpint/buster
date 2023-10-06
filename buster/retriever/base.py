@@ -2,6 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -53,13 +54,15 @@ class Retriever(ABC):
         # filter out matched_documents using a threshold
         return matched_documents[matched_documents.similarity > thresh]
 
-    def retrieve(self, query: str, source: str = None, top_k: int = None, thresh: float = None) -> pd.DataFrame:
+    def retrieve(
+        self, query: str, sources: Optional[list[str]] = None, top_k: int = None, thresh: float = None
+    ) -> pd.DataFrame:
         if top_k is None:
             top_k = self.top_k
         if thresh is None:
             thresh = self.thresh
 
-        matched_documents = self.get_topk_documents(query=query, source=source, top_k=top_k)
+        matched_documents = self.get_topk_documents(query=query, sources=sources, top_k=top_k)
 
         # log matched_documents to the console
         logger.info(f"matched documents before thresh: {matched_documents}")
