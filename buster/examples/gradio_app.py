@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import Optional, Tuple
 
@@ -62,14 +63,14 @@ def add_sources(history, completion):
     return history
 
 
-def chat(chat_history: ChatHistory) -> Tuple[ChatHistory, Completion]:
+async def chat(chat_history: ChatHistory) -> Tuple[ChatHistory, Completion]:
     """Answer a user's question using retrieval augmented generation."""
 
     # We assume that the question is the user's last interaction
     user_input = chat_history[-1][0]
 
     # Do retrieval + augmented generation with buster
-    completion = buster.process_input(user_input)
+    completion = asyncio.run(buster.process_input(user_input))
 
     # Stream tokens one at a time to the user
     chat_history[-1][1] = ""

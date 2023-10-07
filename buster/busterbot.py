@@ -1,6 +1,7 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Optional
+import asyncio
 
 import pandas as pd
 
@@ -77,7 +78,13 @@ class Buster:
         self.retriever = retriever
         self.validator = validator
 
-    def process_input(self, user_input: str, source: str = None) -> Completion:
+    async def check_question_relevance(self, user_input):
+        return self.validator.check_question_relevance(user_input)
+
+    async def retrieve_documents(self, user_input, source):
+        return self.retriever.retrieve(user_input, source=source)
+
+    async def process_input(self, user_input: str, source: Optional[str] = None) -> Completion:
         """
         Main function to process the input question and generate a formatted output.
         """
@@ -88,12 +95,17 @@ class Buster:
         if not user_input.endswith("\n"):
             user_input += "\n"
 
-        # The returned message is either a generic invalid question message or an error handling message
-        question_relevant, irrelevant_question_message = self.validator.check_question_relevance(user_input)
+        # Run the check_question_relevance and retrieve_documents concurrently
+        question_task = asyncio.create_task(self.check_question_relevance(user_input))
+        retrieval_task = asyncio.create_task(self.retrieve_documents(user_input, source))
+
+        # Await the results of both tasks
+        question_relevant, irrelevant_question_message = await question_task
+        matched_documents = await retrieval_task
+
 
         if question_relevant:
             # question is relevant, get completor to generate completion
-            matched_documents = self.retriever.retrieve(user_input, source=source)
             completion: Completion = self.document_answerer.get_completion(
                 user_input=user_input,
                 matched_documents=matched_documents,
