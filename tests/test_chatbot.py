@@ -155,8 +155,8 @@ def vector_store_path(tmp_path_factory):
     dm.add(df, num_workers=NUM_WORKERS)
     return dm_path
 
-
-def test_chatbot_mock_data(tmp_path, monkeypatch):
+@pytest.mark.asyncio
+async def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
 
     path = tmp_path / "not_a_real_file.tar.gz"
@@ -171,12 +171,13 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     document_answerer = MockAnswerer(**buster_cfg.completion_cfg)
     validator = MockValidator(**buster_cfg.validator_cfg)
     buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
-    completion = buster.process_input("What is a transformer?", source="fake_source")
+    completion = await buster.process_input("What is a transformer?", source="fake_source")
     assert isinstance(completion.answer_text, str)
     assert completion.answer_text.startswith(gpt_expected_answer)
 
 
-def test_chatbot_real_data__chatGPT(vector_store_path):
+@pytest.mark.asyncio
+async def test_chatbot_real_data__chatGPT(vector_store_path):
     buster_cfg = copy.deepcopy(buster_cfg_template)
     buster_cfg.retriever_cfg["path"] = vector_store_path
 
@@ -190,7 +191,7 @@ def test_chatbot_real_data__chatGPT(vector_store_path):
     validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
     buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
 
-    completion = buster.process_input("What is backpropagation?")
+    completion = await buster.process_input("What is backpropagation?")
     assert isinstance(completion.answer_text, str)
 
     assert completion.question_relevant == True
@@ -199,7 +200,8 @@ def test_chatbot_real_data__chatGPT(vector_store_path):
     assert completion.completion_kwargs == buster_cfg.completion_cfg["completion_kwargs"]
 
 
-def test_chatbot_real_data__chatGPT_OOD(vector_store_path):
+@pytest.mark.asyncio
+async def test_chatbot_real_data__chatGPT_OOD(vector_store_path):
     buster_cfg = copy.deepcopy(buster_cfg_template)
     buster_cfg.retriever_cfg["path"] = vector_store_path
     buster_cfg.prompt_formatter_cfg = {
@@ -227,7 +229,7 @@ def test_chatbot_real_data__chatGPT_OOD(vector_store_path):
     validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
     buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
 
-    completion: Completion = buster.process_input("What is a good recipe for brocolli soup?")
+    completion: Completion = await buster.process_input("What is a good recipe for brocolli soup?")
     assert isinstance(completion.answer_text, str)
 
     assert completion.question_relevant == False
@@ -236,7 +238,8 @@ def test_chatbot_real_data__chatGPT_OOD(vector_store_path):
     assert completion.completion_kwargs is None
 
 
-def test_chatbot_real_data__no_docs_found(vector_store_path):
+@pytest.mark.asyncio
+async def test_chatbot_real_data__no_docs_found(vector_store_path):
     with pytest.warns():
         buster_cfg = copy.deepcopy(buster_cfg_template)
         buster_cfg.retriever_cfg = {
@@ -258,7 +261,7 @@ def test_chatbot_real_data__no_docs_found(vector_store_path):
         validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
         buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
 
-        completion = buster.process_input("What is backpropagation?")
+        completion = await buster.process_input("What is backpropagation?")
         assert isinstance(completion.answer_text, str)
 
         assert completion.question_relevant == True
