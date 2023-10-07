@@ -155,6 +155,7 @@ def vector_store_path(tmp_path_factory):
     dm.add(df, num_workers=NUM_WORKERS)
     return dm_path
 
+
 @pytest.mark.asyncio
 async def test_chatbot_mock_data(tmp_path, monkeypatch):
     gpt_expected_answer = "this is GPT answer"
