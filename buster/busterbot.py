@@ -103,7 +103,6 @@ class Buster:
         question_relevant, irrelevant_question_message = await question_task
         matched_documents = await retrieval_task
 
-
         if question_relevant:
             # question is relevant, get completor to generate completion
             completion: Completion = self.document_answerer.get_completion(
