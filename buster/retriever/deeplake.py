@@ -58,7 +58,7 @@ order by score desc limit {top_k}
 
 
 class DeepLakeRetriever(Retriever):
-    def __init__(self, path, exec_option: str = "python", org_id: str = None, use_tql: bool = False, **kwargs):
+    def __init__(self, path, exec_option: str = "python", use_tql: bool = False, **kwargs):
         from deeplake.core.vectorstore import VectorStore
 
         super().__init__(**kwargs)
@@ -68,7 +68,6 @@ class DeepLakeRetriever(Retriever):
             path=path,
             read_only=True,
             token=os.getenv("ACTIVELOOP_TOKEN"),
-            org_id=org_id,
         )
 
     def get_documents(self, sources: list[str] = None):
