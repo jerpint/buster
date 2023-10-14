@@ -68,6 +68,7 @@ class DeepLakeRetriever(Retriever):
             path=path,
             read_only=True,
             token=os.getenv("ACTIVELOOP_TOKEN"),
+            exec_option=exec_option,
         )
 
     def get_documents(self, sources: list[str] = None):
