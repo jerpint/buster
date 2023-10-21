@@ -71,12 +71,10 @@ class ServiceRetriever(Retriever):
         if sources is None:
             filter = None
         else:
-            if len(sources) > 1:
-                raise ValueError("Service retriever only supports one source for now...")
-            filter = {"source": {"$eq": sources[0]}}
-            source_exists = self.db.sources.find_one({"name": sources[0]})
+            filter = {"source": {"$in": sources}}
+            source_exists = self.db.sources.find_one({"name": {"$in": sources}})
             if source_exists is None:
-                logger.warning(f"Source {sources[0]} does not exist. Returning empty dataframe.")
+                logger.warning(f"Sources {sources} do not exist. Returning empty dataframe.")
                 return pd.DataFrame()
 
         query_embedding = self.get_embedding(query, model=self.embedding_model)

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def extract_metadata(x, columns):
+def extract_metadata(x: pd.DataFrame, columns) -> pd.DataFrame:
     """Returned metadata from deeplake is in a nested dict, extract it so that each attribute has its own column."""
     for col in columns:
         x[col] = x.metadata[col]
@@ -72,7 +72,7 @@ class DeepLakeRetriever(Retriever):
             exec_option=exec_option,
         )
 
-    def get_documents(self, sources: list[str] = None):
+    def get_documents(self, sources: Optional[list[str]] = None):
         """Get all current documents from a given source."""
         k = len(self.vector_store)
 
