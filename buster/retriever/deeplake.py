@@ -58,12 +58,13 @@ order by score desc limit {top_k}
 
 
 class DeepLakeRetriever(Retriever):
-    def __init__(self, path, exec_option: str = "python", use_tql: bool = False, **kwargs):
+    def __init__(self, path, exec_option: str = "python", use_tql: bool = False, deep_memory=False, **kwargs):
         from deeplake.core.vectorstore import VectorStore
 
         super().__init__(**kwargs)
         self.use_tql = use_tql
         self.exec_option = exec_option
+        self.deep_memory = deep_memory
         self.vector_store = VectorStore(
             path=path,
             read_only=True,
@@ -110,7 +111,7 @@ class DeepLakeRetriever(Retriever):
         if self.use_tql:
             assert self.exec_option == "compute_engine", "cant use tql without compute_engine"
             tql_query = build_tql_query(query_embedding, sources=sources, top_k=top_k)
-            data = self.vector_store.search(query=tql_query)
+            data = self.vector_store.search(query=tql_query, deep_memory=self.deep_memory)
         else:
             # build the filter clause
             if sources:
