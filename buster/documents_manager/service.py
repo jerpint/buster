@@ -1,4 +1,4 @@
-import os
+import logging
 
 import pandas as pd
 import pinecone
@@ -6,6 +6,9 @@ from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 
 from buster.documents_manager.base import DocumentsManager
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 class DocumentsService(DocumentsManager):
@@ -28,6 +31,7 @@ class DocumentsService(DocumentsManager):
         self.index = pinecone.Index(pinecone_index)
         self.namespace = pinecone_namespace
 
+        self.mongo_db_name = mongo_db_name
         self.client = MongoClient(mongo_uri, server_api=ServerApi("1"))
         self.db = self.client[mongo_db_name]
 
@@ -76,3 +80,10 @@ class DocumentsService(DocumentsManager):
         self.index.delete(filter={"source": source}, namespace=self.namespace)
 
         return source_deleted, documents_deleted
+
+    def delete_all(self):
+        """Delete all documents from the database."""
+        self.index.delete(namespace=self.namespace, delete_all=True)
+
+        logging.info(f"Deleted all documents from Pinecone namespace: {self.namespace=}")
+        logging.info(f"The MongoDB database needs to be dropped manually: {self.mongo_db_name=}")

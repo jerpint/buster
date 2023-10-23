@@ -203,3 +203,8 @@ class DocumentsManager(ABC):
         This method should handle the actual process of adding documents to the database.
         """
         ...
+
+    @abstractmethod
+    def delete_all(self):
+        """Delete all documents from the database."""
+        ...

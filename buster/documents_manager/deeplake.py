@@ -77,3 +77,7 @@ class DeepLakeDocumentsManager(DocumentsManager):
         zip_file_path = zip_contents(input_path=vector_store_path, output_path=output_path)
         logger.info(f"Compressed {vector_store_path} to {zip_file_path}.")
         return zip_file_path
+
+    def delete_all(self):
+        """Delete all documents from the database."""
+        raise NotImplementedError()
