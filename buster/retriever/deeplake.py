@@ -62,13 +62,21 @@ class DeepLakeRetriever(Retriever):
         from deeplake.core.vectorstore import VectorStore
 
         super().__init__(**kwargs)
+        activeloop_token = os.getenv("ACTIVELOOP_TOKEN")
+        if activeloop_token is None:
+            logger.warning(
+                """
+                No activeloop token detected, enterprise features will not be available.
+                You can set it using: export ACTIVELOOP_TOKEN=...
+                """
+            )
         self.use_tql = use_tql
         self.exec_option = exec_option
         self.deep_memory = deep_memory
         self.vector_store = VectorStore(
             path=path,
             read_only=True,
-            token=os.getenv("ACTIVELOOP_TOKEN"),
+            token=activeloop_token,
             exec_option=exec_option,
         )
 
