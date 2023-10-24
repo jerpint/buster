@@ -58,11 +58,18 @@ order by score desc limit {top_k}
 
 
 class DeepLakeRetriever(Retriever):
-    def __init__(self, path, exec_option: str = "python", use_tql: bool = False, deep_memory=False, **kwargs):
+    def __init__(
+        self,
+        path,
+        exec_option: str = "python",
+        use_tql: bool = False,
+        deep_memory: bool = False,
+        activeloop_token: str = None,
+        **kwargs,
+    ):
         from deeplake.core.vectorstore import VectorStore
 
         super().__init__(**kwargs)
-        activeloop_token = os.getenv("ACTIVELOOP_TOKEN")
         if activeloop_token is None:
             logger.warning(
                 """
