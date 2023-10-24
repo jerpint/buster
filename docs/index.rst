@@ -23,10 +23,10 @@ We scraped the documentation of `huggingface 🤗 Transformers <https://huggingf
 
 
 .. toctree::
-   :caption: Quick Start
+   :caption: Getting Started
    :maxdepth: 1
 
-   usage/quickstart
+   usage/installation
 
 .. toctree::
    :caption: User Guide
