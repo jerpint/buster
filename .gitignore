@@ -1,3 +1,5 @@
+# Ignore docs
+docs/_build/
 # database files
 *.db
 
