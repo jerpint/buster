@@ -25,7 +25,8 @@ if promptlayer_api_key:
 
 
 class ChatGPTCompleter(Completer):
-    def complete(self, prompt: str, user_input, completion_kwargs=None) -> str | Iterator:
+    def complete(self, prompt: str, user_input, completion_kwargs=None) -> (str | Iterator, bool):
+        """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""
         # Uses default configuration if not overriden
         if completion_kwargs is None:
             completion_kwargs = self.completion_kwargs
@@ -34,10 +35,24 @@ class ChatGPTCompleter(Completer):
             {"role": "system", "content": prompt},
             {"role": "user", "content": user_input},
         ]
-        response = openai.ChatCompletion.create(
-            messages=messages,
-            **completion_kwargs,
-        )
+
+        try:
+            error = False
+            response = openai.ChatCompletion.create(
+                messages=messages,
+                **completion_kwargs,
+            )
+        except openai.error.InvalidRequestError:
+            error = True
+            logger.exception("Invalid request to OpenAI API. See traceback:")
+            error_message = "Something went wrong with connecting with OpenAI, try again soon!"
+            return error_message, error
+
+        except openai.error.RateLimitError:
+            error = True
+            logger.exception("RateLimit error from OpenAI. See traceback:")
+            error_message = "OpenAI servers seem to be overloaded, try again later!"
+            return error_message, error
 
         if completion_kwargs.get("stream") is True:
             # We are entering streaming mode, so here were just wrapping the streamed
@@ -47,8 +62,8 @@ class ChatGPTCompleter(Completer):
                     token: str = chunk["choices"][0]["delta"].get("content", "")
                     yield token
 
-            return answer_generator()
+            return answer_generator(), error
 
         else:
             full_response: str = response["choices"][0]["message"]["content"]
-            return full_response
+            return full_response, error
