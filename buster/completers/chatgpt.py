@@ -38,7 +38,6 @@ class ChatGPTCompleter(Completer):
 
         try:
             error = False
-            raise openai.error.InvalidRequestError()
             response = openai.ChatCompletion.create(
                 messages=messages,
                 **completion_kwargs,
