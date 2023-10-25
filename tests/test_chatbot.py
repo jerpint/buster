@@ -116,7 +116,7 @@ class MockRetriever(Retriever):
     def get_documents(self, source):
         return self.documents
 
-    def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
+    def get_topk_documents(self, query: str, sources: list[str] = None, top_k: int = None) -> pd.DataFrame:
         documents = self.documents
         documents["embedding"] = [get_fake_embedding() for _ in range(len(documents))]
         documents["similarity"] = [np.random.random() for _ in range(len(documents))]
@@ -171,7 +171,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     document_answerer = MockAnswerer(**buster_cfg.completion_cfg)
     validator = MockValidator(**buster_cfg.validator_cfg)
     buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
-    completion = buster.process_input("What is a transformer?", source="fake_source")
+    completion = buster.process_input("What is a transformer?", sources=["fake_source"])
     assert isinstance(completion.answer_text, str)
     assert completion.answer_text.startswith(gpt_expected_answer)
 

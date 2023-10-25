@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -77,7 +77,7 @@ class Buster:
         self.retriever = retriever
         self.validator = validator
 
-    def process_input(self, user_input: str, source: str = None) -> Completion:
+    def process_input(self, user_input: str, sources: Optional[list[str]] = None) -> Completion:
         """
         Main function to process the input question and generate a formatted output.
         """
@@ -93,7 +93,7 @@ class Buster:
 
         if question_relevant:
             # question is relevant, get completor to generate completion
-            matched_documents = self.retriever.retrieve(user_input, source=source)
+            matched_documents = self.retriever.retrieve(user_input, sources=sources)
             completion: Completion = self.document_answerer.get_completion(
                 user_input=user_input,
                 matched_documents=matched_documents,

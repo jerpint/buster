@@ -48,7 +48,7 @@ def test_write_read(tmp_path, documents_manager, retriever):
     dm = DeepLakeDocumentsManager(vector_store_path=dm_path)
 
     dm.add(df=data)
-    dm_data = retriever(**retriever_cfg).get_documents("sourceA")
+    dm_data = retriever(**retriever_cfg).get_documents(sources=["sourceA"])
 
     assert dm_data["title"].iloc[0] == data["title"].iloc[0]
     assert dm_data["url"].iloc[0] == data["url"].iloc[0]
@@ -99,7 +99,7 @@ def test_write_write_read(tmp_path, documents_manager, retriever):
     )
     db.add(df=data_2, num_workers=NUM_WORKERS)
 
-    db_data = retriever(**retriever_cfg).get_documents("sourceB")
+    db_data = retriever(**retriever_cfg).get_documents(sources=["sourceB"])
 
     assert len(db_data) == len(data_2)
     assert db_data["title"].iloc[0] == data_2["title"].iloc[0]
