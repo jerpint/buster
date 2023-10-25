@@ -87,7 +87,12 @@ class DocumentsService(DocumentsManager):
         For Pinecone, this means deleting everything in the namespace.
         For Mongo DB, this means dropping the database. However this needs to be done manually through the GUI.
         """
-        self.index.delete(namespace=self.namespace, delete_all=True)
+        confirmation = input("Dropping the database is irreversible. Are you sure you want to proceed? (Y/n): ")
 
-        logging.info(f"Deleted all documents from Pinecone namespace: {self.namespace=}")
-        logging.info(f"The MongoDB database needs to be dropped manually: {self.mongo_db_name=}")
+        if confirmation.strip().lower() == "y":
+            self.index.delete(namespace=self.namespace, delete_all=True)
+
+            logging.info(f"Deleted all documents from Pinecone namespace: {self.namespace=}")
+            logging.info(f"The MongoDB database needs to be dropped manually: {self.mongo_db_name=}")
+        else:
+            logging.info("Operation cancelled.")
