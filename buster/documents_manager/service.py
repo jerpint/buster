@@ -81,8 +81,12 @@ class DocumentsService(DocumentsManager):
 
         return source_deleted, documents_deleted
 
-    def delete_all(self):
-        """Delete all documents from the database."""
+    def drop_db(self):
+        """Drop the currently accessible database.
+
+        For Pinecone, this means deleting everything in the namespace.
+        For Mongo DB, this means dropping the database. However this needs to be done manually through the GUI.
+        """
         self.index.delete(namespace=self.namespace, delete_all=True)
 
         logging.info(f"Deleted all documents from Pinecone namespace: {self.namespace=}")
