@@ -6,6 +6,7 @@
 [![PyPI](https://img.shields.io/pypi/v/buster-doctalk?logo=pypi)](https://pypi.org/project/buster-doctalk)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Buster%20Demo-blue)](https://huggingface.co/spaces/jerpint/buster)
+[![Documentation Status](https://readthedocs.org/projects/buster/badge/?version=latest)](https://buster.readthedocs.io/en/latest/?badge=latest)
 
 </div>
 
