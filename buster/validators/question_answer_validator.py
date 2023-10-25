@@ -31,16 +31,18 @@ class QuestionAnswerValidator(Validator):
             elif outputs == "false":
                 relevance = False
             else:
+                # Default assume it's no longer relevant if the detector didn't give one of [true, false]
                 logger.warning(f"the question validation returned an unexpeced value: {outputs}. Assuming Invalid...")
                 relevance = False
             return relevance
 
         response = self.invalid_question_response
         try:
-            outputs = self.completer.complete(self.check_question_prompt, user_input=question)
+            outputs, error = self.completer.complete(self.check_question_prompt, user_input=question)
             relevance = get_relevance(outputs)
 
         except Exception as e:
+            # Something went wrong, assume immediately not relevant.
             logger.exception("Something went wrong during question relevance detection. See traceback:")
             relevance = False
             response = "Unable to process your question at the moment, try again soon"

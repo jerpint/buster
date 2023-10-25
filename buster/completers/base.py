@@ -201,7 +201,8 @@ class Completer(ABC):
         self.completion_kwargs = completion_kwargs
 
     @abstractmethod
-    def complete(self, prompt: str, user_input: str) -> Completion:
+    def complete(self, prompt: str, user_input) -> (str | Iterator, bool):
+        """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""
         ...
 
 
@@ -274,26 +275,12 @@ class DocumentAnswerer:
         logger.info(f"querying model with parameters: {self.completer.completion_kwargs}...")
 
         try:
-            answer_generator = self.completer.complete(prompt=prompt, user_input=user_input)
-            error = False
-
-        except openai.error.InvalidRequestError:
-            error = True
-            logger.exception("Invalid request to OpenAI API. See traceback:")
-            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
-            return error_msg
-
-        except openai.error.RateLimitError:
-            error = True
-            logger.exception("RateLimit error from OpenAI. See traceback:")
-            error_msg = "OpenAI servers seem to be overloaded, try again later!"
-            return error_msg
+            answer_generator, error = self.completer.complete(prompt=prompt, user_input=user_input)
 
         except Exception as e:
             error = True
-            error_msg = "Something went wrong with the request, try again soon! If the problem persists, contact the project admin."
-            logger.exception("Unknown error when attempting to connect to OpenAI API. See traceback:")
-            return error_msg
+            answer_generator = "Something went wrong with the request, try again soon!"
+            logger.exception("Unknown error when attempting to generate response. See traceback:")
 
         completion = self.completion_class(
             answer_generator=answer_generator,
