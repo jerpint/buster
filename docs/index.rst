@@ -1,8 +1,3 @@
-.. amlrt_project documentation master file, created by
-   sphinx-quickstart on Fri Jul  3 10:11:19 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Buster 🤖
 =============================================
 
@@ -24,15 +19,18 @@ We scraped the documentation of `huggingface 🤗 Transformers <https://huggingf
 
 .. toctree::
    :caption: Getting Started
-   :maxdepth: 1
+   :maxdepth: 2
 
    usage/installation
+   usage/configuration
+   usage/custom_docs
+
 
 .. toctree::
-   :caption: User Guide
+   :caption: Buster Components
    :maxdepth: 1
 
-   usage/guide
+   usage/components_overview
 
 .. toctree::
    :maxdepth: 2
