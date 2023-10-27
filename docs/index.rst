@@ -22,6 +22,13 @@ We scraped the documentation of `huggingface 🤗 Transformers <https://huggingf
    :maxdepth: 2
 
    usage/installation
+
+
+.. toctree::
+   :caption: Customization
+   :maxdepth: 1
+
+   usage/components
    usage/configuration
    usage/custom_docs
 
@@ -32,11 +39,6 @@ We scraped the documentation of `huggingface 🤗 Transformers <https://huggingf
 
    usage/components_overview
 
-.. toctree::
-   :maxdepth: 2
-   :caption: API Reference
-
-   autoapi/index
 
 Useful links
 ============
