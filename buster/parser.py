@@ -91,9 +91,6 @@ class Parser(ABC):
         self._relative_path = str(son.relative_to(parent)).split(".")[0]
         return self._relative_path
 
-    def build_url(self, suffix: str) -> str:
-        return self.base_url + self.relative_path + suffix
-
     @abstractmethod
     def find_sections(self) -> Iterator[Section]:
         ...
@@ -124,6 +121,9 @@ class SphinxParser(Parser):
             yield section
         return
 
+    def build_url(self, suffix: str) -> str:
+        return self.base_url + self.relative_path + ".html" + suffix
+
 
 class HuggingfaceParser(Parser):
     def find_sections(self) -> Iterator[Section]:
@@ -137,3 +137,6 @@ class HuggingfaceParser(Parser):
             name = section.text.strip().replace("\n", "")
             yield Section(url, name, nodes)
         return
+
+    def build_url(self, suffix: str) -> str:
+        return self.base_url + self.relative_path + suffix
