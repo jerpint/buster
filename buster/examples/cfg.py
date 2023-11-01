@@ -40,7 +40,6 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
         "path": "deeplake_store",
         "top_k": 3,
         "thresh": 0.7,
-        "max_tokens": 2000,
         "embedding_model": "text-embedding-ada-002",
     },
     documents_answerer_cfg={
