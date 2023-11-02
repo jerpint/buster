@@ -79,21 +79,21 @@ def chat(chat_history: ChatHistory) -> Tuple[ChatHistory, Completion]:
         yield chat_history, completion
 
 
-block = gr.Blocks()
+demo = gr.Blocks()
 
-with block:
+with demo:
     with gr.Row():
         gr.Markdown("<h3><center>Buster 🤖: A Question-Answering Bot for your documentation</center></h3>")
 
     chatbot = gr.Chatbot()
 
     with gr.Row():
-        question = gr.Textbox(
+        question_textbox = gr.Textbox(
             label="What's your question?",
             placeholder="Type your question here...",
             lines=1,
         )
-        submit = gr.Button(value="Send", variant="secondary")
+        send_button = gr.Button(value="Send", variant="secondary")
 
     examples = gr.Examples(
         examples=[
@@ -101,7 +101,7 @@ with block:
             "How do I deal with noisy data?",
             "How do I deal with noisy data in 2 words?",
         ],
-        inputs=question,
+        inputs=question_textbox,
     )
 
     gr.Markdown("This application uses GPT to search the docs for relevant info and answer questions.")
@@ -111,9 +111,10 @@ with block:
     response = gr.State()
 
     # fmt: off
-    submit.click(
-        add_user_question,
-        inputs=[question],
+    gr.on(
+        triggers=[send_button.click, question_textbox.submit],
+        fn=add_user_question,
+        inputs=[question_textbox],
         outputs=[chatbot]
     ).then(
         chat,
@@ -125,21 +126,8 @@ with block:
         outputs=[chatbot]
     )
 
-    question.submit(
-        add_user_question,
-        inputs=[question],
-        outputs=[chatbot],
-    ).then(
-        chat,
-        inputs=[chatbot],
-        outputs=[chatbot, response]
-    ).then(
-        add_sources,
-        inputs=[chatbot, response],
-        outputs=[chatbot]
-    )
     # fmt: on
 
 
-block.queue(concurrency_count=16)
-block.launch(debug=True, share=False)
+demo.queue(concurrency_count=16)
+demo.launch(debug=True, share=False)

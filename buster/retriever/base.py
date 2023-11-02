@@ -17,10 +17,9 @@ logging.basicConfig(level=logging.INFO)
 
 @dataclass
 class Retriever(ABC):
-    def __init__(self, top_k, thresh, max_tokens, embedding_model, *args, **kwargs):
+    def __init__(self, top_k, thresh, embedding_model, *args, **kwargs):
         self.top_k = top_k
         self.thresh = thresh
-        self.max_tokens = max_tokens
         self.embedding_model = embedding_model
 
         # Add your access to documents in your own init

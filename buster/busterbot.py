@@ -77,7 +77,9 @@ class Buster:
         self.retriever = retriever
         self.validator = validator
 
-    def process_input(self, user_input: str, sources: Optional[list[str]] = None) -> Completion:
+    def process_input(
+        self, user_input: str, sources: Optional[list[str]] = None, top_k: Optional[int] = None
+    ) -> Completion:
         """
         Main function to process the input question and generate a formatted output.
         """
@@ -93,7 +95,7 @@ class Buster:
 
         if question_relevant:
             # question is relevant, get completor to generate completion
-            matched_documents = self.retriever.retrieve(user_input, sources=sources)
+            matched_documents = self.retriever.retrieve(user_input, sources=sources, top_k=top_k)
             completion: Completion = self.document_answerer.get_completion(
                 user_input=user_input,
                 matched_documents=matched_documents,
