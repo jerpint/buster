@@ -1,7 +1,7 @@
 bs4
 click
 deeplake
-gradio
+gradio>=3.40
 matplotlib
 numpy
 openai[embeddings]
