@@ -129,5 +129,5 @@ with demo:
     # fmt: on
 
 
-demo.queue(concurrency_count=16)
+demo.queue()
 demo.launch(debug=True, share=False)
