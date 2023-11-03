@@ -25,7 +25,7 @@ if promptlayer_api_key:
 
 
 class ChatGPTCompleter(Completer):
-    def complete(self, prompt: str, user_input, completion_kwargs=None) -> (str | Iterator, bool):
+    def complete(self, prompt: str, user_input: str, completion_kwargs=None) -> (str | Iterator, bool):
         """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""
         # Uses default configuration if not overriden
         if completion_kwargs is None:

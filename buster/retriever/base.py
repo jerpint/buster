@@ -6,6 +6,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+from buster.utils import UserInputs
 
 from buster.documents_manager.base import get_embedding_openai
 
@@ -54,12 +55,14 @@ class Retriever(ABC):
         return matched_documents[matched_documents.similarity > thresh]
 
     def retrieve(
-        self, query: str, sources: Optional[list[str]] = None, top_k: int = None, thresh: float = None
+        self, user_inputs: UserInputs, sources: Optional[list[str]] = None, top_k: int = None, thresh: float = None
     ) -> pd.DataFrame:
         if top_k is None:
             top_k = self.top_k
         if thresh is None:
             thresh = self.thresh
+
+        query = user_inputs.current_input
 
         matched_documents = self.get_topk_documents(query=query, sources=sources, top_k=top_k)
 

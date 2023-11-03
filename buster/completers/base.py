@@ -7,9 +7,11 @@ from typing import Any, Iterator, Optional
 import openai
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
+from buster.utils import UserInputs
 
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
+# from buster.validators.base import Validator
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -19,7 +21,7 @@ class Completion:
     def __init__(
         self,
         error: bool,
-        user_input: str,
+        user_inputs: UserInputs,
         matched_documents: pd.DataFrame,
         answer_generator: Optional[Iterator] = None,
         answer_text: Optional[str] = None,
@@ -29,7 +31,7 @@ class Completion:
         validator=None,
     ):
         self.error = error
-        self.user_input = user_input
+        self.user_inputs = user_inputs
         self.matched_documents = matched_documents
         self.validator = validator
         self.completion_kwargs = completion_kwargs
@@ -42,7 +44,7 @@ class Completion:
         class_name = type(self).__name__
         return (
             f"{class_name}("
-            f"user_input={self.user_input!r}, "
+            f"user_inputs={self.user_inputs!r}, "
             f"error={self.error!r}, "
             f"matched_documents={self.matched_documents!r}, "
             f"answer_text={self._answer_text!r}, "
@@ -166,7 +168,7 @@ class Completion:
         }
 
         to_encode = {
-            "user_input": self.user_input,
+            "user_inputs": self.user_inputs,
             "answer_text": self.answer_text,
             "matched_documents": self.matched_documents,
             "answer_relevant": self.answer_relevant,
@@ -239,13 +241,17 @@ class DocumentAnswerer:
         return prompt
 
     def get_completion(
-        self, user_input: str, matched_documents: pd.DataFrame, validator, question_relevant: bool = True
+        self,
+        user_inputs: UserInputs,
+        matched_documents: pd.DataFrame,
+        validator,
+        question_relevant: bool = True,
     ) -> Completion:
         """Generate a completion to a user's question based on matched documents.
 
         It is safe to assume the question_relevance to be True if we made it here."""
 
-        logger.info(f"{user_input=}")
+        logger.info(f"{user_inputs=}")
 
         if len(matched_documents) == 0:
             warning_msg = "No documents found during retrieval."
@@ -259,7 +265,7 @@ class DocumentAnswerer:
             # However, no documents were found, so we pass the no documents found message instead of generating the answer.
             # The completion does not get triggered, so we do not pass completion kwargs here either.
             completion = self.completion_class(
-                user_input=user_input,
+                user_inputs=user_inputs,
                 answer_text=self.no_documents_message,
                 error=False,
                 matched_documents=matched_documents,
@@ -275,7 +281,7 @@ class DocumentAnswerer:
         logger.info(f"querying model with parameters: {self.completer.completion_kwargs}...")
 
         try:
-            answer_generator, error = self.completer.complete(prompt=prompt, user_input=user_input)
+            answer_generator, error = self.completer.complete(prompt=prompt, user_input=user_inputs.current_input)
 
         except Exception as e:
             error = True
@@ -286,7 +292,7 @@ class DocumentAnswerer:
             answer_generator=answer_generator,
             error=error,
             matched_documents=matched_documents,
-            user_input=user_input,
+            user_inputs=user_inputs,
             question_relevant=question_relevant,
             validator=validator,
             completion_kwargs=self.completer.completion_kwargs,
