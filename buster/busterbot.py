@@ -116,7 +116,7 @@ class Buster:
             else:
                 completion = Completion(
                     error=True,
-                    user_input=user_input,
+                    user_inputs=user_inputs,
                     matched_documents=pd.DataFrame(),
                     answer_text="Something went wrong generating the question...", # TODO: Better error handling?
                     answer_relevant=False,
