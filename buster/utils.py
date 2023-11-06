@@ -1,8 +1,9 @@
-from dataclasses import dataclass
 import os
-from typing import Optional
 import urllib.request
 import zipfile
+from dataclasses import dataclass
+from typing import Optional
+
 
 @dataclass
 class UserInputs:
@@ -12,7 +13,6 @@ class UserInputs:
     @property
     def current_input(self):
         return self.reformulated_input if self.reformulated_input is not None else self.original_input
-
 
 
 def get_file_extension(filepath: str) -> str:

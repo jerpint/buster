@@ -7,10 +7,10 @@ from typing import Any, Iterator, Optional
 import openai
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
-from buster.utils import UserInputs
 
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
+from buster.utils import UserInputs
 
 # from buster.validators.base import Validator
 

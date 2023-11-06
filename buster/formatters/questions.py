@@ -1,5 +1,7 @@
-from buster.completers import ChatGPTCompleter
 import logging
+
+from buster.completers import ChatGPTCompleter
+
 
 class QuestionReformulator:
     def __init__(self):

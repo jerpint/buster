@@ -7,8 +7,8 @@ import pandas as pd
 from buster.completers import Completer, Completion, DocumentAnswerer
 from buster.formatters.questions import QuestionReformulator
 from buster.retriever import Retriever
-from buster.validators import Validator
 from buster.utils import UserInputs
+from buster.validators import Validator
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

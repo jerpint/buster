@@ -6,9 +6,9 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from buster.utils import UserInputs
 
 from buster.documents_manager.base import get_embedding_openai
+from buster.utils import UserInputs
 
 ALL_SOURCES = "All"
 
