@@ -72,15 +72,26 @@ class BusterConfig:
         }
     )
 
+
 class Buster:
-    def __init__(self, retriever: Retriever, document_answerer: DocumentAnswerer, validator: Validator, question_reformulator: Optional[QuestionReformulator] = None):
+    def __init__(
+        self,
+        retriever: Retriever,
+        document_answerer: DocumentAnswerer,
+        validator: Validator,
+        question_reformulator: Optional[QuestionReformulator] = None,
+    ):
         self.document_answerer = document_answerer
         self.retriever = retriever
         self.validator = validator
         self.question_reformulator = question_reformulator
 
     def process_input(
-        self, user_input: str, sources: Optional[list[str]] = None, top_k: Optional[int] = None, reformulate_question: Optional[bool] = False,
+        self,
+        user_input: str,
+        sources: Optional[list[str]] = None,
+        top_k: Optional[int] = None,
+        reformulate_question: Optional[bool] = False,
     ) -> Completion:
         """
         Main function to process the input question and generate a formatted output.
@@ -102,27 +113,32 @@ class Buster:
 
             # reformulate the question if a reformulator is defined
             if self.question_reformulator is not None and reformulate_question:
-                user_inputs.reformulated_input, error = self.question_reformulator.reformulate(user_inputs.original_input)
-
-
-            if not error:
-                matched_documents = self.retriever.retrieve(user_inputs, sources=sources, top_k=top_k)
-                completion: Completion = self.document_answerer.get_completion(
-                    user_inputs=user_inputs,
-                    matched_documents=matched_documents,
-                    validator=self.validator,
-                    question_relevant=question_relevant,
+                reformulated_input, reformulation_error = self.question_reformulator.reformulate(
+                    user_inputs.original_input
                 )
-            else:
-                completion = Completion(
-                    error=True,
-                    user_inputs=user_inputs,
-                    matched_documents=pd.DataFrame(),
-                    answer_text="Something went wrong generating the question...", # TODO: Better error handling?
-                    answer_relevant=False,
-                    question_relevant=False,
-                    validator=self.validator,
-                )
+                user_inputs.reformulated_input = reformulated_input
+
+                if reformulation_error:
+                    completion = Completion(
+                        error=True,
+                        user_inputs=user_inputs,
+                        matched_documents=pd.DataFrame(),
+                        answer_text="Something went wrong generating the question...",  # TODO: Better error handling?
+                        answer_relevant=False,
+                        question_relevant=False,
+                        validator=self.validator,
+                    )
+                    return completion
+
+            # Retrieve and answer
+            matched_documents = self.retriever.retrieve(user_inputs, sources=sources, top_k=top_k)
+            completion: Completion = self.document_answerer.get_completion(
+                user_inputs=user_inputs,
+                matched_documents=matched_documents,
+                validator=self.validator,
+                question_relevant=question_relevant,
+            )
+            return completion
 
         else:
             # question was determined irrelevant, so we instead return a generic response set by the user.
@@ -135,7 +151,4 @@ class Buster:
                 question_relevant=False,
                 validator=self.validator,
             )
-
-        logger.info(f"Completion:\n{completion}")
-
-        return completion
+            return completion
