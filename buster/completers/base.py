@@ -11,6 +11,7 @@ from buster.utils import UserInputs
 
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
+
 # from buster.validators.base import Validator
 
 logger = logging.getLogger(__name__)
@@ -180,6 +181,11 @@ class Completion:
 
     @classmethod
     def from_dict(cls, completion_dict: dict):
+        # Map a dict of user inputs to the UserInputs class
+        if isinstance(completion_dict["user_inputs"], dict):
+            completion_dict["user_inputs"] = UserInputs(**completion_dict["user_inputs"])
+
+        # Map the matched documents back to a dataframe
         if isinstance(completion_dict["matched_documents"], str):
             # avoids deprecation warning
             json_data = io.StringIO(completion_dict["matched_documents"])
