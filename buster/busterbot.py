@@ -72,9 +72,6 @@ class BusterConfig:
             "system_prompt": """
             Your role is to reformat a user's input into a question that is useful in the context of a semantic retrieval system.
             Reformulate the question in a way that captures the original essence of the question while also adding more relevant details that can be useful in the context of semantic retrieval.""",
-
-
-
         }
     )
     completion_cfg: dict = field(
