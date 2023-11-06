@@ -12,8 +12,6 @@ from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
 from buster.utils import UserInputs
 
-# from buster.validators.base import Validator
-
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
