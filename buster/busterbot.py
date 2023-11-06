@@ -123,7 +123,7 @@ class Buster:
                         error=True,
                         user_inputs=user_inputs,
                         matched_documents=pd.DataFrame(),
-                        answer_text="Something went wrong generating the question...",  # TODO: Better error handling?
+                        answer_text="Something went wrong reformulating the question. Try again soon.",
                         answer_relevant=False,
                         question_relevant=False,
                         validator=self.validator,
