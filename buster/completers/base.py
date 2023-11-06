@@ -8,9 +8,9 @@ import openai
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
 
+from buster.completers.user_inputs import UserInputs
 from buster.formatters.documents import DocumentsFormatter
 from buster.formatters.prompts import PromptFormatter
-from buster.utils import UserInputs
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

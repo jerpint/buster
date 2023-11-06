@@ -4,10 +4,9 @@ from typing import Any, Optional
 
 import pandas as pd
 
-from buster.completers import Completer, Completion, DocumentAnswerer
+from buster.completers import Completion, DocumentAnswerer, UserInputs
 from buster.llm_utils import QuestionReformulator
 from buster.retriever import Retriever
-from buster.utils import UserInputs
 from buster.validators import Validator
 
 logger = logging.getLogger(__name__)

@@ -1,7 +1,6 @@
 import pandas as pd
 
-from buster.completers import Completion
-from buster.utils import UserInputs
+from buster.completers import Completion, UserInputs
 
 
 class MockValidator:
