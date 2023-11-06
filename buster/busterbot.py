@@ -62,6 +62,21 @@ class BusterConfig:
             "no_documents_message": "No documents are available for this question.",
         }
     )
+    question_reformulator_cfg: dict = field(
+        default_factory=lambda: {
+            "completion_kwargs": {
+                "model": "gpt-3.5-turbo",
+                "stream": False,
+                "temperature": 0,
+            },
+            "system_prompt": """
+            Your role is to reformat a user's input into a question that is useful in the context of a semantic retrieval system.
+            Reformulate the question in a way that captures the original essence of the question while also adding more relevant details that can be useful in the context of semantic retrieval.""",
+
+
+
+        }
+    )
     completion_cfg: dict = field(
         default_factory=lambda: {
             "completion_kwargs": {
