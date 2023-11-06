@@ -78,17 +78,17 @@ class MockAnswerer(Completer):
     def __init__(self, expected_answer):
         self.expected_answer = expected_answer
 
-    def prepare_prompt(self, user_input, matched_documents):
+    def prepare_prompt(self, user_inputs, matched_documents):
         pass
 
     def complete(self):
         return
 
-    def get_completion(self, user_input, matched_documents, validator, *arg, **kwarg) -> Completion:
+    def get_completion(self, user_inputs, matched_documents, validator, *arg, **kwarg) -> Completion:
         return Completion(
             answer_text=self.expected_answer,
             error=False,
-            user_input=user_input,
+            user_inputs=user_inputs,
             matched_documents=matched_documents,
             validator=validator,
         )
@@ -171,7 +171,7 @@ def test_chatbot_mock_data(tmp_path, monkeypatch):
     document_answerer = MockAnswerer(**buster_cfg.completion_cfg)
     validator = MockValidator(**buster_cfg.validator_cfg)
     buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
-    completion = buster.process_input("What is a transformer?", sources=["fake_source"])
+    completion = buster.process_input(user_input="What is a transformer?", sources=["fake_source"])
     assert isinstance(completion.answer_text, str)
     assert completion.answer_text.startswith(gpt_expected_answer)
 
