@@ -1,6 +1,6 @@
 import pandas as pd
 
-from buster.completers import Completion
+from buster.completers import Completion, UserInputs
 
 
 class MockValidator:
@@ -28,7 +28,7 @@ def test_read_write_completion():
         }
     )
     c = Completion(
-        user_input="What is the meaning of life?",
+        user_inputs=UserInputs(original_input="What is the meaning of life?"),
         error=False,
         answer_text="This is my actual answer",
         matched_documents=matched_documents,
@@ -41,7 +41,7 @@ def test_read_write_completion():
 
     assert c.error == c_back.error
     assert c.answer_text == c_back.answer_text
-    assert c.user_input == c_back.user_input
+    assert c.user_inputs == c_back.user_inputs
     assert c.answer_relevant == c_back.answer_relevant
     assert c.completion_kwargs == c_back.completion_kwargs
     for col in c_back.matched_documents.columns.tolist():
