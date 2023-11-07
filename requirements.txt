@@ -4,7 +4,7 @@ deeplake
 gradio>=3.40
 matplotlib
 numpy
-openai[embeddings]==0.28.1
+openai[embeddings]
 pandas
 pinecone-client
 pymongo

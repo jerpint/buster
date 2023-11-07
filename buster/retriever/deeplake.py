@@ -70,13 +70,6 @@ class DeepLakeRetriever(Retriever):
         from deeplake.core.vectorstore import VectorStore
 
         super().__init__(**kwargs)
-        if activeloop_token is None:
-            logger.warning(
-                """
-                No activeloop token detected, enterprise features will not be available.
-                You can set it using: export ACTIVELOOP_TOKEN=...
-                """
-            )
         self.use_tql = use_tql
         self.exec_option = exec_option
         self.deep_memory = deep_memory
@@ -86,6 +79,14 @@ class DeepLakeRetriever(Retriever):
             token=activeloop_token,
             exec_option=exec_option,
         )
+
+        if activeloop_token is None and use_tql:
+            logger.warning(
+                """
+                No activeloop token detected, enterprise features will not be available.
+                You can set it using: export ACTIVELOOP_TOKEN=...
+                """
+            )
 
     def get_documents(self, sources: Optional[list[str]] = None):
         """Get all current documents from a given source."""

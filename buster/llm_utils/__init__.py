@@ -1,3 +1,4 @@
 from buster.llm_utils.question_reformulator import QuestionReformulator
+from buster.llm_utils.embeddings import cosine_similarity, get_openai_embedding, compute_embeddings_parallelized
 
-__all__ = [QuestionReformulator]
+__all__ = [QuestionReformulator, cosine_similarity, get_openai_embedding, compute_embeddings_parallelized]

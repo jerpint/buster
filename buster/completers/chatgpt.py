@@ -3,6 +3,9 @@ import os
 from typing import Iterator
 
 import openai
+from openai import OpenAI
+
+client = OpenAI()
 
 from buster.completers import Completer
 
@@ -38,11 +41,9 @@ class ChatGPTCompleter(Completer):
 
         try:
             error = False
-            response = openai.ChatCompletion.create(
-                messages=messages,
-                **completion_kwargs,
-            )
-        except openai.error.InvalidRequestError:
+            response = client.chat.completions.create(messages=messages,
+            **completion_kwargs)
+        except openai.InvalidRequestError:
             error = True
             logger.exception("Invalid request to OpenAI API. See traceback:")
             error_message = "Something went wrong with connecting with OpenAI, try again soon!"
@@ -65,5 +66,5 @@ class ChatGPTCompleter(Completer):
             return answer_generator(), error
 
         else:
-            full_response: str = response["choices"][0]["message"]["content"]
+            full_response: str = response.choices[0].message.content
             return full_response, error

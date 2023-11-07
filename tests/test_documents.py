@@ -7,8 +7,8 @@ import pytest
 from buster.documents_manager import DeepLakeDocumentsManager
 from buster.documents_manager.base import (
     compute_embeddings_parallelized,
-    get_embedding_openai,
 )
+from buster.llm_utils import get_openai_embedding
 from buster.retriever import DeepLakeRetriever
 
 # Patch the get_embedding function to return a fixed, fake embedding
@@ -148,9 +148,9 @@ def test_generate_embeddings_parallelized():
     )
 
     embeddings_parallel = compute_embeddings_parallelized(
-        df, embedding_fn=get_embedding_openai, num_workers=NUM_WORKERS
+        df, embedding_fn=get_openai_embedding, num_workers=NUM_WORKERS
     )
-    embeddings = df.content.apply(get_embedding_openai)
+    embeddings = df.content.apply(get_openai_embedding)
 
     # embeddings comes out as a series because of the apply, so cast it back to an array
     embeddings_arr = np.array(embeddings.to_list())
