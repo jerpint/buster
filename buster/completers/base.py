@@ -4,7 +4,6 @@ import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Iterator, Optional
 
-import openai
 import pandas as pd
 from fastapi.encoders import jsonable_encoder
 

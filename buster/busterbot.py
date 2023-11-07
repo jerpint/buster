@@ -76,7 +76,7 @@ class BusterConfig:
     completion_cfg: dict = field(
         default_factory=lambda: {
             "completion_kwargs": {
-                "engine": "gpt-3.5-turbo",
+                "model": "gpt-3.5-turbo",
                 "temperature": 0,
                 "stream": True,
             },

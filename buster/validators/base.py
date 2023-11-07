@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 
 import pandas as pd
-from openai.embeddings_utils import cosine_similarity, get_embedding
+
+from buster.llm_utils import cosine_similarity, get_openai_embedding
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -24,10 +25,10 @@ class Validator(ABC):
 
     @staticmethod
     @lru_cache
-    def get_embedding(query: str, engine: str):
+    def get_embedding(text: str, model: str):
         """Currently supports OpenAI embeddings, override to add your own."""
         logger.info("generating embedding")
-        return get_embedding(query, engine=engine)
+        return get_openai_embedding(text, model)
 
     @abstractmethod
     def check_question_relevance(self, question: str) -> tuple[bool, str]:
@@ -49,7 +50,7 @@ class Validator(ABC):
 
         answer_embedding = self.get_embedding(
             answer,
-            engine=self.embedding_model,
+            model=self.embedding_model,
         )
         col = "similarity_to_answer"
         matched_documents[col] = matched_documents.embedding.apply(lambda x: cosine_similarity(x, answer_embedding))

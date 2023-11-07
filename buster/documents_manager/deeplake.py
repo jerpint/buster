@@ -1,7 +1,6 @@
 import logging
 from typing import Optional
 
-import openai
 import pandas as pd
 
 from buster.utils import zip_contents

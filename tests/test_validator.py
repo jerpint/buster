@@ -1,6 +1,6 @@
 import pandas as pd
-from openai.embeddings_utils import get_embedding
 
+from buster.llm_utils import get_openai_embedding
 from buster.validators import QuestionAnswerValidator, Validator
 
 validator_cfg = {
@@ -42,7 +42,7 @@ def test_validator_rerank_docs():
     ]
     matched_documents = pd.DataFrame({"documents": documents})
     matched_documents["embedding"] = matched_documents.documents.apply(
-        lambda x: get_embedding(x, engine=validator.embedding_model)
+        lambda x: get_openai_embedding(x, model=validator.embedding_model)
     )
 
     answer = "An apple is a delicious fruit."

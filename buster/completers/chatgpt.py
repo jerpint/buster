@@ -2,9 +2,11 @@ import logging
 import os
 from typing import Iterator
 
-import openai
+from openai import OpenAI
 
 from buster.completers import Completer
+
+client = OpenAI()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -12,6 +14,7 @@ logging.basicConfig(level=logging.INFO)
 # Check if an API key exists for promptlayer, if it does, use it
 promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
 if promptlayer_api_key:
+    # TODO: Check if this still works with latest openAI API...
     try:
         import promptlayer
 
@@ -38,11 +41,8 @@ class ChatGPTCompleter(Completer):
 
         try:
             error = False
-            response = openai.ChatCompletion.create(
-                messages=messages,
-                **completion_kwargs,
-            )
-        except openai.error.InvalidRequestError:
+            response = client.chat.completions.create(messages=messages, **completion_kwargs)
+        except openai.InvalidRequestError:
             error = True
             logger.exception("Invalid request to OpenAI API. See traceback:")
             error_message = "Something went wrong with connecting with OpenAI, try again soon!"
@@ -59,11 +59,15 @@ class ChatGPTCompleter(Completer):
             # openai response to be easier to handle later
             def answer_generator():
                 for chunk in response:
-                    token: str = chunk["choices"][0]["delta"].get("content", "")
+                    token = chunk.choices[0].delta.content
+
+                    # Always stream a string, openAI returns None on last token
+                    token = "" if token is None else token
+
                     yield token
 
             return answer_generator(), error
 
         else:
-            full_response: str = response["choices"][0]["message"]["content"]
+            full_response: str = response.choices[0].message.content
             return full_response, error

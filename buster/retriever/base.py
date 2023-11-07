@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from buster.completers import UserInputs
-from buster.documents_manager.base import get_embedding_openai
+from buster.llm_utils import get_openai_embedding
 
 ALL_SOURCES = "All"
 
@@ -41,7 +41,7 @@ class Retriever(ABC):
     @lru_cache
     def get_embedding(query: str, model: str) -> np.ndarray:
         logger.info("generating embedding")
-        return get_embedding_openai(query, model=model)
+        return get_openai_embedding(query, model=model)
 
     @abstractmethod
     def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:

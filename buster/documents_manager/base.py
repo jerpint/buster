@@ -4,49 +4,18 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-import numpy as np
-import openai
 import pandas as pd
+from openai import OpenAI
 from tqdm import tqdm
-from tqdm.contrib.concurrent import process_map
+
+from buster.llm_utils import compute_embeddings_parallelized, get_openai_embedding
+
+client = OpenAI()
 
 tqdm.pandas()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
-
-
-def get_embedding_openai(text: str, model="text-embedding-ada-002") -> np.ndarray:
-    text = text.replace("\n", " ")
-    try:
-        return np.array(openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"], dtype=np.float32)
-    except:
-        # This rarely happens with the API but in the off chance it does, will allow us not to loose the progress.
-        logger.warning("Embedding failed to compute.")
-        return None
-
-
-def compute_embeddings_parallelized(df: pd.DataFrame, embedding_fn: callable, num_workers: int) -> pd.Series:
-    """Compute the embeddings on the 'content' column of a DataFrame in parallel.
-
-    This method calculates embeddings for the entries in the 'content' column of the provided DataFrame using the specified
-    embedding function. The 'content' column is expected to contain strings or textual data. The method processes the
-    embeddings in parallel using the number of workers specified.
-
-    Args:
-        df (pd.DataFrame): The DataFrame containing the data to compute embeddings for.
-        embedding_fn (callable): A function that computes embeddings for a given input string.
-        num_workers (int): The number of parallel workers to use for computing embeddings.
-
-    Returns:
-        pd.Series: A Series containing the computed embeddings for each entry in the 'content' column.
-    """
-
-    logger.info(f"Computing embeddings of {len(df)} chunks. Using {num_workers=}")
-    embeddings = process_map(embedding_fn, df.content.to_list(), max_workers=num_workers)
-
-    logger.info(f"Finished computing embeddings")
-    return embeddings
 
 
 @dataclass
@@ -89,7 +58,7 @@ class DocumentsManager(ABC):
         self,
         df: pd.DataFrame,
         num_workers: int = 16,
-        embedding_fn: callable = get_embedding_openai,
+        embedding_fn: callable = get_openai_embedding,
         csv_filename: Optional[str] = None,
         csv_overwrite: bool = True,
         **add_kwargs,
@@ -133,7 +102,7 @@ class DocumentsManager(ABC):
         batch_size: int = 3000,
         min_time_interval: int = 60,
         num_workers: int = 16,
-        embedding_fn: callable = get_embedding_openai,
+        embedding_fn: callable = get_openai_embedding,
         csv_filename: Optional[str] = None,
         csv_overwrite: bool = False,
         **add_kwargs,

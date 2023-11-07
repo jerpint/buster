@@ -1,8 +1,7 @@
 import logging
 
-from openai.embeddings_utils import cosine_similarity
-
 from buster.completers import ChatGPTCompleter
+from buster.llm_utils import cosine_similarity
 from buster.validators import Validator
 
 logger = logging.getLogger(__name__)
@@ -70,14 +69,14 @@ class QuestionAnswerValidator(Validator):
         unknown_embeddings = [
             self.get_embedding(
                 unknown_response,
-                engine=self.embedding_model,
+                model=self.embedding_model,
             )
             for unknown_response in unknown_responses
         ]
 
         answer_embedding = self.get_embedding(
             answer,
-            engine=self.embedding_model,
+            model=self.embedding_model,
         )
         unknown_similarity_scores = [
             cosine_similarity(answer_embedding, unknown_embedding) for unknown_embedding in unknown_embeddings
