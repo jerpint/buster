@@ -59,7 +59,10 @@ class ChatGPTCompleter(Completer):
             # openai response to be easier to handle later
             def answer_generator():
                 for chunk in response:
-                    token: str = chunk["choices"][0]["delta"].get("content", "")
+                    token = chunk.choices[0].delta.content
+
+                    # Always stream a string, openAI returns None on last token
+                    token = "" if token is None else token
                     yield token
 
             return answer_generator(), error
