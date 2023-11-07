@@ -2,7 +2,6 @@ import logging
 import os
 from typing import Iterator
 
-import openai
 from openai import OpenAI
 
 client = OpenAI()
@@ -15,6 +14,7 @@ logging.basicConfig(level=logging.INFO)
 # Check if an API key exists for promptlayer, if it does, use it
 promptlayer_api_key = os.environ.get("PROMPTLAYER_API_KEY")
 if promptlayer_api_key:
+    # TODO: Check if this still works with latest openAI API...
     try:
         import promptlayer
 
