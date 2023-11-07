@@ -1,8 +1,8 @@
 import logging
 
 from buster.completers import ChatGPTCompleter
-from buster.validators import Validator
 from buster.llm_utils import cosine_similarity
+from buster.validators import Validator
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

@@ -10,7 +10,7 @@ client = OpenAI()
 import pandas as pd
 from tqdm import tqdm
 
-from buster.llm_utils import get_openai_embedding, compute_embeddings_parallelized
+from buster.llm_utils import compute_embeddings_parallelized, get_openai_embedding
 
 tqdm.pandas()
 

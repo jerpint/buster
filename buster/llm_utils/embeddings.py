@@ -1,10 +1,9 @@
-import numpy as np
 import logging
+
+import numpy as np
 import pandas as pd
-
-from tqdm.contrib.concurrent import process_map
-
 from openai import OpenAI
+from tqdm.contrib.concurrent import process_map
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -12,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 client = OpenAI()
 
 
-def get_openai_embedding(text: str, model: str = 'text-embedding-ada-002'):
+def get_openai_embedding(text: str, model: str = "text-embedding-ada-002"):
     try:
         text = text.replace("\n", " ")
         response = client.embeddings.create(
@@ -26,6 +25,7 @@ def get_openai_embedding(text: str, model: str = 'text-embedding-ada-002'):
         logger.exception(e)
         logger.warning(f"Embedding failed to compute for {text=}")
         return None
+
 
 def cosine_similarity(a, b):
     return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
@@ -52,5 +52,3 @@ def compute_embeddings_parallelized(df: pd.DataFrame, embedding_fn: callable, nu
 
     logger.info(f"Finished computing embeddings")
     return embeddings
-
-

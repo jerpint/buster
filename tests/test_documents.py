@@ -5,9 +5,7 @@ import pandas as pd
 import pytest
 
 from buster.documents_manager import DeepLakeDocumentsManager
-from buster.documents_manager.base import (
-    compute_embeddings_parallelized,
-)
+from buster.documents_manager.base import compute_embeddings_parallelized
 from buster.llm_utils import get_openai_embedding
 from buster.retriever import DeepLakeRetriever
 

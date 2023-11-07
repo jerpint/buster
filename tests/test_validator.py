@@ -1,6 +1,6 @@
 import pandas as pd
-from buster.llm_utils import get_openai_embedding
 
+from buster.llm_utils import get_openai_embedding
 from buster.validators import QuestionAnswerValidator, Validator
 
 validator_cfg = {

@@ -41,8 +41,7 @@ class ChatGPTCompleter(Completer):
 
         try:
             error = False
-            response = client.chat.completions.create(messages=messages,
-            **completion_kwargs)
+            response = client.chat.completions.create(messages=messages, **completion_kwargs)
         except openai.InvalidRequestError:
             error = True
             logger.exception("Invalid request to OpenAI API. See traceback:")
