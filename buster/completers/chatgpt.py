@@ -4,9 +4,9 @@ from typing import Iterator
 
 from openai import OpenAI
 
-client = OpenAI()
-
 from buster.completers import Completer
+
+client = OpenAI()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -63,6 +63,7 @@ class ChatGPTCompleter(Completer):
 
                     # Always stream a string, openAI returns None on last token
                     token = "" if token is None else token
+
                     yield token
 
             return answer_generator(), error
