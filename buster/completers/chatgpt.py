@@ -2,6 +2,7 @@ import logging
 import os
 from typing import Iterator
 
+import openai
 from openai import OpenAI
 
 from buster.completers import Completer
@@ -42,16 +43,22 @@ class ChatGPTCompleter(Completer):
         try:
             error = False
             response = client.chat.completions.create(messages=messages, **completion_kwargs)
-        except openai.InvalidRequestError:
+        except openai.BadRequestError:
             error = True
             logger.exception("Invalid request to OpenAI API. See traceback:")
-            error_message = "Something went wrong with connecting with OpenAI, try again soon!"
+            error_message = "Something went wrong while connecting with OpenAI, try again soon!"
             return error_message, error
 
-        except openai.error.RateLimitError:
+        except openai.RateLimitError:
             error = True
             logger.exception("RateLimit error from OpenAI. See traceback:")
             error_message = "OpenAI servers seem to be overloaded, try again later!"
+            return error_message, error
+
+        except Exception as e:
+            error = True
+            logger.exception("Some kind of error happened trying to generate the response. See traceback:")
+            error_message = "Something went wrong with connecting with OpenAI, try again soon!"
             return error_message, error
 
         if completion_kwargs.get("stream") is True:
