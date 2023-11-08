@@ -42,16 +42,10 @@ class ChatGPTCompleter(Completer):
         try:
             error = False
             response = client.chat.completions.create(messages=messages, **completion_kwargs)
-        except openai.InvalidRequestError:
+        except Exception as e:
             error = True
-            logger.exception("Invalid request to OpenAI API. See traceback:")
+            logger.exception("Some kind of error happened trying to generate the response. See traceback:")
             error_message = "Something went wrong with connecting with OpenAI, try again soon!"
-            return error_message, error
-
-        except openai.error.RateLimitError:
-            error = True
-            logger.exception("RateLimit error from OpenAI. See traceback:")
-            error_message = "OpenAI servers seem to be overloaded, try again later!"
             return error_message, error
 
         if completion_kwargs.get("stream") is True:
