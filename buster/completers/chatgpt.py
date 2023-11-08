@@ -46,7 +46,7 @@ class ChatGPTCompleter(Completer):
         except openai.BadRequestError:
             error = True
             logger.exception("Invalid request to OpenAI API. See traceback:")
-            error_message = "Something went wrong with connecting with OpenAI, try again soon!"
+            error_message = "Something went wrong while connecting with OpenAI, try again soon!"
             return error_message, error
 
         except openai.RateLimitError:
