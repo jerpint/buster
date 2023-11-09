@@ -18,6 +18,21 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
+def split_df_by_nans(df: pd.DataFrame, column: str) -> (pd.DataFrame, pd.DataFrame):
+    """
+    Splits a DataFrame into two DataFrames, one with rows containing NaN and the other without NaNs.
+
+    Args:
+    df (pd.DataFrame): The input DataFrame.
+
+    Returns:
+    (pd.DataFrame, pd.DataFrame): A tuple of two DataFrames, the first with NaN rows, the second without NaNs.
+    """
+    df_with_nans = df[df[column].isna()]
+    df_without_nans = df.dropna()
+    return df_without_nans, df_with_nans
+
+
 @dataclass
 class DocumentsManager(ABC):
     def __init__(self, required_columns: Optional[list[str]] = None):
@@ -41,7 +56,7 @@ class DocumentsManager(ABC):
 
         if csv_overwrite:
             df.to_csv(csv_filename)
-            logger.info(f"Saved DataFrame with embeddings to {csv_filename}")
+            logger.debug(f"Saved DataFrame to {csv_filename}")
 
         else:
             if os.path.exists(csv_filename):
@@ -52,14 +67,15 @@ class DocumentsManager(ABC):
                 # will create the new file
                 append_df = df.copy()
             append_df.to_csv(csv_filename)
-            logger.info(f"Appending DataFrame embeddings to {csv_filename}")
+            logger.debug(f"Appending DataFrame to {csv_filename}")
 
     def add(
         self,
         df: pd.DataFrame,
         num_workers: int = 16,
         embedding_fn: callable = get_openai_embedding,
-        csv_filename: Optional[str] = None,
+        csv_embeddings_filename: Optional[str] = None,
+        csv_errors_filename: Optional[str] = None,
         csv_overwrite: bool = True,
         **add_kwargs,
     ):
@@ -77,7 +93,7 @@ class DocumentsManager(ABC):
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
 
-            csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_embeddings_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
             csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
 
@@ -91,8 +107,16 @@ class DocumentsManager(ABC):
         if "embedding" not in df.columns:
             df["embedding"] = compute_embeddings_parallelized(df, embedding_fn=embedding_fn, num_workers=num_workers)
 
-        if csv_filename is not None:
-            self._checkpoint_csv(df, csv_filename=csv_filename, csv_overwrite=csv_overwrite)
+        # errors with embeddings computation will be NaNs, so we filter them out and the user can recompute them later on...
+        df, df_errors = split_df_by_nans(df, column="embedding")
+
+        if len(df_errors) > 0:
+            logger.warning(f"{len(df_errors)} errors have occured during embedding generation.")
+            if csv_errors_filename is not None:
+                self._checkpoint_csv(df_errors, csv_filename=csv_errors_filename, csv_overwrite=csv_overwrite)
+
+        if csv_embeddings_filename is not None:
+            self._checkpoint_csv(df, csv_filename=csv_embeddings_filename, csv_overwrite=csv_overwrite)
 
         self._add_documents(df, **add_kwargs)
 
