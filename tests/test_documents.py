@@ -182,7 +182,7 @@ def test_add_batches(tmp_path):
         num_workers=NUM_WORKERS,
         batch_size=batch_size,
         min_time_interval=0,
-        csv_filename=csv_filename,
+        csv_embeddings_filename=csv_filename,
     )
 
     csv_files = [f for f in os.listdir(tmp_path) if f.endswith(".csv")]

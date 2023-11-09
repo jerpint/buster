@@ -132,7 +132,7 @@ class DocumentsManager(ABC):
         embedding_fn: callable = get_openai_embedding,
         csv_embeddings_filename: Optional[str] = None,
         csv_errors_filename: Optional[str] = None,
-        csv_overwrite: bool = True,
+        csv_overwrite: bool = False,
         **add_kwargs,
     ):
         """
