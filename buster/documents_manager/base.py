@@ -130,8 +130,9 @@ class DocumentsManager(ABC):
         min_time_interval: int = 60,
         num_workers: int = 16,
         embedding_fn: callable = get_openai_embedding,
-        csv_filename: Optional[str] = None,
-        csv_overwrite: bool = False,
+        csv_embeddings_filename: Optional[str] = None,
+        csv_errors_filename: Optional[str] = None,
+        csv_overwrite: bool = True,
         **add_kwargs,
     ):
         """
@@ -174,7 +175,8 @@ class DocumentsManager(ABC):
             self.add(
                 batch_df,
                 num_workers=num_workers,
-                csv_filename=csv_filename,
+                csv_embeddings_filename=csv_embeddings_filename,
+                csv_errors_filename=csv_errors_filename,
                 csv_overwrite=csv_overwrite,
                 embedding_fn=embedding_fn,
                 **add_kwargs,
