@@ -137,6 +137,11 @@ class Completion:
                 answer=self.answer_text, matched_documents=self.matched_documents
             )
 
+        if self.validator.validate_documents:
+            self.matched_documents = self.validator.check_documents_relevance(
+                answer=self.answer_text, matched_documents=self.matched_documents
+            )
+
         # access the property so it gets set if not computed alerady
         self.answer_relevant
 

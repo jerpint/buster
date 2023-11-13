@@ -4,19 +4,18 @@ from buster.formatters.documents import DocumentsFormatterJSON
 from buster.formatters.prompts import PromptFormatter
 from buster.retriever import DeepLakeRetriever, Retriever
 from buster.tokenizers import GPTTokenizer
-from buster.validators import QuestionAnswerValidator, Validator
+from buster.validators import Validator
 
 buster_cfg = BusterConfig(
     validator_cfg={
-        "unknown_response_templates": [
-            "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
-        ],
-        "unknown_threshold": 0.85,
-        "embedding_model": "text-embedding-ada-002",
-        "use_reranking": True,
-        "invalid_question_response": "This question does not seem relevant to my current knowledge.",
-        "check_question_prompt": """You are an chatbot answering questions on artificial intelligence.
-
+        "question_validator_cfg": {
+            "invalid_question_response": "This question does not seem relevant to my current knowledge.",
+            "completion_kwargs": {
+                "model": "gpt-3.5-turbo",
+                "stream": False,
+                "temperature": 0,
+            },
+            "check_question_prompt": """You are an chatbot answering questions on artificial intelligence.
 Your job is to determine wether or not a question is valid, and should be answered.
 More general questions are not considered valid, even if you might know the response.
 A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.
@@ -30,11 +29,22 @@ Q: What is the meaning of life?
 false
 
 A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.""",
-        "completion_kwargs": {
-            "model": "gpt-3.5-turbo",
-            "stream": False,
-            "temperature": 0,
         },
+        "answer_validator_cfg": {
+            "unknown_response_templates": [
+                "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
+            ],
+            "unknown_threshold": 0.85,
+        },
+        "documents_validator_cfg": {
+            "completion_kwargs": {
+                "model": "gpt-3.5-turbo",
+                "stream": False,
+                "temperature": 0,
+            },
+        },
+        "use_reranking": True,
+        "validate_documents": True,
     },
     retriever_cfg={
         "path": "deeplake_store",
@@ -98,6 +108,6 @@ def setup_buster(buster_cfg: BusterConfig):
         prompt_formatter=PromptFormatter(tokenizer=tokenizer, **buster_cfg.prompt_formatter_cfg),
         **buster_cfg.documents_answerer_cfg,
     )
-    validator: Validator = QuestionAnswerValidator(**buster_cfg.validator_cfg)
+    validator: Validator = Validator(**buster_cfg.validator_cfg)
     buster: Buster = Buster(retriever=retriever, document_answerer=document_answerer, validator=validator)
     return buster

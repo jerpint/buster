@@ -1,4 +1,5 @@
 import logging
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
@@ -11,6 +12,7 @@ logging.basicConfig(level=logging.INFO)
 client = OpenAI()
 
 
+@lru_cache
 def get_openai_embedding(text: str, model: str = "text-embedding-ada-002"):
     try:
         text = text.replace("\n", " ")
