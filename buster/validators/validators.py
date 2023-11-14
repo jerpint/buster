@@ -24,7 +24,7 @@ class QuestionValidator:
         if check_question_prompt is None:
             check_question_prompt = (
                 """You are a chatbot answering questions on documentation.
-Your job is to determine wether or not a question is valid, and should be answered.
+Your job is to determine whether or not a question is valid, and should be answered.
 More general questions are not considered valid, even if you might know the response.
 A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.
 
