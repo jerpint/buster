@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from openai import OpenAI
 from tqdm.contrib.concurrent import thread_map
+from pinecone_text.sparse import BM25Encoder
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -64,3 +65,23 @@ def compute_embeddings_parallelized(df: pd.DataFrame, embedding_fn: callable, nu
 
     logger.info(f"Finished computing embeddings")
     return embeddings
+
+
+class BM25:
+    def __init__(self, path_to_params: str = None) -> None:
+        self.encoder = BM25Encoder()
+
+        if path_to_params:
+            self.encoder.load(path_to_params)
+
+    def fit(self, df: pd.DataFrame):
+        self.encoder.fit(df.content.to_list())
+
+    def dump_params(self, path: str):
+        self.encoder.dump(path)
+
+    def get_sparse_embedding_fn(self):
+        def sparse_embedding_fn(query: str):
+            return self.encoder.encode_queries(query)
+
+        return sparse_embedding_fn

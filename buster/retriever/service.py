@@ -79,13 +79,23 @@ class ServiceRetriever(Retriever):
 
         query_embedding = self.get_embedding(query)
 
+        if self.get_sparse_embedding is not None:
+            sparse_query_embedding = self.get_sparse_embedding(query)
+        else:
+            sparse_query_embedding = None
+
         if isinstance(query_embedding, np.ndarray):
             # pinecone expects a list of floats, so convert from ndarray if necessary
             query_embedding = query_embedding.tolist()
 
         # Pinecone retrieval
         matches = self.index.query(
-            query_embedding, top_k=top_k, filter=filter, include_values=True, namespace=self.namespace
+            vector=query_embedding,
+            sparse_vector=sparse_query_embedding,
+            top_k=top_k,
+            filter=filter,
+            include_values=True,
+            namespace=self.namespace,
         )["matches"]
         matching_ids = [ObjectId(match.id) for match in matches]
         matching_scores = {match.id: match.score for match in matches}

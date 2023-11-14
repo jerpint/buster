@@ -1,4 +1,5 @@
 from buster.llm_utils.embeddings import (
+    BM25,
     compute_embeddings_parallelized,
     cosine_similarity,
     get_openai_embedding,
@@ -12,4 +13,5 @@ __all__ = [
     get_openai_embedding,
     compute_embeddings_parallelized,
     get_openai_embedding_constructor,
+    BM25
 ]

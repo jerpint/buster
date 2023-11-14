@@ -7,6 +7,7 @@ numpy
 openai>=1.0
 pandas
 pinecone-client
+pinecone-text
 pymongo
 pytest
 tabulate
