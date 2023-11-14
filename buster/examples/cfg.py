@@ -15,7 +15,7 @@ buster_cfg = BusterConfig(
                 "stream": False,
                 "temperature": 0,
             },
-            "check_question_prompt": """You are an chatbot answering questions on artificial intelligence.
+            "check_question_prompt": """You are a chatbot answering questions on artificial intelligence.
 Your job is to determine wether or not a question is valid, and should be answered.
 More general questions are not considered valid, even if you might know the response.
 A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.
