@@ -1,5 +1,7 @@
 import concurrent.futures
 import logging
+from typing import Callable, List
+import numpy as np
 
 import pandas as pd
 
@@ -36,7 +38,7 @@ class QuestionValidator:
 
 
 class AnswerValidator:
-    def __init__(self, unknown_response_templates: list[str], unknown_threshold: float, embedding_fn: callable = None):
+    def __init__(self, unknown_response_templates: list[str], unknown_threshold: float, embedding_fn: Callable[[str], np.array] = None):
         self.unknown_response_templates = unknown_response_templates
         self.unknown_threshold = unknown_threshold
 
