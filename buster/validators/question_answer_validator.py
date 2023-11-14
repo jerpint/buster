@@ -71,7 +71,7 @@ class DocumentsValidator:
     ):
         if system_prompt is None:
             system_prompt = """
-            Your goal is to determine if the contents of a document can be attributed to a provided answer.
+            Your goal is to determine if the content of a document can be attributed to a provided answer.
             This means that if information in the document is found in the answer, it is relevant. Otherwise it is not.
             Your goal is to determine if the information contained in a document was used to generate an answer.
             You will be comparing a document to an answer. If the answer can be inferred from the document, return 'true'. Otherwise return 'false'.
