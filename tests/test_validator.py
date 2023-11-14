@@ -43,6 +43,25 @@ def test_validator_check_answer_relevance():
     assert validator.check_answer_relevance(answer) == True
 
 
+def test_validator_check_documents_relevance():
+    docs = {
+        "content": [
+            "A panda is a bear native to China, known for its black and white fur.",
+            "An apple is a sweet fruit, often red, green, or yellow in color.",
+            "A car is a wheeled vehicle used for transportation, typically powered by an engine.",
+        ]
+    }
+
+    answer = "Pandas live in China."
+    expected_relevance = [True, False, False]
+
+    matched_documents = pd.DataFrame(docs)
+    matched_documents = validator.check_documents_relevance(answer=answer, matched_documents=matched_documents)
+
+    assert "relevance" in matched_documents.columns
+    assert matched_documents.relevance.to_list() == expected_relevance
+
+
 def test_validator_rerank_docs():
     documents = [
         "A basketball player practicing",
