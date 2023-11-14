@@ -3,7 +3,7 @@ import logging
 import pandas as pd
 
 from buster.llm_utils import cosine_similarity, get_openai_embedding
-from buster.validators.question_answer_validator import (
+from buster.validators.validators import (
     AnswerValidator,
     DocumentsValidator,
     QuestionValidator,
