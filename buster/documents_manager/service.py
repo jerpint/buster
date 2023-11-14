@@ -74,10 +74,7 @@ class DocumentsService(DocumentsManager):
 
                 to_upsert.append(vector)
 
-            if use_sparse_vector:
-                MAX_PINECONE_BATCH_SIZE = 100
-            else:
-                MAX_PINECONE_BATCH_SIZE = 1000
+            MAX_PINECONE_BATCH_SIZE = 100 if use_sparse_vector else 1000
             for i in range(0, len(to_upsert), MAX_PINECONE_BATCH_SIZE):
                 self.index.upsert(vectors=to_upsert[i : i + MAX_PINECONE_BATCH_SIZE], namespace=self.namespace)
 

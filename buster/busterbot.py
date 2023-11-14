@@ -5,7 +5,7 @@ from typing import Any, Optional
 import pandas as pd
 
 from buster.completers import Completion, DocumentAnswerer, UserInputs
-from buster.llm_utils import QuestionReformulator
+from buster.llm_utils import QuestionReformulator, get_openai_embedding
 from buster.retriever import Retriever
 from buster.validators import Validator
 
@@ -33,7 +33,7 @@ class BusterConfig:
             "max_tokens": 3000,
             "top_k": 3,
             "thresh": 0.7,
-            "embedding_model": "text-embedding-ada-002",
+            "embedding_fn": get_openai_embedding,
         }
     )
     prompt_formatter_cfg: dict = field(

@@ -78,11 +78,7 @@ class ServiceRetriever(Retriever):
                 return pd.DataFrame()
 
         query_embedding = self.get_embedding(query)
-
-        if self.get_sparse_embedding is not None:
-            sparse_query_embedding = self.get_sparse_embedding(query)
-        else:
-            sparse_query_embedding = None
+        sparse_query_embedding = self.get_sparse_embedding(query) if self.get_sparse_embedding is not None else None
 
         if isinstance(query_embedding, np.ndarray):
             # pinecone expects a list of floats, so convert from ndarray if necessary
