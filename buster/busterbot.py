@@ -19,12 +19,8 @@ class BusterConfig:
 
     validator_cfg: dict = field(
         default_factory=lambda: {
-            "unknown_prompts": [
-                "I Don't know how to answer your question.",
-            ],
-            "unknown_threshold": 0.85,
-            "embedding_model": "text-embedding-ada-002",
             "use_reranking": True,
+            "validate_documents": False,
         }
     )
     tokenizer_cfg: dict = field(
