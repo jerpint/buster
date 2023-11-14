@@ -1,8 +1,8 @@
 import concurrent.futures
 import logging
 from typing import Callable, List, Optional
-import numpy as np
 
+import numpy as np
 import pandas as pd
 
 from buster.completers import ChatGPTCompleter, Completer
