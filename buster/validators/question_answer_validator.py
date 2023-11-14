@@ -105,7 +105,7 @@ class DocumentsValidator:
 
         if output not in ["true", "false"]:
             # Default assume it's relevant if the detector didn't give one of [true, false]
-            logger.warning(f"the validation returned an unexpeced value: {output}. Assuming valid...")
+            logger.warning(f"the validation returned an unexpected value: {output}. Assuming valid...")
             return True
         return output == "true"
 
