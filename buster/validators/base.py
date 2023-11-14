@@ -22,9 +22,17 @@ class Validator:
         answer_validator_cfg=None,
         documents_validator_cfg=None,
     ):
-        self.question_validator = QuestionValidator(**question_validator_cfg)
-        self.answer_validator = AnswerValidator(**answer_validator_cfg)
-        self.documents_validator = DocumentsValidator(**documents_validator_cfg)
+        self.question_validator = (
+            QuestionValidator(**question_validator_cfg) if question_validator_cfg is not None else QuestionValidator()
+        )
+        self.answer_validator = (
+            AnswerValidator(**answer_validator_cfg) if answer_validator_cfg is not None else AnswerValidator()
+        )
+        self.documents_validator = (
+            DocumentsValidator(**documents_validator_cfg)
+            if documents_validator_cfg is not None
+            else DocumentsValidator()
+        )
         self.use_reranking = use_reranking
         self.validate_documents = validate_documents
 

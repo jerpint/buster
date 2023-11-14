@@ -1,11 +1,11 @@
 import concurrent.futures
 import logging
-from typing import Callable, List
+from typing import Callable, List, Optional
 import numpy as np
 
 import pandas as pd
 
-from buster.completers import ChatGPTCompleter
+from buster.completers import ChatGPTCompleter, Completer
 from buster.llm_utils import cosine_similarity
 from buster.llm_utils.embeddings import get_openai_embedding
 
@@ -14,8 +14,44 @@ logging.basicConfig(level=logging.INFO)
 
 
 class QuestionValidator:
-    def __init__(self, completion_kwargs: dict, check_question_prompt: str, invalid_question_response: str):
-        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs)
+    def __init__(
+        self,
+        check_question_prompt: Optional[str] = None,
+        invalid_question_response: Optional[str] = None,
+        completion_kwargs: Optional[dict] = None,
+        completer: Optional[Completer] = None,
+    ):
+        if check_question_prompt is None:
+            check_question_prompt = (
+                """You are a chatbot answering questions on documentation.
+Your job is to determine wether or not a question is valid, and should be answered.
+More general questions are not considered valid, even if you might know the response.
+A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.
+
+For example:
+
+Q: What is backpropagation?
+true
+
+Q: What is the meaning of life?
+false
+
+A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.""",
+            )
+
+        if completer is None:
+            completer = ChatGPTCompleter
+
+        if completion_kwargs is None:
+            completion_kwargs = (
+                {
+                    "model": "gpt-3.5-turbo",
+                    "stream": False,
+                    "temperature": 0,
+                },
+            )
+
+        self.completer = completer(completion_kwargs=completion_kwargs)
         self.check_question_prompt = check_question_prompt
         self.invalid_question_response = invalid_question_response
 
@@ -38,12 +74,26 @@ class QuestionValidator:
 
 
 class AnswerValidator:
-    def __init__(self, unknown_response_templates: list[str], unknown_threshold: float, embedding_fn: Callable[[str], np.array] = None):
-        self.unknown_response_templates = unknown_response_templates
-        self.unknown_threshold = unknown_threshold
+    def __init__(
+        self,
+        unknown_response_templates: Optional[list[str]] = None,
+        unknown_threshold: Optional[float] = None,
+        embedding_fn: Callable[[str], np.array] = None,
+    ):
+        if unknown_threshold is None:
+            unknown_threshold = 0.85
 
         if embedding_fn is None:
-            self.embedding_fn = get_openai_embedding
+            embedding_fn = get_openai_embedding
+
+        if unknown_response_templates is None:
+            unknown_response_templates = [
+                "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
+            ]
+
+        self.embedding_fn = embedding_fn
+        self.unknown_response_templates = unknown_response_templates
+        self.unknown_threshold = unknown_threshold
 
     def check_answer_relevance(self, answer: str) -> bool:
         """Check if a generated answer is relevant to the chatbot's knowledge."""
@@ -66,9 +116,9 @@ class AnswerValidator:
 class DocumentsValidator:
     def __init__(
         self,
-        completion_kwargs: dict = None,
-        system_prompt: str = None,
-        user_input_formatter: str = None,
+        completion_kwargs: Optional[dict] = None,
+        system_prompt: Optional[str] = None,
+        user_input_formatter: Optional[str] = None,
         max_calls: int = 30,
     ):
         if system_prompt is None:
