@@ -2,9 +2,18 @@ from buster.busterbot import Buster, BusterConfig
 from buster.completers import ChatGPTCompleter, DocumentAnswerer
 from buster.formatters.documents import DocumentsFormatterJSON
 from buster.formatters.prompts import PromptFormatter
+from buster.llm_utils import get_openai_embedding_constructor
 from buster.retriever import DeepLakeRetriever, Retriever
 from buster.tokenizers import GPTTokenizer
 from buster.validators import Validator
+
+# kwargs to pass to OpenAI client
+client_kwargs = {
+    "timeout": 20,
+    "max_retries": 3,
+}
+
+embedding_fn = get_openai_embedding_constructor(client_kwargs=client_kwargs)
 
 buster_cfg = BusterConfig(
     validator_cfg={
@@ -15,6 +24,7 @@ buster_cfg = BusterConfig(
                 "stream": False,
                 "temperature": 0,
             },
+            "client_kwargs": client_kwargs,
             "check_question_prompt": """You are a chatbot answering questions on artificial intelligence.
 Your job is to determine wether or not a question is valid, and should be answered.
 More general questions are not considered valid, even if you might know the response.
@@ -35,6 +45,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
                 "I'm sorry, but I am an AI language model trained to assist with questions related to AI. I cannot answer that question as it is not relevant to the library or its usage. Is there anything else I can assist you with?",
             ],
             "unknown_threshold": 0.85,
+            "embedding_fn": embedding_fn,
         },
         "documents_validator_cfg": {
             "completion_kwargs": {
@@ -42,15 +53,16 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
                 "stream": False,
                 "temperature": 0,
             },
+            "client_kwargs": client_kwargs,
         },
         "use_reranking": True,
-        "validate_documents": True,
+        "validate_documents": False,
     },
     retriever_cfg={
         "path": "deeplake_store",
         "top_k": 3,
         "thresh": 0.7,
-        "embedding_model": "text-embedding-ada-002",
+        "embedding_fn": embedding_fn,
     },
     documents_answerer_cfg={
         "no_documents_message": "No documents are available for this question.",
@@ -61,6 +73,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
             "stream": True,
             "temperature": 0,
         },
+        "client_kwargs": client_kwargs,
     },
     tokenizer_cfg={
         "model_name": "gpt-3.5-turbo",

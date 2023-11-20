@@ -5,8 +5,13 @@ from buster.completers import ChatGPTCompleter
 
 
 class QuestionReformulator:
-    def __init__(self, system_prompt: Optional[str] = None, completion_kwargs: Optional[dict] = None):
-        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs)
+    def __init__(
+        self,
+        system_prompt: Optional[str] = None,
+        completion_kwargs: Optional[dict] = None,
+        client_kwargs: Optional[dict] = None,
+    ):
+        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs, client_kwargs=client_kwargs)
 
         if completion_kwargs is None:
             # Default kwargs

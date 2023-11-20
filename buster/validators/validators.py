@@ -19,7 +19,7 @@ class QuestionValidator:
         check_question_prompt: Optional[str] = None,
         invalid_question_response: Optional[str] = None,
         completion_kwargs: Optional[dict] = None,
-        completer: Optional[Completer] = None,
+        client_kwargs: Optional[dict] = None,
     ):
         if check_question_prompt is None:
             check_question_prompt = (
@@ -39,10 +39,8 @@ false
 A user will submit a question. Respond 'true' if it is valid, respond 'false' if it is invalid.""",
             )
 
-        if completer is None:
-            completer = ChatGPTCompleter
-
         if completion_kwargs is None:
+            # default completion kwargs
             completion_kwargs = (
                 {
                     "model": "gpt-3.5-turbo",
@@ -51,7 +49,7 @@ A user will submit a question. Respond 'true' if it is valid, respond 'false' if
                 },
             )
 
-        self.completer = completer(completion_kwargs=completion_kwargs)
+        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs, client_kwargs=client_kwargs)
         self.check_question_prompt = check_question_prompt
         self.invalid_question_response = invalid_question_response
 
@@ -117,6 +115,7 @@ class DocumentsValidator:
     def __init__(
         self,
         completion_kwargs: Optional[dict] = None,
+        client_kwargs: Optional[dict] = None,
         system_prompt: Optional[str] = None,
         user_input_formatter: Optional[str] = None,
         max_calls: int = 30,
@@ -144,7 +143,7 @@ class DocumentsValidator:
                 "temperature": 0,
             }
 
-        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs)
+        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs, client_kwargs=client_kwargs)
 
         self.max_calls = max_calls
 

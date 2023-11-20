@@ -204,12 +204,6 @@ class Completion:
 class Completer(ABC):
     """Generic LLM-based completer. Requires a prompt and an input to produce an output."""
 
-    def __init__(
-        self,
-        completion_kwargs: dict,
-    ):
-        self.completion_kwargs = completion_kwargs
-
     @abstractmethod
     def complete(self, prompt: str, user_input) -> (str | Iterator, bool):
         """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""

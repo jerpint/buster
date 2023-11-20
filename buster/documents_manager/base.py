@@ -5,12 +5,9 @@ from dataclasses import dataclass
 from typing import Optional
 
 import pandas as pd
-from openai import OpenAI
 from tqdm import tqdm
 
 from buster.llm_utils import compute_embeddings_parallelized, get_openai_embedding
-
-client = OpenAI()
 
 tqdm.pandas()
 

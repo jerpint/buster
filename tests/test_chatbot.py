@@ -30,6 +30,10 @@ buster_cfg_template = BusterConfig(
             "model": "gpt-3.5-turbo",
             "temperature": 0,
         },
+        "client_kwargs": {
+            "timeout": 20,
+            "max_retries": 2,
+        },
     },
     validator_cfg={
         "validate_documents": False,
@@ -46,6 +50,10 @@ buster_cfg_template = BusterConfig(
                 "model": "gpt-3.5-turbo",
                 "stream": False,
                 "temperature": 0,
+            },
+            "client_kwargs": {
+                "timeout": 20,
+                "max_retries": 2,
             },
             "check_question_prompt": "You are validating if questions are related to AI. If a question is relevant, respond with 'true', if it is irrlevant, respond with 'false'.",
         },

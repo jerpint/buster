@@ -1,13 +1,11 @@
 import logging
 import os
-from typing import Iterator
+from typing import Iterator, Optional
 
 import openai
 from openai import OpenAI
 
 from buster.completers import Completer
-
-client = OpenAI()
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -29,9 +27,19 @@ if promptlayer_api_key:
 
 
 class ChatGPTCompleter(Completer):
+    def __init__(self, completion_kwargs: dict, client_kwargs: Optional[dict] = None):
+        # use default client if none passed
+        self.completion_kwargs = completion_kwargs
+
+        if client_kwargs is None:
+            client_kwargs = {}
+
+        self.client = OpenAI(**client_kwargs)
+
     def complete(self, prompt: str, user_input: str, completion_kwargs=None) -> (str | Iterator, bool):
         """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""
         # Uses default configuration if not overriden
+
         if completion_kwargs is None:
             completion_kwargs = self.completion_kwargs
 
@@ -42,7 +50,7 @@ class ChatGPTCompleter(Completer):
 
         try:
             error = False
-            response = client.chat.completions.create(messages=messages, **completion_kwargs)
+            response = self.client.chat.completions.create(messages=messages, **completion_kwargs)
         except openai.BadRequestError:
             error = True
             logger.exception("Invalid request to OpenAI API. See traceback:")
