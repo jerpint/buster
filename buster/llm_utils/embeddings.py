@@ -1,5 +1,6 @@
 import logging
 from functools import lru_cache
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -10,13 +11,13 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 
-def get_embedding_fn(client_kwargs=None):
+def get_openai_embedding_constructor(client_kwargs: Optional[dict] = None, model: str = "text-embedding-ada-002"):
     if client_kwargs is None:
         client_kwargs = {}
     client = OpenAI(**client_kwargs)
 
     @lru_cache
-    def get_openai_embedding(text: str, model: str = "text-embedding-ada-002") -> np.array:
+    def embedding_fn(text: str) -> np.array:
         try:
             text = text.replace("\n", " ")
             response = client.embeddings.create(
@@ -31,10 +32,11 @@ def get_embedding_fn(client_kwargs=None):
             logger.warning(f"Embedding failed to compute for {text=}")
             return None
 
-    return get_openai_embedding
+    return embedding_fn
 
 
-get_openai_embedding = get_embedding_fn()
+# default embedding function
+get_openai_embedding = get_openai_embedding_constructor()
 
 
 def cosine_similarity(a, b):
