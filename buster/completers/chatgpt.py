@@ -27,13 +27,14 @@ if promptlayer_api_key:
 
 
 class ChatGPTCompleter(Completer):
-    def __init__(self, completion_kwargs: dict, client: Optional[OpenAI] = None):
+    def __init__(self, completion_kwargs: dict, client_kwargs: Optional[dict] = None):
         # use default client if none passed
-        if client is None:
-            client = OpenAI()
-
         self.completion_kwargs = completion_kwargs
-        self.client = client
+
+        if client_kwargs is None:
+            client_kwargs = {}
+
+        self.client = OpenAI(**client_kwargs)
 
     def complete(self, prompt: str, user_input: str, completion_kwargs=None) -> (str | Iterator, bool):
         """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""
