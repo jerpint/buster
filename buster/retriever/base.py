@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Optional
+from typing import Callable, Optional
 
 import numpy as np
 import pandas as pd
@@ -18,10 +18,13 @@ logging.basicConfig(level=logging.INFO)
 
 @dataclass
 class Retriever(ABC):
-    def __init__(self, top_k, thresh, embedding_model, *args, **kwargs):
+    def __init__(self, top_k, thresh, embedding_fn: Callable[[str], np.array] = None, *args, **kwargs):
+        if embedding_fn is None:
+            embedding_fn = get_openai_embedding
+
         self.top_k = top_k
         self.thresh = thresh
-        self.embedding_model = embedding_model
+        self.embedding_fn = embedding_fn
 
         # Add your access to documents in your own init
 
@@ -37,11 +40,9 @@ class Retriever(ABC):
         If source is None, returns all documents. If source does not exist, returns empty dataframe."""
         ...
 
-    @staticmethod
-    @lru_cache
-    def get_embedding(query: str, model: str) -> np.ndarray:
+    def get_embedding(self, query: str) -> np.ndarray:
         logger.info("generating embedding")
-        return get_openai_embedding(query, model=model)
+        return self.embedding_fn(query)
 
     @abstractmethod
     def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
