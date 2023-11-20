@@ -115,6 +115,7 @@ class DocumentsValidator:
     def __init__(
         self,
         completion_kwargs: Optional[dict] = None,
+        client_kwargs: Optional[dict] = None,
         system_prompt: Optional[str] = None,
         user_input_formatter: Optional[str] = None,
         max_calls: int = 30,
@@ -142,7 +143,7 @@ class DocumentsValidator:
                 "temperature": 0,
             }
 
-        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs)
+        self.completer = ChatGPTCompleter(completion_kwargs=completion_kwargs, client_kwargs=client_kwargs)
 
         self.max_calls = max_calls
 
