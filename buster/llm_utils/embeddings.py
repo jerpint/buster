@@ -17,7 +17,7 @@ def get_openai_embedding_constructor(client_kwargs: Optional[dict] = None, model
     client = OpenAI(**client_kwargs)
 
     @lru_cache
-    def embedding_fn(text: str) -> np.array:
+    def embedding_fn(text: str, model: str = model) -> np.array:
         try:
             text = text.replace("\n", " ")
             response = client.embeddings.create(
