@@ -118,7 +118,7 @@ class DeepLakeRetriever(Retriever):
         If no matches are found, returns an empty dataframe."""
 
         if query is not None:
-            query_embedding = self.get_embedding(query)
+            query_embedding = self.embedding_fn(query)
         elif embedding is not None:
             query_embedding = embedding
         else:

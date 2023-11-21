@@ -131,6 +131,8 @@ class MockRetriever(Retriever):
             }
         )
 
+        self.embedding_fn = get_fake_embedding
+
     def get_documents(self, source):
         return self.documents
 
@@ -139,9 +141,6 @@ class MockRetriever(Retriever):
         documents["embedding"] = [get_fake_embedding() for _ in range(len(documents))]
         documents["similarity"] = [np.random.random() for _ in range(len(documents))]
         return documents
-
-    def get_embedding(self, query, engine):
-        return get_fake_embedding()
 
     def get_source_display_name(self, source):
         return source
