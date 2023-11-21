@@ -5,8 +5,8 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 from openai import OpenAI
-from tqdm.contrib.concurrent import thread_map
 from pinecone_text.sparse import BM25Encoder
+from tqdm.contrib.concurrent import thread_map
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)

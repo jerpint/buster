@@ -13,5 +13,5 @@ __all__ = [
     get_openai_embedding,
     compute_embeddings_parallelized,
     get_openai_embedding_constructor,
-    BM25
+    BM25,
 ]
