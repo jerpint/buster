@@ -46,6 +46,8 @@ class DocumentsService(DocumentsManager):
         """Write all documents from the dataframe into the db as a new version."""
 
         use_sparse_vector = "sparse_embedding" in df.columns
+        if use_sparse_vector:
+            logger.info("Uploading sparse embeddings too.")
 
         for source in df.source.unique():
             source_exists = self.db.sources.find_one({"name": source})
@@ -74,6 +76,10 @@ class DocumentsService(DocumentsManager):
 
                 to_upsert.append(vector)
 
+            # Current (November 2023) Pinecone upload rules:
+            # - Max 1000 vectors per batch
+            # - Max 2 MB per batch
+            # Sparse vectors are heavier, so we reduce the batch size when using them.
             MAX_PINECONE_BATCH_SIZE = 100 if use_sparse_vector else 1000
             for i in range(0, len(to_upsert), MAX_PINECONE_BATCH_SIZE):
                 self.index.upsert(vectors=to_upsert[i : i + MAX_PINECONE_BATCH_SIZE], namespace=self.namespace)

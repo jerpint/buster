@@ -75,6 +75,8 @@ class DocumentsManager(ABC):
             num_workers (int, optional): The number of parallel workers to use for computing embeddings. Default is 32.
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
+            sparse_embedding_fn (callable, optional): A function that computes sparse embeddings for a given input string.
+                Default is None. Only use if you want sparse embeddings.
 
             csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
             csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
@@ -121,6 +123,8 @@ class DocumentsManager(ABC):
                                         Defaults to 32.
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
+            sparse_embedding_fn (callable, optional): A function that computes sparse embeddings for a given input string.
+                Default is None. Only use if you want sparse embeddings.
             csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
             csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
                 When using batches, set to False to keep all embeddings in the same file. You may want to manually remove the file if experimenting.
