@@ -41,6 +41,7 @@ class Completion:
         to_json: Outputs selected attributes of the object in JSON format.
         from_dict: Creates a Completion object from a dictionary.
     """
+
     def __init__(
         self,
         error: bool,
@@ -233,6 +234,7 @@ class Completer(ABC):
     Methods:
         complete: The method that should be implemented by any child class to provide an answer to a prompt.
     """
+
     @abstractmethod
     def complete(self, prompt: str, user_input) -> (str | Iterator, bool):
         """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""
