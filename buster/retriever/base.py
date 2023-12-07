@@ -1,7 +1,6 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from functools import lru_cache
 from typing import Callable, Optional
 
 import numpy as np
@@ -18,13 +17,22 @@ logging.basicConfig(level=logging.INFO)
 
 @dataclass
 class Retriever(ABC):
-    def __init__(self, top_k: int, thresh: float, embedding_fn: Callable[[str], np.array] = None, *args, **kwargs):
+    def __init__(
+        self,
+        top_k: int,
+        thresh: float,
+        embedding_fn: Callable[[str], np.ndarray] = None,
+        sparse_embedding_fn: Callable[[str], dict[str, list[float]]] = None,
+        *args,
+        **kwargs,
+    ):
         """Initializes a Retriever instance.
 
         Args:
           top_k: The maximum number of documents to retrieve.
           thresh: The similarity threshold for document retrieval.
           embedding_fn: The function to compute document embeddings.
+          embedding_fn: (Optional) The function to compute sparse document embeddings.
           *args, **kwargs: Additional arguments and keyword arguments.
         """
         if embedding_fn is None:
@@ -33,6 +41,7 @@ class Retriever(ABC):
         self.top_k = top_k
         self.thresh = thresh
         self.embedding_fn = embedding_fn
+        self.sparse_embedding_fn = sparse_embedding_fn
 
         # Add your access to documents in your own init
 
@@ -61,18 +70,6 @@ class Retriever(ABC):
         If source is None, returns all documents. If source does not exist, returns empty dataframe.
         """
         ...
-
-    def get_embedding(self, query: str) -> np.ndarray:
-        """Generates the embedding of a query.
-
-        Args:
-          query: The query for which to generate the embedding.
-
-        Returns:
-          The embedding of the query as a NumPy array.
-        """
-        logger.info("generating embedding")
-        return self.embedding_fn(query)
 
     @abstractmethod
     def get_topk_documents(self, query: str, source: Optional[str] = None, top_k: Optional[int] = None) -> pd.DataFrame:

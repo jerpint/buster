@@ -27,7 +27,7 @@ def test_write_read(tmp_path, documents_manager, retriever):
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,
-        "embedding_model": "text-embedding-ada-002",
+        "embedding_fn": get_openai_embedding,
     }
     dm_path = tmp_path / "tmp_dir_2"
     retriever_cfg["path"] = dm_path
@@ -66,7 +66,7 @@ def test_write_write_read(tmp_path, documents_manager, retriever):
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,
-        "embedding_model": "text-embedding-ada-002",
+        "embedding_fn": get_openai_embedding,
     }
     db_path = tmp_path / "tmp_dir"
     retriever_cfg["path"] = db_path
@@ -123,7 +123,7 @@ def test_generate_embeddings(tmp_path, monkeypatch):
         "top_k": 3,
         "thresh": 0.85,
         "max_tokens": 3000,
-        "embedding_model": "fake-embedding",
+        "embedding_fn": get_fake_embedding,
     }
     read_df = DeepLakeRetriever(**retriever_cfg).get_documents("my_source")
 

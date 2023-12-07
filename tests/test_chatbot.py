@@ -12,6 +12,7 @@ from buster.completers import ChatGPTCompleter, Completer, Completion, DocumentA
 from buster.documents_manager import DeepLakeDocumentsManager
 from buster.formatters.documents import DocumentsFormatterHTML
 from buster.formatters.prompts import PromptFormatter
+from buster.llm_utils import get_openai_embedding
 from buster.retriever import DeepLakeRetriever, Retriever
 from buster.tokenizers.gpt import GPTTokenizer
 from buster.validators import Validator
@@ -63,7 +64,7 @@ buster_cfg_template = BusterConfig(
         "top_k": 3,
         "thresh": 0.7,
         "max_tokens": 2000,
-        "embedding_model": "text-embedding-ada-002",
+        "embedding_fn": get_openai_embedding,
     },
     prompt_formatter_cfg={
         "max_tokens": 3500,
@@ -130,6 +131,8 @@ class MockRetriever(Retriever):
             }
         )
 
+        self.embedding_fn = get_fake_embedding
+
     def get_documents(self, source):
         return self.documents
 
@@ -138,9 +141,6 @@ class MockRetriever(Retriever):
         documents["embedding"] = [get_fake_embedding() for _ in range(len(documents))]
         documents["similarity"] = [np.random.random() for _ in range(len(documents))]
         return documents
-
-    def get_embedding(self, query, engine):
-        return get_fake_embedding()
 
     def get_source_display_name(self, source):
         return source
@@ -258,7 +258,7 @@ def test_chatbot_real_data__no_docs_found(vector_store_path):
         buster_cfg = copy.deepcopy(buster_cfg_template)
         buster_cfg.retriever_cfg = {
             "path": vector_store_path,
-            "embedding_model": "text-embedding-ada-002",
+            "embedding_fn": get_openai_embedding,
             "top_k": 3,
             "thresh": 1,  # Set threshold very high to be sure no docs are matched
             "max_tokens": 3000,

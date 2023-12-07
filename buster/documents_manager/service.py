@@ -67,6 +67,10 @@ class DocumentsService(DocumentsManager):
         Args:
             df: The dataframe containing the documents.
         """
+        use_sparse_vector = "sparse_embedding" in df.columns
+        if use_sparse_vector:
+            logger.info("Uploading sparse embeddings too.")
+
         for source in df.source.unique():
             source_exists = self.db.sources.find_one({"name": source})
             if source_exists is None:
@@ -75,14 +79,32 @@ class DocumentsService(DocumentsManager):
             source_id = self.get_source_id(source)
 
             df_source = df[df.source == source]
+            to_upsert = []
             for row in df_source.to_dict(orient="records"):
                 embedding = row["embedding"].tolist()
+                if use_sparse_vector:
+                    sparse_embedding = row["sparse_embedding"]
+
                 document = row.copy()
                 document.pop("embedding")
+                if use_sparse_vector:
+                    document.pop("sparse_embedding")
                 document["source_id"] = source_id
 
                 document_id = str(self.db.documents.insert_one(document).inserted_id)
-                self.index.upsert([(document_id, embedding, {"source": source})], namespace=self.namespace)
+                vector = {"id": document_id, "values": embedding, "metadata": {"source": source}}
+                if use_sparse_vector:
+                    vector["sparse_values"] = sparse_embedding
+
+                to_upsert.append(vector)
+
+            # Current (November 2023) Pinecone upload rules:
+            # - Max 1000 vectors per batch
+            # - Max 2 MB per batch
+            # Sparse vectors are heavier, so we reduce the batch size when using them.
+            MAX_PINECONE_BATCH_SIZE = 100 if use_sparse_vector else 1000
+            for i in range(0, len(to_upsert), MAX_PINECONE_BATCH_SIZE):
+                self.index.upsert(vectors=to_upsert[i : i + MAX_PINECONE_BATCH_SIZE], namespace=self.namespace)
 
     def update_source(self, source: str, display_name: str = None, note: str = None):
         """Update the display name and/or note of a source. Also create the source if it does not exist.

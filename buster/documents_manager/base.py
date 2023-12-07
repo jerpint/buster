@@ -2,8 +2,9 @@ import logging
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Optional
+from typing import Callable, Optional
 
+import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
@@ -63,7 +64,8 @@ class DocumentsManager(ABC):
         self,
         df: pd.DataFrame,
         num_workers: int = 16,
-        embedding_fn: callable = get_openai_embedding,
+        embedding_fn: Callable[[str], np.ndarray] = get_openai_embedding,
+        sparse_embedding_fn: Callable[[str], dict[str, list[float]]] = None,
         csv_filename: Optional[str] = None,
         csv_overwrite: bool = True,
         **add_kwargs,
@@ -81,6 +83,8 @@ class DocumentsManager(ABC):
             num_workers (int, optional): The number of parallel workers to use for computing embeddings. Default is 32.
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
+            sparse_embedding_fn (callable, optional): A function that computes sparse embeddings for a given input string.
+                Default is None. Only use if you want sparse embeddings.
             csv_filename (str, optional): Path to save a copy of the dataframe with computed embeddings for later use.
             csv_overwrite (bool, optional): Whether to overwrite the file with a new file. Defaults to True.
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
@@ -92,6 +96,8 @@ class DocumentsManager(ABC):
         # Check if embeddings are present, computes them if not
         if "embedding" not in df.columns:
             df["embedding"] = compute_embeddings_parallelized(df, embedding_fn=embedding_fn, num_workers=num_workers)
+        if "sparse_embedding" not in df.columns and sparse_embedding_fn is not None:
+            df["sparse_embedding"] = sparse_embedding_fn(df.content.to_list())
 
         if csv_filename is not None:
             self._checkpoint_csv(df, csv_filename=csv_filename, csv_overwrite=csv_overwrite)
@@ -104,7 +110,8 @@ class DocumentsManager(ABC):
         batch_size: int = 3000,
         min_time_interval: int = 60,
         num_workers: int = 16,
-        embedding_fn: callable = get_openai_embedding,
+        embedding_fn: Callable[[str], np.ndarray] = get_openai_embedding,
+        sparse_embedding_fn: Callable[[str], dict[str, list[float]]] = None,
         csv_filename: Optional[str] = None,
         csv_overwrite: bool = False,
         **add_kwargs,
@@ -125,6 +132,8 @@ class DocumentsManager(ABC):
                                         Defaults to 32.
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
+            sparse_embedding_fn (callable, optional): A function that computes sparse embeddings for a given input string.
+                Default is None. Only use if you want sparse embeddings.
             csv_filename (str, optional): Path to save a copy of the dataframe with computed embeddings for later use.
             csv_overwrite (bool, optional): Whether to overwrite the file with a new file. Defaults to False.
                 When using batches, set to False to keep all embeddings in the same file. You may want to manually remove the file if experimenting.
@@ -151,6 +160,7 @@ class DocumentsManager(ABC):
                 csv_filename=csv_filename,
                 csv_overwrite=csv_overwrite,
                 embedding_fn=embedding_fn,
+                sparse_embedding_fn=sparse_embedding_fn,
                 **add_kwargs,
             )
 
