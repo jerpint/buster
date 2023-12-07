@@ -28,6 +28,12 @@ if promptlayer_api_key:
 
 class ChatGPTCompleter(Completer):
     def __init__(self, completion_kwargs: dict, client_kwargs: Optional[dict] = None):
+        """Initialize the ChatGPTCompleter with completion and client keyword arguments.
+
+        Args:
+          completion_kwargs: A dictionary of keyword arguments to be used for completions.
+          client_kwargs: An optional dictionary of keyword arguments to be used for the OpenAI client.
+        """
         # use default client if none passed
         self.completion_kwargs = completion_kwargs
 
@@ -37,8 +43,21 @@ class ChatGPTCompleter(Completer):
         self.client = OpenAI(**client_kwargs)
 
     def complete(self, prompt: str, user_input: str, completion_kwargs=None) -> (str | Iterator, bool):
-        """Returns the completed message (can be a generator), and a boolean to indicate if an error occured or not."""
-        # Uses default configuration if not overriden
+        """Given a prompt and user input, returns the generated message and error flag.
+
+        Args:
+          prompt: The prompt containing the formatted documents and instructions.
+          user_input: The user input to be responded to.
+          completion_kwargs: An optional dictionary of keyword arguments to override the default completion kwargs.
+
+        Returns:
+          A tuple containing the completed message and a boolean indicating if an error occurred.
+
+        Raises:
+          openai.BadRequestError: If the completion request is invalid.
+          openai.RateLimitError: If the OpenAI servers are overloaded.
+        """
+        # Uses default configuration if not overridden
 
         if completion_kwargs is None:
             completion_kwargs = self.completion_kwargs
@@ -70,7 +89,7 @@ class ChatGPTCompleter(Completer):
             return error_message, error
 
         if completion_kwargs.get("stream") is True:
-            # We are entering streaming mode, so here were just wrapping the streamed
+            # We are entering streaming mode, so here we're just wrapping the streamed
             # openai response to be easier to handle later
             def answer_generator():
                 for chunk in response:

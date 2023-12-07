@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -25,6 +25,22 @@ class ServiceRetriever(Retriever):
         mongo_db_name: str,
         **kwargs,
     ):
+        """
+        Initializes a ServiceRetriever instance.
+
+        The ServiceRetriever is a hybrid retrieval combining pinecone and mongodb services.
+
+        Pinecone is exclusively used as a vector store.
+        The id of the pinecone vectors are used as a key in the mongodb database to store its associated metadata.
+
+        Args:
+            pinecone_api_key: The API key for Pinecone.
+            pinecone_env: The environment for Pinecone.
+            pinecone_index: The name of the Pinecone index.
+            pinecone_namespace: The namespace for Pinecone.
+            mongo_uri: The URI for MongoDB.
+            mongo_db_name: The name of the MongoDB database.
+        """
         super().__init__(**kwargs)
 
         pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
@@ -36,15 +52,26 @@ class ServiceRetriever(Retriever):
         self.db = self.client[mongo_db_name]
 
     def get_source_id(self, source: str) -> str:
-        """Get the id of a source. Returns empty string if the source does not exist."""
+        """Get the id of a source. Returns an empty string if the source does not exist.
+
+        Args:
+            source: The name of the source.
+
+        Returns:
+            The id of the source.
+        """
         source_pointer = self.db.sources.find_one({"name": source})
         return "" if source_pointer is None else str(source_pointer["_id"])
 
-    def get_documents(self, source: str = None) -> pd.DataFrame:
+    def get_documents(self, source: Optional[str] = None) -> pd.DataFrame:
         """Get all current documents from a given source.
 
-        If source is None, returns all documents. If source does not exist, returns empty dataframe."""
+        Args:
+            source: The name of the source. Defaults to None.
 
+        Returns:
+            A DataFrame containing all the documents. If the source does not exist, returns an empty DataFrame.
+        """
         if source is None:
             # No source specified, return all documents
             documents = self.db.documents.find()
@@ -60,14 +87,31 @@ class ServiceRetriever(Retriever):
         return pd.DataFrame(list(documents))
 
     def get_source_display_name(self, source: str) -> str:
-        """Get the display name of a source."""
+        """Get the display name of a source.
+
+        Args:
+            source: The name of the source.
+
+        Returns:
+            The display name of the source.
+        """
         if source is None:
             return ALL_SOURCES
         else:
             display_name = self.db.sources.find_one({"name": source})["display_name"]
             return display_name
 
-    def get_topk_documents(self, query: str, sources: Optional[list[str]], top_k: int) -> pd.DataFrame:
+    def get_topk_documents(self, query: str, sources: Optional[List[str]], top_k: int) -> pd.DataFrame:
+        """Get the top k documents matching a query from the specified sources.
+
+        Args:
+            query: The query string.
+            sources: The list of source names to search. Defaults to None.
+            top_k: The number of top matches to return.
+
+        Returns:
+            A DataFrame containing the top k matching documents.
+        """
         if sources is None:
             filter = None
         else:
