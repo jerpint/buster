@@ -3,7 +3,7 @@ click
 deeplake
 gradio>=3.40
 matplotlib
-numpy
+numpy>=1.25
 openai>=1.0
 pandas
 pinecone-client
