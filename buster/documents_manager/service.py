@@ -63,7 +63,7 @@ class DocumentsService(DocumentsManager):
 
     def _add_documents(self, df: pd.DataFrame):
         """Write all documents from the dataframe into the db as a new version.
-        
+
         Args:
             df: The dataframe containing the documents.
         """
