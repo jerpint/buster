@@ -24,6 +24,17 @@ class DocumentsService(DocumentsManager):
         mongo_db_name: str,
         **kwargs,
     ):
+        """Initialize the DocumentsService.
+
+        Args:
+            pinecone_api_key: The Pinecone API key.
+            pinecone_env: The Pinecone environment.
+            pinecone_index: The Pinecone index.
+            pinecone_namespace: The Pinecone namespace.
+            mongo_uri: The MongoDB URI.
+            mongo_db_name: The MongoDB database name.
+            **kwargs: Additional keyword arguments to pass to the parent class.
+        """
         super().__init__(**kwargs)
 
         pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
@@ -36,15 +47,26 @@ class DocumentsService(DocumentsManager):
         self.db = self.client[mongo_db_name]
 
     def __repr__(self):
+        """Return a string representation of the DocumentsService."""
         return "DocumentsService"
 
     def get_source_id(self, source: str) -> str:
-        """Get the id of a source."""
+        """Get the id of a source.
+
+        Args:
+            source: The name of the source.
+
+        Returns:
+            The id of the source.
+        """
         return str(self.db.sources.find_one({"name": source})["_id"])
 
     def _add_documents(self, df: pd.DataFrame):
-        """Write all documents from the dataframe into the db as a new version."""
-
+        """Write all documents from the dataframe into the db as a new version.
+        
+        Args:
+            df: The dataframe containing the documents.
+        """
         use_sparse_vector = "sparse_embedding" in df.columns
         if use_sparse_vector:
             logger.info("Uploading sparse embeddings too.")
@@ -85,13 +107,26 @@ class DocumentsService(DocumentsManager):
                 self.index.upsert(vectors=to_upsert[i : i + MAX_PINECONE_BATCH_SIZE], namespace=self.namespace)
 
     def update_source(self, source: str, display_name: str = None, note: str = None):
-        """Update the display name and/or note of a source. Also create the source if it does not exist."""
+        """Update the display name and/or note of a source. Also create the source if it does not exist.
+
+        Args:
+            source: The name of the source.
+            display_name: The new display name of the source.
+            note: The new note of the source.
+        """
         self.db.sources.update_one(
             {"name": source}, {"$set": {"display_name": display_name, "note": note}}, upsert=True
         )
 
     def delete_source(self, source: str) -> tuple[int, int]:
-        """Delete a source and all its documents. Return if the source was deleted and the number of deleted documents."""
+        """Delete a source and all its documents. Return if the source was deleted and the number of deleted documents.
+
+        Args:
+            source: The name of the source.
+
+        Returns:
+            A tuple containing the number of deleted sources and the number of deleted documents.
+        """
         source_id = self.get_source_id(source)
 
         # MongoDB

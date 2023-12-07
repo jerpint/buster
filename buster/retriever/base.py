@@ -26,6 +26,15 @@ class Retriever(ABC):
         *args,
         **kwargs,
     ):
+        """Initializes a Retriever instance.
+
+        Args:
+          top_k: The maximum number of documents to retrieve.
+          thresh: The similarity threshold for document retrieval.
+          embedding_fn: The function to compute document embeddings.
+          embedding_fn: (Optional) The function to compute sparse document embeddings.
+          *args, **kwargs: Additional arguments and keyword arguments.
+        """
         if embedding_fn is None:
             embedding_fn = get_openai_embedding
 
@@ -37,31 +46,78 @@ class Retriever(ABC):
         # Add your access to documents in your own init
 
     @abstractmethod
-    def get_documents(self, source: str = None) -> pd.DataFrame:
-        """Get all current documents from a given source."""
+    def get_documents(self, source: Optional[str] = None) -> pd.DataFrame:
+        """Get all current documents from a given source.
+
+        Args:
+          source: The source from which to retrieve documents. If None, retrieves documents from all sources.
+
+        Returns:
+          A pandas DataFrame containing the documents.
+        """
         ...
 
     @abstractmethod
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source.
 
-        If source is None, returns all documents. If source does not exist, returns empty dataframe."""
+        Args:
+          source: The source for which to retrieve the display name.
+
+        Returns:
+          The display name of the source.
+
+        If source is None, returns all documents. If source does not exist, returns empty dataframe.
+        """
         ...
 
     @abstractmethod
-    def get_topk_documents(self, query: str, source: str = None, top_k: int = None) -> pd.DataFrame:
+    def get_topk_documents(self, query: str, source: Optional[str] = None, top_k: Optional[int] = None) -> pd.DataFrame:
         """Get the topk documents matching a user's query.
 
-        If no matches are found, returns an empty dataframe."""
+        Args:
+          query: The user's query.
+          source: The source from which to retrieve documents. If None, retrieves documents from all sources.
+          top_k: The maximum number of documents to retrieve.
+
+        Returns:
+          A pandas DataFrame containing the topk matched documents.
+
+        If no matches are found, returns an empty dataframe.
+        """
         ...
 
-    def threshold_documents(self, matched_documents, thresh: float) -> pd.DataFrame:
+    def threshold_documents(self, matched_documents: pd.DataFrame, thresh: float) -> pd.DataFrame:
+        """Filters out matched documents using a similarity threshold.
+
+        Args:
+          matched_documents: The DataFrame containing the matched documents.
+          thresh: The similarity threshold.
+
+        Returns:
+          A pandas DataFrame containing the filtered matched documents.
+        """
         # filter out matched_documents using a threshold
         return matched_documents[matched_documents.similarity > thresh]
 
     def retrieve(
-        self, user_inputs: UserInputs, sources: Optional[list[str]] = None, top_k: int = None, thresh: float = None
+        self,
+        user_inputs: UserInputs,
+        sources: Optional[list[str]] = None,
+        top_k: Optional[int] = None,
+        thresh: Optional[float] = None,
     ) -> pd.DataFrame:
+        """Retrieves documents based on user inputs.
+
+        Args:
+          user_inputs: The user's inputs.
+          sources: The sources from which to retrieve documents. If None, retrieves documents from all sources.
+          top_k: The maximum number of documents to retrieve.
+          thresh: The similarity threshold for document retrieval.
+
+        Returns:
+          A pandas DataFrame containing the retrieved documents.
+        """
         if top_k is None:
             top_k = self.top_k
         if thresh is None:

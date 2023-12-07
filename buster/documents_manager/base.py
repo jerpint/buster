@@ -22,9 +22,9 @@ class DocumentsManager(ABC):
         """
         Constructor for DocumentsManager class.
 
-        Parameters:
+        Args:
             required_columns (Optional[list[str]]): A list of column names that are required for the dataframe to contain.
-                                                    If None, no columns are enforced.
+                                                     If None, no columns are enforced.
         """
 
         self.required_columns = required_columns
@@ -35,6 +35,14 @@ class DocumentsManager(ABC):
             raise ValueError(f"DataFrame is missing one or more of {self.required_columns=}")
 
     def _checkpoint_csv(self, df, csv_filename: str, csv_overwrite: bool = True):
+        """
+        Saves DataFrame with embeddings to a CSV checkpoint.
+
+        Args:
+            df (pd.DataFrame): The DataFrame with embeddings.
+            csv_filename (str): Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_overwrite (bool, optional): Whether to overwrite the file with a new file. Defaults to True.
+        """
         import os
 
         if csv_overwrite:
@@ -68,7 +76,7 @@ class DocumentsManager(ABC):
         1. Checks if the required columns are present in the DataFrame.
         2. Computes embeddings for the 'content' column if they are not already present.
         3. Optionally saves the DataFrame with computed embeddings to a CSV checkpoint.
-        4. Calls the '_add_documents' method to add documents with embeddinsg to the DocumentsManager.
+        4. Calls the '_add_documents' method to add documents with embeddings to the DocumentsManager.
 
         Args:
             df (pd.DataFrame): The DataFrame containing the documents to be added.
@@ -77,9 +85,8 @@ class DocumentsManager(ABC):
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
             sparse_embedding_fn (callable, optional): A function that computes sparse embeddings for a given input string.
                 Default is None. Only use if you want sparse embeddings.
-
-            csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
-            csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
+            csv_filename (str, optional): Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_overwrite (bool, optional): Whether to overwrite the file with a new file. Defaults to True.
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
         """
 
@@ -110,30 +117,29 @@ class DocumentsManager(ABC):
         **add_kwargs,
     ):
         """
+        Adds DataFrame data to a DataManager instance in batches.
+
         This function takes a DataFrame and adds its data to a DataManager instance in batches.
         It ensures that a minimum time interval is maintained between successive batches
         to prevent timeouts or excessive load. This is useful for APIs like openAI with rate limits.
 
         Args:
-            df (pandas.DataFrame): The input DataFrame containing data to be added.
+            df (pd.DataFrame): The input DataFrame containing data to be added.
             batch_size (int, optional): The size of each batch. Defaults to 3000.
             min_time_interval (int, optional): The minimum time interval (in seconds) between batches.
-                                            Defaults to 60.
+                                                Defaults to 60.
             num_workers (int, optional): The number of parallel workers to use when adding data.
                                         Defaults to 32.
             embedding_fn (callable, optional): A function that computes embeddings for a given input string.
                 Default is 'get_embedding_openai' which uses the text-embedding-ada-002 model.
             sparse_embedding_fn (callable, optional): A function that computes sparse embeddings for a given input string.
                 Default is None. Only use if you want sparse embeddings.
-            csv_filename: (str, optional) = Path to save a copy of the dataframe with computed embeddings for later use.
-            csv_overwrite: (bool, optional) = If csv_filename is specified, whether to overwrite the file with a new file.
+            csv_filename (str, optional): Path to save a copy of the dataframe with computed embeddings for later use.
+            csv_overwrite (bool, optional): Whether to overwrite the file with a new file. Defaults to False.
                 When using batches, set to False to keep all embeddings in the same file. You may want to manually remove the file if experimenting.
-
             **add_kwargs: Additional keyword arguments to be passed to the '_add_documents' method.
-
-        Returns:
-            None
         """
+
         total_batches = (len(df) // batch_size) + 1
 
         logger.info(f"Adding {len(df)} documents with {batch_size=} for {total_batches=}")

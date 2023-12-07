@@ -16,6 +16,32 @@ logging.basicConfig(level=logging.INFO)
 
 
 class Completion:
+    """
+    A class to represent the completion object of a model's output for a user's question.
+
+    Attributes:
+        error (bool): A boolean indicating if an error occurred when generating the completion.
+        user_inputs (UserInputs): The inputs from the user.
+        matched_documents (pd.DataFrame): The documents that were matched to the user's question.
+        answer_generator (Iterator): An optional iterator used to generate the model's answer.
+        answer_text (str): An optional answer text.
+        answer_relevant (bool): An optional boolean indicating if the answer is relevant.
+        question_relevant (bool): An optional boolean indicating if the question is relevant.
+        completion_kwargs (dict): Optional arguments for the completion.
+        validator (Validator): An optional Validator object.
+
+    Methods:
+        __repr__: Outputs a string representation of the object.
+        _validate_arguments: Validates answer_generator and answer_text arguments.
+        answer_relevant: Determines if the answer is relevant or not.
+        question_relevant: Retrieves the relevance of the question.
+        answer_text: Retrieves the answer text.
+        answer_generator: Retrieves the answer generator.
+        postprocess: Postprocesses the results after generating the model's answer.
+        to_json: Outputs selected attributes of the object in JSON format.
+        from_dict: Creates a Completion object from a dictionary.
+    """
+
     def __init__(
         self,
         error: bool,
@@ -202,7 +228,12 @@ class Completion:
 
 
 class Completer(ABC):
-    """Generic LLM-based completer. Requires a prompt and an input to produce an output."""
+    """
+    Abstract base class for completers, which generate an answer to a prompt.
+
+    Methods:
+        complete: The method that should be implemented by any child class to provide an answer to a prompt.
+    """
 
     @abstractmethod
     def complete(self, prompt: str, user_input) -> (str | Iterator, bool):
@@ -211,9 +242,21 @@ class Completer(ABC):
 
 
 class DocumentAnswerer:
-    """Completer that will answer questions based on documents.
+    """
+    A class that answers questions based on documents.
 
     It takes care of formatting the prompts and the documents, and generating the answer when relevant.
+
+    Attributes:
+        completer (Completer): Object that actually generates an answer to the prompt.
+        documents_formatter (DocumentsFormatter): Object that formats the documents for the prompt.
+        prompt_formatter (PromptFormatter): Object that prepares the prompt for the completer.
+        no_documents_message (str): Message to display when no documents are found to match the query.
+        completion_class (Completion): Class to use for the resulting completion.
+
+    Methods:
+        prepare_prompt: Prepares the prompt that will be passed to the completer.
+        get_completion: Generates a completion to the user's question based on matched documents.
     """
 
     def __init__(

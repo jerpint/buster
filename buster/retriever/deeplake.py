@@ -12,13 +12,29 @@ logging.basicConfig(level=logging.INFO)
 
 
 def extract_metadata(x: pd.DataFrame, columns) -> pd.DataFrame:
-    """Returned metadata from deeplake is in a nested dict, extract it so that each attribute has its own column."""
+    """Extracts metadata from deeplake.
+
+    Args:
+      x: The dataframe containing the metadata.
+      columns: The columns to extract.
+
+    Returns:
+      The dataframe with the extracted metadata.
+    """
     for col in columns:
         x[col] = x.metadata[col]
     return x
 
 
-def data_dict_to_df(data: dict):
+def data_dict_to_df(data: dict) -> pd.DataFrame:
+    """Converts a dictionary of data to a Pandas DataFrame.
+
+    Args:
+      data: The dictionary containing the data.
+
+    Returns:
+      The DataFrame containing the data.
+    """
     # rename 'score' to 'similarity'
     data["similarity"] = data.pop("score")
     data["content"] = data.pop("text")
@@ -35,7 +51,17 @@ def data_dict_to_df(data: dict):
     return matched_documents
 
 
-def build_tql_query(embedding, sources=None, top_k: int = 3):
+def build_tql_query(embedding, sources=None, top_k: int = 3) -> str:
+    """Builds a TQL query.
+
+    Args:
+      embedding: The embedding vector.
+      sources: The sources to filter by.
+      top_k: The number of top documents to retrieve.
+
+    Returns:
+      The TQL query.
+    """
     # Initialize the where_clause to an empty string.
     where_clause = ""
 
@@ -88,8 +114,15 @@ class DeepLakeRetriever(Retriever):
                 """
             )
 
-    def get_documents(self, sources: Optional[list[str]] = None):
-        """Get all current documents from a given source."""
+    def get_documents(self, sources: Optional[list[str]] = None) -> pd.DataFrame:
+        """Get all current documents from a given source.
+
+        Args:
+          sources: The sources to retrieve documents from.
+
+        Returns:
+          The DataFrame containing the retrieved documents.
+        """
         k = len(self.vector_store)
 
         # currently this is the only way to retrieve all embeddings in deeplake
@@ -102,7 +135,15 @@ class DeepLakeRetriever(Retriever):
     def get_source_display_name(self, source: str) -> str:
         """Get the display name of a source.
 
-        If source is None, returns all documents. If source does not exist, returns empty dataframe."""
+        Args:
+          source: The name of the source.
+
+        Returns:
+          The display name of the source.
+
+        Raises:
+          NotImplementedError: If the method is not implemented.
+        """
         raise NotImplementedError()
 
     def get_topk_documents(
@@ -115,8 +156,18 @@ class DeepLakeRetriever(Retriever):
     ) -> pd.DataFrame:
         """Get the topk documents matching a user's query.
 
-        If no matches are found, returns an empty dataframe."""
+        If no matches are found, returns an empty dataframe.
 
+        Args:
+          query: The user's query.
+          embedding: The embedding vector.
+          sources: The sources to filter by.
+          top_k: The number of top documents to retrieve.
+          return_tensors: The tensors to include in the result.
+
+        Returns:
+          The DataFrame containing the matched documents.
+        """
         if query is not None:
             query_embedding = self.embedding_fn(query)
         elif embedding is not None:
