@@ -5,9 +5,9 @@ gradio>=3.40
 matplotlib
 numpy>=1.25
 openai>=1.0
-pandas
+pandas>=2.1.3
 pinecone-client
-pinecone-text
+pinecone-text>=0.6.0
 pymongo
 pytest
 tabulate
