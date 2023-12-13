@@ -6,11 +6,11 @@ from dataclasses import InitVar, dataclass, field
 from itertools import takewhile, zip_longest
 from pathlib import Path
 from typing import Iterator, Type
-from tqdm import tqdm
 
 import bs4
 import pandas as pd
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 
 @dataclass
