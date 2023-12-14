@@ -1,14 +1,16 @@
+import glob
 import os
 import re
 from abc import ABC, abstractmethod
 from dataclasses import InitVar, dataclass, field
 from itertools import takewhile, zip_longest
 from pathlib import Path
-from typing import Iterator
+from typing import Iterator, Type
 
 import bs4
 import pandas as pd
 from bs4 import BeautifulSoup
+from tqdm import tqdm
 
 
 @dataclass
@@ -140,3 +142,64 @@ class HuggingfaceParser(Parser):
 
     def build_url(self, suffix: str) -> str:
         return self.base_url + self.relative_path + suffix
+
+
+def get_document(
+    root_dir: str,
+    file: str,
+    base_url: str,
+    parser_cls: Type[Parser],
+    min_section_length: int = 100,
+    max_section_length: int = 2000,
+) -> pd.DataFrame:
+    """Extract all sections from one file.
+
+    Sections are broken into subsections if they are longer than `max_section_length`.
+    Sections correspond to `section` HTML tags that have a headerlink attached.
+    """
+    filepath = os.path.join(root_dir, file)
+    with open(filepath, "r") as f:
+        source = f.read()
+
+    soup = BeautifulSoup(source, "html.parser")
+    parser = parser_cls(soup, base_url, root_dir, filepath, min_section_length, max_section_length)
+
+    sections = []
+    urls = []
+    names = []
+    for section in parser.parse():
+        sections.append(section.text)
+        urls.append(section.url)
+        names.append(section.name)
+
+    documents_df = pd.DataFrame.from_dict({"title": names, "url": urls, "content": sections})
+
+    return documents_df
+
+
+def get_all_documents(
+    root_dir: str,
+    base_url: str,
+    parser_cls: Type[Parser],
+    min_section_length: int = 100,
+    max_section_length: int = 2000,
+) -> pd.DataFrame:
+    """Parse all HTML files in `root_dir`, and extract all sections.
+
+    Sections are broken into subsections if they are longer than `max_section_length`.
+    Sections correspond to `section` HTML tags that have a headerlink attached.
+    """
+    files = glob.glob("**/*.html", root_dir=root_dir, recursive=True)
+
+    dfs = []
+    for file in tqdm(files):
+        try:
+            df = get_document(root_dir, file, base_url, parser_cls, min_section_length, max_section_length)
+            dfs.append(df)
+        except Exception as e:
+            print(f"Skipping {file} due to the following error: {e}")
+            continue
+
+    documents_df = pd.concat(dfs, ignore_index=True)
+
+    return documents_df
