@@ -6,14 +6,15 @@
 [![PyPI](https://img.shields.io/pypi/v/buster-doctalk?logo=pypi)](https://pypi.org/project/buster-doctalk)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Buster%20Demo-blue)](https://huggingface.co/spaces/jerpint/buster)
+[![Documentation Status](https://readthedocs.org/projects/buster/badge/?version=latest)](https://buster.readthedocs.io/en/latest/?badge=latest)
 
 </div>
 
-Buster is a question-answering chatbot that can be tuned to any source of documentations.
+Buster is retrieval-augmented generation (RAG) module that can be tuned to any source of documentation.
 
 # Demo
 
-In order to view the full abilities of Buster, you can play with our [live demo here](https://huggingface.co/spaces/jerpint/buster).
+In order to demo Buster's abilities, you can play with our [live demo here](https://huggingface.co/spaces/jerpint/buster).
 We scraped the documentation of [huggingface 🤗 Transformers](https://huggingface.co/docs/transformers/index) and instructed Buster to answer questions related to its usage.
 
 # Quickstart
@@ -45,7 +46,7 @@ export OPENAI_API_KEY=sk-...
 
 # Generating your own embeddings
 
-Once your local version of Buster is up and running, the next step is for you to be able to import your own data.
+Once your local version of Buster is properly installed, the next step is for you to be able to import your own data.
 We will be using the `stackoverflow.csv` file in the `buster/examples/` folder for this. This is the same data that was used to generate the demo app's embeddings.
 
 You will first ingest the documents to be ready for buster. In this example, we use Deeplake's vector store, but you can always write your own custom `DocumentManager`:
