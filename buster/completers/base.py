@@ -285,7 +285,7 @@ class DocumentAnswerer:
         prompt = self.prompt_formatter.format(formatted_documents)
         return prompt
 
-    def get_completion(
+    async def get_completion(
         self,
         user_inputs: UserInputs,
         matched_documents: pd.DataFrame,
@@ -326,7 +326,7 @@ class DocumentAnswerer:
         logger.info(f"querying model with parameters: {self.completer.completion_kwargs}...")
 
         try:
-            answer_generator, error = self.completer.complete(prompt=prompt, user_input=user_inputs.current_input)
+            answer_generator, error = await self.completer.complete(prompt=prompt, user_input=user_inputs.current_input)
 
         except Exception as e:
             error = True

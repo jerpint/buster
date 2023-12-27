@@ -3,7 +3,7 @@ import os
 from typing import Iterator, Optional
 
 import openai
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from buster.completers import Completer
 
@@ -40,9 +40,9 @@ class ChatGPTCompleter(Completer):
         if client_kwargs is None:
             client_kwargs = {}
 
-        self.client = OpenAI(**client_kwargs)
+        self.client = AsyncOpenAI(**client_kwargs)
 
-    def complete(self, prompt: str, user_input: str, completion_kwargs=None) -> (str | Iterator, bool):
+    async def complete(self, prompt: str, user_input: str, completion_kwargs=None) -> (str | Iterator, bool):
         """Given a prompt and user input, returns the generated message and error flag.
 
         Args:
@@ -69,7 +69,7 @@ class ChatGPTCompleter(Completer):
 
         try:
             error = False
-            response = self.client.chat.completions.create(messages=messages, **completion_kwargs)
+            response = await self.client.chat.completions.create(messages=messages, **completion_kwargs)
         except openai.BadRequestError:
             error = True
             logger.exception("Invalid request to OpenAI API. See traceback:")
@@ -91,8 +91,8 @@ class ChatGPTCompleter(Completer):
         if completion_kwargs.get("stream") is True:
             # We are entering streaming mode, so here we're just wrapping the streamed
             # openai response to be easier to handle later
-            def answer_generator():
-                for chunk in response:
+            async def answer_generator():
+                async for chunk in response:
                     token = chunk.choices[0].delta.content
 
                     # Always stream a string, openAI returns None on last token

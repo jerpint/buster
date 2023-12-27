@@ -93,7 +93,7 @@ class Buster:
         self.validator = validator
         self.question_reformulator = question_reformulator
 
-    def process_input(
+    async def process_input(
         self,
         user_input: str,
         sources: Optional[list[str]] = None,
@@ -139,7 +139,7 @@ class Buster:
 
             # Retrieve and answer
             matched_documents = self.retriever.retrieve(user_inputs, sources=sources, top_k=top_k)
-            completion: Completion = self.document_answerer.get_completion(
+            completion: Completion = await self.document_answerer.get_completion(
                 user_inputs=user_inputs,
                 matched_documents=matched_documents,
                 validator=self.validator,
