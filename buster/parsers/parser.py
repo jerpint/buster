@@ -94,8 +94,7 @@ class Parser(ABC):
         return self._relative_path
 
     @abstractmethod
-    def find_sections(self) -> Iterator[Section]:
-        ...
+    def find_sections(self) -> Iterator[Section]: ...
 
     def parse(self) -> list[Section]:
         """Parse the documents into sections, respecting the lenght constraints."""
