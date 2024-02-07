@@ -17,7 +17,6 @@ class DocumentsService(DocumentsManager):
     def __init__(
         self,
         pinecone_api_key: str,
-        pinecone_env: str,
         pinecone_index: str,
         pinecone_namespace: str,
         mongo_uri: str,
@@ -37,9 +36,9 @@ class DocumentsService(DocumentsManager):
         """
         super().__init__(**kwargs)
 
-        pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
+        pc = pinecone.Pinecone(api_key=pinecone_api_key)
 
-        self.index = pinecone.Index(pinecone_index)
+        self.index = pc.Index(pinecone_index)
         self.namespace = pinecone_namespace
 
         self.mongo_db_name = mongo_db_name
@@ -98,11 +97,9 @@ class DocumentsService(DocumentsManager):
 
                 to_upsert.append(vector)
 
-            # Current (November 2023) Pinecone upload rules:
-            # - Max 1000 vectors per batch
-            # - Max 2 MB per batch
-            # Sparse vectors are heavier, so we reduce the batch size when using them.
-            MAX_PINECONE_BATCH_SIZE = 100 if use_sparse_vector else 1000
+            # Current (February 2024) Pinecone upload rules:
+            # - Max 100 vectors per batch
+            MAX_PINECONE_BATCH_SIZE = 100
             for i in range(0, len(to_upsert), MAX_PINECONE_BATCH_SIZE):
                 self.index.upsert(vectors=to_upsert[i : i + MAX_PINECONE_BATCH_SIZE], namespace=self.namespace)
 

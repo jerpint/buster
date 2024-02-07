@@ -18,7 +18,6 @@ class ServiceRetriever(Retriever):
     def __init__(
         self,
         pinecone_api_key: str,
-        pinecone_env: str,
         pinecone_index: str,
         pinecone_namespace: str,
         mongo_uri: str,
@@ -43,9 +42,9 @@ class ServiceRetriever(Retriever):
         """
         super().__init__(**kwargs)
 
-        pinecone.init(api_key=pinecone_api_key, environment=pinecone_env)
+        pc = pinecone.Pinecone(api_key=pinecone_api_key)
 
-        self.index = pinecone.Index(pinecone_index)
+        self.index = pc.Index(pinecone_index)
         self.namespace = pinecone_namespace
 
         self.client = MongoClient(mongo_uri, server_api=ServerApi("1"))
