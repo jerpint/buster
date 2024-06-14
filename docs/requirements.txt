@@ -1,0 +1,6 @@
+myst-parser
+sphinx
+sphinx-autoapi
+sphinx-rtd-theme
+sphinxcontrib-napoleon
+sphinxcontrib-katex
